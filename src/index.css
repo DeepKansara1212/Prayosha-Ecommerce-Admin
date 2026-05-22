@@ -1,1 +1,50 @@
 @import "tailwindcss";
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background: #F5F0E8;
+}
+
+/* Admin sidebar nav links */
+.admin-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 20px;
+  font-family: 'Jost', sans-serif;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #6B6057;
+  background: transparent;
+  border-left: 2px solid transparent;
+  text-decoration: none;
+  transition: background 0.15s, color 0.15s;
+}
+
+.admin-nav-item:hover {
+  background: #F0EAF7;
+  color: #1C1A17;
+}
+
+.admin-nav-item.active {
+  background: #F0EAF7;
+  color: #7B5EA7;
+  border-left-color: #7B5EA7;
+}
+
+/* Admin form field focus */
+.admin-input:focus {
+  border-color: #7B5EA7;
+  outline: none;
+}
+
+/* Dashboard table row hover */
+.admin-table-row:hover td {
+  background: #F5F0E8;
+}
