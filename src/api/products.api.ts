@@ -104,16 +104,14 @@ export async function deleteProduct(id: string): Promise<void> {
   await client.delete(`/api/v1/products/${id}`)
 }
 
-export async function uploadImages(id: string, files: File[]): Promise<string[]> {
+export async function updateImages(
+  id: string,
+  existingUrls: string[],
+  newFiles: File[],
+): Promise<string[]> {
   const form = new FormData()
-  files.forEach((f) => form.append('images', f))
+  form.append('existingImages', JSON.stringify(existingUrls))
+  newFiles.forEach((f) => form.append('images', f))
   const res = await client.post(`/api/v1/products/${id}/images`, form)
-  return res.data.data.images as string[]
-}
-
-export async function deleteImage(id: string, imageUrl: string): Promise<string[]> {
-  const res = await client.delete(`/api/v1/products/${id}/images`, {
-    data: { imageUrl },
-  })
   return res.data.data.images as string[]
 }

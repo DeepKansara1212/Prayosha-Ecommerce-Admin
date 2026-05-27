@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Pencil, Trash2, Plus, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Pencil, Trash2, Plus, ChevronLeft, ChevronRight, Package } from 'lucide-react'
 import {
   getProducts,
   updateProduct,
@@ -373,8 +373,35 @@ export default function ProductsPage() {
             Failed to load products. Please try again.
           </div>
         ) : products.length === 0 ? (
-          <div style={{ padding: 48, textAlign: 'center', fontFamily: FONT, fontSize: 13, color: '#9E9590' }}>
-            No products found.
+          <div style={{ padding: '64px 24px', textAlign: 'center' }}>
+            <Package size={48} style={{ margin: '0 auto 16px', color: '#9E9590', display: 'block' }} />
+            <h3 style={{ fontFamily: FONT, fontSize: 18, fontWeight: 500, color: '#1C1A17', marginBottom: 8, marginTop: 0 }}>
+              No products found
+            </h3>
+            <p style={{ fontFamily: FONT, fontSize: 13, color: '#6B6057', marginBottom: 24, marginTop: 0 }}>
+              Try adjusting your filters or add a new product.
+            </p>
+            <Link to="/admin/products/new" style={{ textDecoration: 'none' }}>
+              <button
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 6,
+                  padding: '9px 18px',
+                  background: '#C49A3C',
+                  border: 'none',
+                  borderRadius: 4,
+                  fontFamily: FONT,
+                  fontSize: 12,
+                  fontWeight: 500,
+                  color: '#fff',
+                  cursor: 'pointer',
+                  letterSpacing: '0.04em',
+                }}
+              >
+                Add Product
+              </button>
+            </Link>
           </div>
         ) : (
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>

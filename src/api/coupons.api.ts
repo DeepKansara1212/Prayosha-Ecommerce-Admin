@@ -37,7 +37,12 @@ export async function getCoupons(): Promise<Coupon[]> {
 }
 
 export async function createCoupon(data: CreateCouponPayload): Promise<Coupon> {
-  const res = await client.post('/api/v1/admin/coupons', data)
+  const payload = {
+    ...data,
+    validFrom:  new Date(data.validFrom  + 'T00:00:00.000Z').toISOString(),
+    validUntil: new Date(data.validUntil + 'T23:59:59.999Z').toISOString(),
+  }
+  const res = await client.post('/api/v1/admin/coupons', payload)
   return res.data.data.coupon as Coupon
 }
 

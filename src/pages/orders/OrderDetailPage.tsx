@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { ArrowLeft, Package, MapPin, Clock, CreditCard } from 'lucide-react'
+import { ArrowLeft, Package, MapPin, Clock, CreditCard, Loader2, CheckCircle, AlertCircle } from 'lucide-react'
 import {
   getOrderDetail,
   updateOrderStatus,
@@ -40,6 +40,36 @@ const fmtDate = (iso: string) =>
     day: '2-digit', month: 'short', year: 'numeric',
     hour: '2-digit', minute: '2-digit',
   })
+
+// ── Toast ─────────────────────────────────────────────────────────────────────
+
+function Toast({ type, message }: { type: 'success' | 'error'; message: string }) {
+  const isOk = type === 'success'
+  return (
+    <div
+      style={{
+        position: 'fixed',
+        top: 24,
+        right: 24,
+        zIndex: 300,
+        display: 'flex',
+        alignItems: 'center',
+        gap: 10,
+        padding: '12px 18px',
+        background: isOk ? '#1C1A17' : '#A85050',
+        borderRadius: 4,
+        boxShadow: '0 4px 16px rgba(0,0,0,0.2)',
+        maxWidth: 360,
+        animation: 'fadeIn 0.2s ease',
+      }}
+    >
+      {isOk
+        ? <CheckCircle size={15} color="#5A8A6A" />
+        : <AlertCircle size={15} color="#fff" />}
+      <span style={{ fontFamily: FONT, fontSize: 13, color: '#fff' }}>{message}</span>
+    </div>
+  )
+}
 
 // ── Sub-components ────────────────────────────────────────────────────────────
 
@@ -109,7 +139,17 @@ export default function OrderDetailPage() {
   const [trackingNumber, setTrackingNumber] = useState('')
   const [note, setNote]                     = useState('')
   const [formError, setFormError]           = useState('')
-  const [formSuccess, setFormSuccess]       = useState(false)
+
+  const [toast, setToast]   = useState<{ type: 'success' | 'error'; message: string } | null>(null)
+  const toastTimer          = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const showToast = (type: 'success' | 'error', message: string) => {
+    if (toastTimer.current) clearTimeout(toastTimer.current)
+    setToast({ type, message })
+    toastTimer.current = setTimeout(() => setToast(null), 3500)
+  }
+
+  useEffect(() => () => { if (toastTimer.current) clearTimeout(toastTimer.current) }, [])
 
   // Sync form when order loads (but not on every re-fetch to preserve edits)
   useEffect(() => {
@@ -122,16 +162,16 @@ export default function OrderDetailPage() {
   const statusMutation = useMutation({
     mutationFn: (payload: Parameters<typeof updateOrderStatus>[1]) =>
       updateOrderStatus(id!, payload),
-    onSuccess: () => {
+    onSuccess: (_data, variables) => {
       setNote('')
       setFormError('')
-      setFormSuccess(true)
-      setTimeout(() => setFormSuccess(false), 3000)
+      showToast('success', `Order #${order?.orderNumber} updated to ${variables.status}`)
       qc.invalidateQueries({ queryKey: ['admin-order', id] })
       qc.invalidateQueries({ queryKey: ['admin-orders'] })
     },
     onError: () => {
-      setFormError('Failed to update status. Please try again.')
+      if (order) setFormStatus(order.status)
+      showToast('error', 'Failed to update order status. Please try again.')
     },
   })
 
@@ -170,6 +210,8 @@ export default function OrderDetailPage() {
 
   return (
     <div>
+      {toast && <Toast type={toast.type} message={toast.message} />}
+
       {/* Back + header */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 24 }}>
         <button
@@ -571,29 +613,39 @@ export default function OrderDetailPage() {
                 >
                   Status
                 </label>
-                <select
-                  value={formStatus}
-                  onChange={e => {
-                    setFormStatus(e.target.value as OrderStatus)
-                    setFormError('')
-                  }}
-                  style={{
-                    width: '100%',
-                    padding: '8px 10px',
-                    background: '#F5F0E8',
-                    border: '1px solid #E2DAC8',
-                    borderRadius: 4,
-                    fontFamily: FONT,
-                    fontSize: 12,
-                    color: '#1C1A17',
-                    outline: 'none',
-                    cursor: 'pointer',
-                  }}
-                >
-                  {ORDER_STATUSES.map(s => (
-                    <option key={s} value={s}>{capitalize(s)}</option>
-                  ))}
-                </select>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <select
+                    value={formStatus}
+                    onChange={e => {
+                      setFormStatus(e.target.value as OrderStatus)
+                      setFormError('')
+                    }}
+                    disabled={statusMutation.isPending}
+                    style={{
+                      flex: 1,
+                      padding: '8px 10px',
+                      background: '#F5F0E8',
+                      border: '1px solid #E2DAC8',
+                      borderRadius: 4,
+                      fontFamily: FONT,
+                      fontSize: 12,
+                      color: '#1C1A17',
+                      outline: 'none',
+                      cursor: statusMutation.isPending ? 'not-allowed' : 'pointer',
+                      opacity: statusMutation.isPending ? 0.6 : 1,
+                    }}
+                  >
+                    {ORDER_STATUSES.map(s => (
+                      <option key={s} value={s}>{capitalize(s)}</option>
+                    ))}
+                  </select>
+                  {statusMutation.isPending && (
+                    <Loader2
+                      size={15}
+                      style={{ animation: 'spin 1s linear infinite', color: '#7B5EA7', flexShrink: 0 }}
+                    />
+                  )}
+                </div>
               </div>
 
               {/* Tracking number (only for shipped) */}
@@ -654,17 +706,10 @@ export default function OrderDetailPage() {
                 />
               </div>
 
-              {/* Error */}
+              {/* Validation error */}
               {formError && (
                 <p style={{ fontFamily: FONT, fontSize: 12, color: '#A85050', margin: 0 }}>
                   {formError}
-                </p>
-              )}
-
-              {/* Success */}
-              {formSuccess && (
-                <p style={{ fontFamily: FONT, fontSize: 12, color: '#5A8A6A', margin: 0 }}>
-                  Status updated successfully.
                 </p>
               )}
 
@@ -673,6 +718,9 @@ export default function OrderDetailPage() {
                 onClick={handleStatusUpdate}
                 disabled={statusMutation.isPending}
                 style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 6,
                   padding: '9px 18px',
                   background: statusMutation.isPending ? '#D4B86A' : '#C49A3C',
                   border: 'none',
@@ -695,6 +743,9 @@ export default function OrderDetailPage() {
                     (e.currentTarget as HTMLButtonElement).style.background = '#C49A3C'
                 }}
               >
+                {statusMutation.isPending && (
+                  <Loader2 size={13} style={{ animation: 'spin 1s linear infinite' }} />
+                )}
                 {statusMutation.isPending ? 'Updating…' : 'Update Status'}
               </button>
             </div>

@@ -8,6 +8,7 @@ import {
   deleteCategory,
   type Category,
 } from '../../api/categories.api'
+import { useToast } from '../../store/toastStore'
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -455,6 +456,7 @@ function DeleteButton({ onConfirm, disabled }: { onConfirm: () => void; disabled
 
 export default function CategoriesPage() {
   const qc = useQueryClient()
+  const toast = useToast()
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [editingCategory, setEditingCategory] = useState<Category | null>(null)
 
@@ -466,16 +468,30 @@ export default function CategoriesPage() {
   const saveMutation = useMutation({
     mutationFn: ({ fd, id }: { fd: FormData; id?: string }) =>
       id ? updateCategory(id, fd) : createCategory(fd),
-    onSuccess: () => {
+    onSuccess: (_data, { id }) => {
       qc.invalidateQueries({ queryKey: ['admin-categories'] })
       setDrawerOpen(false)
       setEditingCategory(null)
+      toast.success(id ? 'Category updated' : 'Category created')
+    },
+    onError: (err: unknown) => {
+      const msg = (err as { response?: { data?: { message?: string } } })
+        ?.response?.data?.message ?? 'Failed to save category'
+      toast.error(msg)
     },
   })
 
   const deleteMutation = useMutation({
     mutationFn: deleteCategory,
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['admin-categories'] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['admin-categories'] })
+      toast.success('Category deleted')
+    },
+    onError: (err: unknown) => {
+      const msg = (err as { response?: { data?: { message?: string } } })
+        ?.response?.data?.message ?? 'Failed to delete category'
+      toast.error(msg)
+    },
   })
 
   const openCreate = () => { setEditingCategory(null); setDrawerOpen(true) }

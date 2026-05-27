@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { Search, ShoppingBag, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Search, ShoppingBag, ChevronLeft, ChevronRight, Users } from 'lucide-react'
 import { getCustomers, type Customer } from '../../api/customers.api'
 
 // ── Constants ─────────────────────────────────────────────────────────────────
@@ -199,16 +199,14 @@ export default function CustomersPage() {
             Failed to load customers. Please try again.
           </div>
         ) : customers.length === 0 ? (
-          <div
-            style={{
-              padding: 48,
-              textAlign: 'center',
-              fontFamily: FONT,
-              fontSize: 13,
-              color: '#9E9590',
-            }}
-          >
-            {debouncedSearch ? 'No customers match your search.' : 'No customers yet.'}
+          <div style={{ padding: '64px 24px', textAlign: 'center' }}>
+            <Users size={48} style={{ margin: '0 auto 16px', color: '#9E9590', display: 'block' }} />
+            <h3 style={{ fontFamily: FONT, fontSize: 18, fontWeight: 500, color: '#1C1A17', marginBottom: 8, marginTop: 0 }}>
+              No customers found
+            </h3>
+            <p style={{ fontFamily: FONT, fontSize: 13, color: '#6B6057', marginBottom: 0, marginTop: 0 }}>
+              Try a different search term.
+            </p>
           </div>
         ) : (
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>

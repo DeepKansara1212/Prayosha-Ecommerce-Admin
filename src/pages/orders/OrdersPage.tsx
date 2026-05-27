@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Eye, ChevronDown, ChevronLeft, ChevronRight, Search } from 'lucide-react'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { Eye, ChevronDown, ChevronLeft, ChevronRight, Search, Loader2, CheckCircle, AlertCircle, ShoppingCart } from 'lucide-react'
 import {
   getAllOrders,
   updateOrderStatus,
@@ -90,6 +90,36 @@ const fmtDate = (iso: string) =>
     day: '2-digit', month: 'short', year: 'numeric',
   })
 
+// ── Toast ─────────────────────────────────────────────────────────────────────
+
+function Toast({ type, message }: { type: 'success' | 'error'; message: string }) {
+  const isOk = type === 'success'
+  return (
+    <div
+      style={{
+        position: 'fixed',
+        top: 24,
+        right: 24,
+        zIndex: 300,
+        display: 'flex',
+        alignItems: 'center',
+        gap: 10,
+        padding: '12px 18px',
+        background: isOk ? '#1C1A17' : '#A85050',
+        borderRadius: 4,
+        boxShadow: '0 4px 16px rgba(0,0,0,0.2)',
+        maxWidth: 360,
+        animation: 'fadeIn 0.2s ease',
+      }}
+    >
+      {isOk
+        ? <CheckCircle size={15} color="#5A8A6A" />
+        : <AlertCircle size={15} color="#fff" />}
+      <span style={{ fontFamily: FONT, fontSize: 13, color: '#fff' }}>{message}</span>
+    </div>
+  )
+}
+
 // ── StatusDropdown ────────────────────────────────────────────────────────────
 
 function StatusDropdown({
@@ -97,11 +127,13 @@ function StatusDropdown({
   current,
   onSelect,
   disabled,
+  isLoading,
 }: {
   orderId: string
   current: OrderStatus
   onSelect: (id: string, status: OrderStatus) => void
   disabled?: boolean
+  isLoading?: boolean
 }) {
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
@@ -115,10 +147,12 @@ function StatusDropdown({
     return () => document.removeEventListener('mousedown', handler)
   }, [open])
 
+  const busy = isLoading || disabled
+
   return (
     <div ref={ref} style={{ position: 'relative', display: 'inline-block' }}>
       <button
-        onClick={() => !disabled && setOpen(o => !o)}
+        onClick={() => !busy && setOpen(o => !o)}
         style={{
           display: 'inline-flex',
           alignItems: 'center',
@@ -126,18 +160,21 @@ function StatusDropdown({
           padding: '3px 8px 3px 10px',
           borderRadius: 12,
           border: 'none',
-          cursor: disabled ? 'not-allowed' : 'pointer',
+          cursor: busy ? 'not-allowed' : 'pointer',
           background: STATUS_STYLE[current].bg,
           color: STATUS_STYLE[current].color,
           fontFamily: FONT,
           fontSize: 11,
           fontWeight: 500,
-          opacity: disabled ? 0.6 : 1,
+          opacity: busy ? 0.6 : 1,
           transition: 'opacity 0.15s',
         }}
       >
         {capitalize(current)}
-        <ChevronDown size={11} />
+        {isLoading
+          ? <Loader2 size={11} style={{ animation: 'spin 1s linear infinite' }} />
+          : <ChevronDown size={11} />
+        }
       </button>
 
       {open && (
@@ -222,6 +259,19 @@ export default function OrdersPage() {
     return () => { if (debounceRef.current) clearTimeout(debounceRef.current) }
   }, [search])
 
+  // ── Toast ──────────────────────────────────────────────────────────────────────
+
+  const [toast, setToast]   = useState<{ type: 'success' | 'error'; message: string } | null>(null)
+  const toastTimer          = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const showToast = (type: 'success' | 'error', message: string) => {
+    if (toastTimer.current) clearTimeout(toastTimer.current)
+    setToast({ type, message })
+    toastTimer.current = setTimeout(() => setToast(null), 3500)
+  }
+
+  useEffect(() => () => { if (toastTimer.current) clearTimeout(toastTimer.current) }, [])
+
   useEffect(() => { setPage(1) }, [statusFilter, dateFrom, dateTo])
 
   // ── Query ─────────────────────────────────────────────────────────────────────
@@ -240,13 +290,22 @@ export default function OrdersPage() {
     placeholderData: (prev) => prev,
   })
 
-  // ── Mutation ──────────────────────────────────────────────────────────────────
+  // ── Per-row status update ─────────────────────────────────────────────────────
 
-  const statusMutation = useMutation({
-    mutationFn: ({ id, status }: { id: string; status: OrderStatus }) =>
-      updateOrderStatus(id, { status }),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['admin-orders'] }),
-  })
+  const [updatingId, setUpdatingId] = useState<string | null>(null)
+
+  const handleStatusChange = async (orderId: string, orderNumber: string, newStatus: OrderStatus) => {
+    setUpdatingId(orderId)
+    try {
+      await updateOrderStatus(orderId, { status: newStatus })
+      qc.invalidateQueries({ queryKey: ['admin-orders'] })
+      showToast('success', `Order #${orderNumber} updated to ${newStatus}`)
+    } catch {
+      showToast('error', 'Failed to update order status. Please try again.')
+    } finally {
+      setUpdatingId(null)
+    }
+  }
 
   const orders     = data?.orders ?? []
   const pagination = data?.pagination
@@ -255,6 +314,8 @@ export default function OrdersPage() {
 
   return (
     <div>
+      {toast && <Toast type={toast.type} message={toast.message} />}
+
       {/* Header */}
       <h1
         style={{
@@ -381,8 +442,14 @@ export default function OrdersPage() {
             Failed to load orders. Please try again.
           </div>
         ) : orders.length === 0 ? (
-          <div style={{ padding: 48, textAlign: 'center', fontFamily: FONT, fontSize: 13, color: '#9E9590' }}>
-            No orders found.
+          <div style={{ padding: '64px 24px', textAlign: 'center' }}>
+            <ShoppingCart size={48} style={{ margin: '0 auto 16px', color: '#9E9590', display: 'block' }} />
+            <h3 style={{ fontFamily: FONT, fontSize: 18, fontWeight: 500, color: '#1C1A17', marginBottom: 8, marginTop: 0 }}>
+              No orders yet
+            </h3>
+            <p style={{ fontFamily: FONT, fontSize: 13, color: '#6B6057', marginBottom: 0, marginTop: 0 }}>
+              Orders will appear here once customers start purchasing.
+            </p>
           </div>
         ) : (
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
@@ -485,9 +552,10 @@ export default function OrdersPage() {
                       orderId={order._id}
                       current={order.status}
                       onSelect={(id, status) =>
-                        statusMutation.mutate({ id, status })
+                        handleStatusChange(id, order.orderNumber, status)
                       }
-                      disabled={statusMutation.isPending}
+                      disabled={updatingId !== null && updatingId !== order._id}
+                      isLoading={updatingId === order._id}
                     />
                   </td>
 

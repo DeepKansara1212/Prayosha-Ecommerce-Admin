@@ -41,10 +41,16 @@ const STATUS_STYLES: Record<string, { bg: string; color: string }> = {
   placed:     { bg: '#EBF3FF', color: '#2563EB' },
   confirmed:  { bg: '#ECFDF5', color: '#059669' },
   processing: { bg: '#FFF7ED', color: '#D97706' },
-  shipped:    { bg: '#F0EAF7', color: '#7B5EA7' },
-  delivered:  { bg: '#D1FAE5', color: '#065F46' },
-  cancelled:  { bg: '#FEF2F2', color: '#DC2626' },
+  shipped:    { bg: '#E8F0FB', color: '#2563EB' },
+  delivered:  { bg: '#E8F2EC', color: '#5A8A6A' },
+  cancelled:  { bg: '#F9EDED', color: '#A85050' },
   refunded:   { bg: '#F3F4F6', color: '#6B7280' },
+}
+
+const PAYMENT_STYLES: Record<string, { bg: string; color: string }> = {
+  paid:    { bg: '#E8F2EC', color: '#5A8A6A' },
+  pending: { bg: '#FDF6E3', color: '#C49A3C' },
+  failed:  { bg: '#F9EDED', color: '#A85050' },
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -154,8 +160,14 @@ function KpiSkeleton() {
   )
 }
 
-function StatusBadge({ status }: { status: string }) {
-  const s = STATUS_STYLES[status] ?? { bg: '#F3F4F6', color: '#6B7280' }
+function Badge({
+  label,
+  styles,
+}: {
+  label: string
+  styles: Record<string, { bg: string; color: string }>
+}) {
+  const s = styles[label] ?? { bg: '#F3F4F6', color: '#6B7280' }
   return (
     <span
       style={{
@@ -172,9 +184,17 @@ function StatusBadge({ status }: { status: string }) {
         whiteSpace: 'nowrap',
       }}
     >
-      {status}
+      {label}
     </span>
   )
+}
+
+function StatusBadge({ status }: { status: string }) {
+  return <Badge label={status} styles={STATUS_STYLES} />
+}
+
+function PaymentBadge({ status }: { status: string }) {
+  return <Badge label={status} styles={PAYMENT_STYLES} />
 }
 
 // ── Main Page ─────────────────────────────────────────────────────────────────
@@ -197,12 +217,17 @@ export default function DashboardPage() {
     queryFn: getLowStockProducts,
   })
 
-  const { data: ordersData, isLoading: ordersLoading } = useQuery({
+  const {
+    data: ordersData,
+    isLoading: ordersLoading,
+    isError: ordersError,
+    refetch: refetchOrders,
+  } = useQuery({
     queryKey: ['recent-orders'],
-    queryFn: getRecentOrders,
+    queryFn: () => getRecentOrders(10),
   })
 
-  const recentOrders = ordersData?.orders ?? []
+  const recentOrders = ordersData ?? []
   const lowStockProducts = lowStockData?.products ?? []
   const salesPoints = salesData?.data ?? []
 
@@ -426,16 +451,72 @@ export default function DashboardPage() {
           </div>
 
           {ordersLoading ? (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              {Array.from({ length: 5 }, (_, i) => (
-                <Skeleton key={i} style={{ height: 44 }} />
-              ))}
+            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <thead>
+                <tr>
+                  {Array.from({ length: 7 }, (_, i) => (
+                    <th key={i} style={{ padding: '0 8px 12px', borderBottom: '1px solid #E2DAC8' }}>
+                      <Skeleton style={{ height: 10, width: 40 }} />
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {Array.from({ length: 5 }, (_, i) => (
+                  <tr key={i}>
+                    {Array.from({ length: 7 }, (_, j) => (
+                      <td key={j} style={TD}>
+                        <Skeleton style={{ height: 14, width: j === 5 || j === 6 ? 52 : '70%' }} />
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          ) : ordersError ? (
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '16px 20px',
+                background: '#F9EDED',
+                border: '1px solid #EDCECE',
+                borderRadius: 4,
+              }}
+            >
+              <span
+                style={{
+                  fontFamily: "'Jost', sans-serif",
+                  fontSize: 13,
+                  color: '#A85050',
+                }}
+              >
+                Could not load recent orders
+              </span>
+              <button
+                onClick={() => refetchOrders()}
+                style={{
+                  padding: '5px 14px',
+                  background: 'transparent',
+                  border: '1px solid #A85050',
+                  borderRadius: 2,
+                  fontFamily: "'Jost', sans-serif",
+                  fontSize: 11,
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.06em',
+                  color: '#A85050',
+                  cursor: 'pointer',
+                }}
+              >
+                Retry
+              </button>
             </div>
           ) : (
             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
               <thead>
                 <tr>
-                  {['Order #', 'Customer', 'Total', 'Status', 'Date'].map(
+                  {['Order #', 'Customer', 'Date', 'Items', 'Total', 'Payment', 'Status'].map(
                     (h) => (
                       <th
                         key={h}
@@ -460,27 +541,37 @@ export default function DashboardPage() {
               <tbody>
                 {recentOrders.length === 0 ? (
                   <tr>
-                    <td
-                      colSpan={5}
-                      style={{
-                        padding: '28px 8px',
-                        textAlign: 'center',
-                        fontFamily: "'Jost', sans-serif",
-                        fontSize: 13,
-                        color: '#9E9590',
-                      }}
-                    >
-                      No orders yet
+                    <td colSpan={7} style={{ padding: '32px 8px', textAlign: 'center' }}>
+                      <p
+                        style={{
+                          fontFamily: "'Jost', sans-serif",
+                          fontSize: 14,
+                          fontWeight: 500,
+                          color: '#6B6057',
+                          marginBottom: 4,
+                        }}
+                      >
+                        No recent orders
+                      </p>
+                      <p
+                        style={{
+                          fontFamily: "'Jost', sans-serif",
+                          fontSize: 12,
+                          color: '#9E9590',
+                        }}
+                      >
+                        New orders will appear here once placed
+                      </p>
                     </td>
                   </tr>
                 ) : (
-                  recentOrders.map((order) => {
+                  recentOrders.map((order, idx) => {
                     const customerName =
                       order.user && typeof order.user === 'object'
                         ? order.user.name
-                        : order.shippingAddress.fullName
+                        : order.shippingAddress?.fullName ?? '—'
                     return (
-                      <tr key={order._id} className="admin-table-row">
+                      <tr key={order._id ?? order.orderNumber ?? idx} className="admin-table-row">
                         <td style={TD}>
                           <span
                             style={{
@@ -507,6 +598,28 @@ export default function DashboardPage() {
                         <td style={TD}>
                           <span
                             style={{
+                              fontFamily: "'Jost', sans-serif",
+                              fontSize: 12,
+                              color: '#9E9590',
+                            }}
+                          >
+                            {formatDate(order.createdAt)}
+                          </span>
+                        </td>
+                        <td style={TD}>
+                          <span
+                            style={{
+                              fontFamily: "'Jost', sans-serif",
+                              fontSize: 13,
+                              color: '#6B6057',
+                            }}
+                          >
+                            {order.itemCount}
+                          </span>
+                        </td>
+                        <td style={TD}>
+                          <span
+                            style={{
                               fontFamily: "'Cormorant Garamond', serif",
                               fontSize: 16,
                               color: '#C4A35A',
@@ -516,18 +629,10 @@ export default function DashboardPage() {
                           </span>
                         </td>
                         <td style={TD}>
-                          <StatusBadge status={order.status} />
+                          <PaymentBadge status={order.paymentStatus} />
                         </td>
                         <td style={TD}>
-                          <span
-                            style={{
-                              fontFamily: "'Jost', sans-serif",
-                              fontSize: 12,
-                              color: '#9E9590',
-                            }}
-                          >
-                            {formatDate(order.createdAt)}
-                          </span>
+                          <StatusBadge status={order.status} />
                         </td>
                       </tr>
                     )

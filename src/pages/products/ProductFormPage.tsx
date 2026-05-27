@@ -1,16 +1,15 @@
-import { useState, useEffect, useRef, useMemo } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { X, ArrowUp, ArrowDown, Upload, CheckCircle, AlertCircle } from 'lucide-react'
+import { X, ArrowUp, ArrowDown, Upload, CheckCircle, AlertCircle, Lock, Unlock } from 'lucide-react'
 import {
   getProductBySlug,
   createProduct,
   updateProduct,
-  uploadImages,
-  deleteImage,
+  updateImages,
   type ProductPayload,
 } from '../../api/products.api'
 import { getCategories } from '../../api/categories.api'
@@ -19,7 +18,7 @@ import { getCategories } from '../../api/categories.api'
 
 const schema = z.object({
   name:                   z.string().min(1, 'Name is required'),
-  slug:                   z.string().min(1, 'Slug is required'),
+  slug:                   z.string().min(2, 'Slug must be at least 2 characters').regex(/^[a-z0-9-]+$/, 'Slug can only contain lowercase letters, numbers, and hyphens'),
   sku:                    z.string().min(1, 'SKU is required'),
   shortDescription:       z.string().max(200, 'Max 200 characters'),
   description:            z.string().min(1, 'Description is required'),
@@ -228,23 +227,29 @@ export default function ProductFormPage() {
 
   // ── Image state ────────────────────────────────────────────────────────────
 
-  const [existingImages, setExistingImages] = useState<string[]>([])
-  const [newFiles, setNewFiles]             = useState<File[]>([])
-  const [deletedUrls, setDeletedUrls]       = useState<string[]>([])
-  const [isDragging, setIsDragging]         = useState(false)
-  const fileInputRef                        = useRef<HTMLInputElement>(null)
+  type ImageItem = { url: string; file?: File; isExisting: boolean }
 
-  // Memoised object URLs for new file previews
-  const newPreviews = useMemo(() => newFiles.map(f => URL.createObjectURL(f)), [newFiles])
-  useEffect(() => () => newPreviews.forEach(u => URL.revokeObjectURL(u)), [newPreviews])
+  const [images, setImages]         = useState<ImageItem[]>([])
+  const [isDragging, setIsDragging] = useState(false)
+  const fileInputRef                = useRef<HTMLInputElement>(null)
 
-  const totalImages = existingImages.length + newFiles.length
+  // Keep a ref so the unmount cleanup can revoke blob URLs without a stale closure
+  const imagesRef = useRef<ImageItem[]>([])
+  useEffect(() => { imagesRef.current = images }, [images])
+  useEffect(() => () => imagesRef.current.forEach(img => { if (!img.isExisting) URL.revokeObjectURL(img.url) }), [])
+
+  const totalImages = images.length
 
   const handleFiles = (files: File[]) => {
     const valid     = files.filter(f => ACCEPTED.includes(f.type))
     const remaining = 6 - totalImages
     if (remaining <= 0) return
-    setNewFiles(prev => [...prev, ...valid.slice(0, remaining)])
+    const newItems: ImageItem[] = valid.slice(0, remaining).map(f => ({
+      url: URL.createObjectURL(f),
+      file: f,
+      isExisting: false,
+    }))
+    setImages(prev => [...prev, ...newItems])
   }
 
   const handleDrop = (e: React.DragEvent) => {
@@ -253,19 +258,18 @@ export default function ProductFormPage() {
     handleFiles(Array.from(e.dataTransfer.files))
   }
 
-  const removeExisting = (url: string) => {
-    setExistingImages(prev => prev.filter(u => u !== url))
-    setDeletedUrls(prev => [...prev, url])
+  const removeImage = (idx: number) => {
+    setImages(prev => {
+      const item = prev[idx]
+      if (item && !item.isExisting) URL.revokeObjectURL(item.url)
+      return prev.filter((_, i) => i !== idx)
+    })
   }
 
-  const removeNew = (idx: number) => {
-    setNewFiles(prev => prev.filter((_, i) => i !== idx))
-  }
-
-  const moveExisting = (idx: number, dir: -1 | 1) => {
-    setExistingImages(prev => {
-      const arr   = [...prev]
-      const swap  = idx + dir
+  const moveImage = (idx: number, dir: -1 | 1) => {
+    setImages(prev => {
+      const arr  = [...prev]
+      const swap = idx + dir
       if (swap < 0 || swap >= arr.length) return prev
       ;[arr[idx], arr[swap]] = [arr[swap], arr[idx]]
       return arr
@@ -284,7 +288,6 @@ export default function ProductFormPage() {
     reset,
     setValue,
     watch,
-    getValues,
     formState: { errors, isSubmitting },
   } = useForm<FormValues>({
     resolver: zodResolver(schema),
@@ -297,26 +300,37 @@ export default function ProductFormPage() {
   })
 
   const watchName     = watch('name')
+  const watchSlug     = watch('slug')
   const watchBadge    = watch('badge')
   const watchTags     = watch('tags')
   const watchFeatured = watch('isFeatured')
   const watchActive   = watch('isActive')
 
-  // Auto-generate slug from name (create only, until user edits slug)
-  const prevNameRef    = useRef('')
-  const slugLockedRef  = useRef(false)
+  // Slug lock/edit state
+  // On create: start unlocked (auto-gen active). On edit: start locked (preserve existing slug).
+  const [slugLocked, setSlugLocked]         = useState(isEditing)
+  const [slugTakenError, setSlugTakenError] = useState<string | null>(null)
+  const slugEditedManually                  = useRef(isEditing)
 
+  // Clear 409 error when user changes the slug
+  useEffect(() => { setSlugTakenError(null) }, [watchSlug])
+
+  // Auto-generate slug from name (500ms debounce via RHF subscription).
+  // Using subscription instead of reactive watchName to avoid RHF's synthetic
+  // input-event dispatch (isTrusted=false) from setValue incorrectly locking the slug.
   useEffect(() => {
     if (isEditing) return
-    if (slugLockedRef.current) return
-    const generated = toSlug(watchName)
-    const prevSlug  = toSlug(prevNameRef.current)
-    const curSlug   = getValues('slug')
-    if (!curSlug || curSlug === prevSlug) {
-      setValue('slug', generated, { shouldValidate: false })
-    }
-    prevNameRef.current = watchName
-  }, [watchName, isEditing, getValues, setValue])
+    let timer: ReturnType<typeof setTimeout>
+    const { unsubscribe } = watch((values, { name: field }) => {
+      if (field !== 'name') return
+      if (slugEditedManually.current) return
+      clearTimeout(timer)
+      timer = setTimeout(() => {
+        setValue('slug', toSlug(values.name ?? ''), { shouldValidate: false })
+      }, 500)
+    })
+    return () => { unsubscribe(); clearTimeout(timer) }
+  }, [isEditing, watch, setValue])
 
   // ── Queries ────────────────────────────────────────────────────────────────
 
@@ -335,7 +349,6 @@ export default function ProductFormPage() {
   // Pre-fill form when product loads
   useEffect(() => {
     if (!product || !isEditing) return
-    slugLockedRef.current = true
     reset({
       name:                   product.name,
       slug:                   product.slug,
@@ -359,9 +372,7 @@ export default function ProductFormPage() {
       isFeatured:             product.isFeatured,
       isActive:               product.isActive,
     })
-    setExistingImages(product.images ?? [])
-    setNewFiles([])
-    setDeletedUrls([])
+    setImages((product.images ?? []).map(url => ({ url, isExisting: true })))
   }, [product, isEditing, reset])
 
   // ── Submit handler ─────────────────────────────────────────────────────────
@@ -391,33 +402,41 @@ export default function ProductFormPage() {
 
     try {
       if (isEditing && product) {
-        // 1. Delete removed images (sequential — Cloudinary needs each separately)
-        for (const url of deletedUrls) {
-          await deleteImage(product._id, url)
-        }
-        // 2. Update product data
         await updateProduct(product._id, payload)
-        // 3. Upload new images
-        if (newFiles.length > 0) {
-          const updatedImages = await uploadImages(product._id, newFiles)
-          setExistingImages(updatedImages)
-          setNewFiles([])
+
+        const existingUrls  = images.filter(i => i.isExisting).map(i => i.url)
+        const newImageFiles = images.filter(i => !i.isExisting && i.file).map(i => i.file!)
+        const imagesChanged =
+          newImageFiles.length > 0 ||
+          existingUrls.length !== (product.images?.length ?? 0) ||
+          existingUrls.some((url, i) => url !== (product.images ?? [])[i])
+
+        if (imagesChanged) {
+          // Revoke blob URLs before state replacement
+          images.forEach(img => { if (!img.isExisting) URL.revokeObjectURL(img.url) })
+          const updatedImages = await updateImages(product._id, existingUrls, newImageFiles)
+          setImages(updatedImages.map(url => ({ url, isExisting: true })))
         }
-        setDeletedUrls([])
+
         qc.invalidateQueries({ queryKey: ['admin-products'] })
         qc.invalidateQueries({ queryKey: ['product', slugParam] })
         showToast('success', 'Product updated successfully')
       } else {
         // Create
-        const created = await createProduct(payload)
-        if (newFiles.length > 0) {
-          await uploadImages(created._id, newFiles)
+        const created      = await createProduct(payload)
+        const newImgFiles  = images.filter(i => !i.isExisting && i.file).map(i => i.file!)
+        if (newImgFiles.length > 0) {
+          await updateImages(created._id, [], newImgFiles)
         }
         navigate('/admin/products')
       }
     } catch (err) {
-      const axErr = err as { response?: { data?: { message?: string } } }
-      const msg   = axErr?.response?.data?.message ?? (err instanceof Error ? err.message : 'Something went wrong')
+      const axErr = err as { response?: { status?: number; data?: { message?: string } } }
+      if (axErr?.response?.status === 409) {
+        setSlugTakenError('This slug is already taken. Please choose a different one.')
+        return
+      }
+      const msg = axErr?.response?.data?.message ?? (err instanceof Error ? err.message : 'Something went wrong')
       showToast('error', msg)
     }
   }
@@ -486,14 +505,49 @@ export default function ProductFormPage() {
 
             <div style={FIELD}>
               <label style={LABEL}>Slug <span style={{ color: '#A85050' }}>*</span></label>
-              <input
-                {...register('slug')}
-                placeholder="rose-quartz-tumble"
-                className="admin-input"
-                style={INPUT}
-                onInput={() => { slugLockedRef.current = true }}
-              />
+              <div style={{ position: 'relative' }}>
+                <input
+                  {...register('slug')}
+                  readOnly={slugLocked}
+                  placeholder="rose-quartz-tumble"
+                  className="admin-input"
+                  style={{
+                    ...INPUT,
+                    paddingRight: 34,
+                    ...(slugLocked
+                      ? { background: '#EDE8DC', color: '#9E9590', cursor: 'default' }
+                      : {}),
+                  }}
+                  onInput={(e: React.FormEvent<HTMLInputElement>) => {
+                    if (e.nativeEvent.isTrusted) slugEditedManually.current = true
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    slugEditedManually.current = true
+                    setSlugLocked(v => !v)
+                  }}
+                  title={slugLocked ? 'Unlock to edit slug' : 'Lock slug'}
+                  style={{
+                    position: 'absolute',
+                    right: 10,
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    background: 'none',
+                    border: 'none',
+                    cursor: 'pointer',
+                    color: slugLocked ? '#9E9590' : '#7B5EA7',
+                    display: 'flex',
+                    alignItems: 'center',
+                    padding: 0,
+                  }}
+                >
+                  {slugLocked ? <Lock size={13} /> : <Unlock size={13} />}
+                </button>
+              </div>
               {errors.slug && <span style={ERR}>{errors.slug.message}</span>}
+              {slugTakenError && <span style={ERR}>{slugTakenError}</span>}
             </div>
           </div>
 
@@ -834,45 +888,37 @@ export default function ProductFormPage() {
           )}
 
           {/* Preview grid */}
-          {(existingImages.length > 0 || newFiles.length > 0) && (
+          {images.length > 0 && (
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
-              {/* Existing images */}
-              {existingImages.map((url, idx) => (
+              {images.map((img, idx) => (
                 <div
-                  key={url}
+                  key={img.url}
                   style={{
                     position: 'relative',
                     width: 120,
                     height: 120,
                     borderRadius: 4,
-                    border: '1px solid #E2DAC8',
+                    border: img.isExisting ? '1px solid #E2DAC8' : '2px dashed #7B5EA7',
                     overflow: 'visible',
                   }}
                 >
                   <img
-                    src={url}
+                    src={img.url}
                     alt=""
                     style={{
                       width: '100%',
                       height: '100%',
                       objectFit: 'cover',
-                      borderRadius: 4,
+                      borderRadius: img.isExisting ? 4 : 3,
                       display: 'block',
+                      opacity: img.isExisting ? 1 : 0.85,
                     }}
                   />
                   {/* Order arrows */}
-                  <div
-                    style={{
-                      position: 'absolute',
-                      bottom: 4,
-                      left: 4,
-                      display: 'flex',
-                      gap: 2,
-                    }}
-                  >
+                  <div style={{ position: 'absolute', bottom: 4, left: 4, display: 'flex', gap: 2 }}>
                     <button
                       type="button"
-                      onClick={() => moveExisting(idx, -1)}
+                      onClick={() => moveImage(idx, -1)}
                       disabled={idx === 0}
                       title="Move left"
                       style={{
@@ -892,8 +938,8 @@ export default function ProductFormPage() {
                     </button>
                     <button
                       type="button"
-                      onClick={() => moveExisting(idx, 1)}
-                      disabled={idx === existingImages.length - 1}
+                      onClick={() => moveImage(idx, 1)}
+                      disabled={idx === images.length - 1}
                       title="Move right"
                       style={{
                         width: 22,
@@ -904,8 +950,8 @@ export default function ProductFormPage() {
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        cursor: idx === existingImages.length - 1 ? 'not-allowed' : 'pointer',
-                        opacity: idx === existingImages.length - 1 ? 0.4 : 1,
+                        cursor: idx === images.length - 1 ? 'not-allowed' : 'pointer',
+                        opacity: idx === images.length - 1 ? 0.4 : 1,
                       }}
                     >
                       <ArrowDown size={11} />
@@ -914,7 +960,7 @@ export default function ProductFormPage() {
                   {/* Delete button */}
                   <button
                     type="button"
-                    onClick={() => removeExisting(url)}
+                    onClick={() => removeImage(idx)}
                     title="Remove image"
                     style={{
                       position: 'absolute',
@@ -952,70 +998,23 @@ export default function ProductFormPage() {
                       MAIN
                     </span>
                   )}
-                </div>
-              ))}
-
-              {/* New (pending upload) images */}
-              {newFiles.map((_, idx) => (
-                <div
-                  key={idx}
-                  style={{
-                    position: 'relative',
-                    width: 120,
-                    height: 120,
-                    borderRadius: 4,
-                    border: '2px dashed #7B5EA7',
-                    overflow: 'visible',
-                  }}
-                >
-                  <img
-                    src={newPreviews[idx]}
-                    alt=""
-                    style={{
-                      width: '100%',
-                      height: '100%',
-                      objectFit: 'cover',
-                      borderRadius: 3,
-                      display: 'block',
-                      opacity: 0.85,
-                    }}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => removeNew(idx)}
-                    style={{
-                      position: 'absolute',
-                      top: -6,
-                      right: -6,
-                      width: 20,
-                      height: 20,
-                      borderRadius: '50%',
-                      background: '#A85050',
-                      border: '2px solid #F5F0E8',
-                      color: '#fff',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      cursor: 'pointer',
-                    }}
-                  >
-                    <X size={10} />
-                  </button>
-                  <span
-                    style={{
-                      position: 'absolute',
-                      bottom: 4,
-                      left: 0,
-                      right: 0,
-                      textAlign: 'center',
-                      fontFamily: FONT,
-                      fontSize: 9,
-                      color: '#7B5EA7',
-                      background: 'rgba(255,255,255,0.8)',
-                    }}
-                  >
-                    Pending upload
-                  </span>
+                  {!img.isExisting && (
+                    <span
+                      style={{
+                        position: 'absolute',
+                        bottom: 4,
+                        left: 0,
+                        right: 0,
+                        textAlign: 'center',
+                        fontFamily: FONT,
+                        fontSize: 9,
+                        color: '#7B5EA7',
+                        background: 'rgba(255,255,255,0.8)',
+                      }}
+                    >
+                      Pending upload
+                    </span>
+                  )}
                 </div>
               ))}
             </div>

@@ -1,6 +1,6 @@
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Star, CheckCircle, Trash2, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Star, CheckCircle, AlertCircle, Trash2, ChevronLeft, ChevronRight, MessageSquare, CheckSquare } from 'lucide-react'
 import {
   getAllReviews,
   approveReview,
@@ -39,6 +39,38 @@ function StarRating({ rating }: { rating: number }) {
   )
 }
 
+// ── Toast ─────────────────────────────────────────────────────────────────────
+
+function Toast({ type, message }: { type: 'success' | 'error' | 'warning'; message: string }) {
+  const bg = type === 'error' ? '#A85050' : '#1C1A17'
+  const icon =
+    type === 'success' ? <CheckCircle size={15} color="#5A8A6A" /> :
+    type === 'warning' ? <AlertCircle  size={15} color="#C49A3C" /> :
+                         <AlertCircle  size={15} color="#fff" />
+  return (
+    <div
+      style={{
+        position: 'fixed',
+        top: 24,
+        right: 24,
+        zIndex: 300,
+        display: 'flex',
+        alignItems: 'center',
+        gap: 10,
+        padding: '12px 18px',
+        background: bg,
+        borderRadius: 4,
+        boxShadow: '0 4px 16px rgba(0,0,0,0.2)',
+        maxWidth: 380,
+        animation: 'fadeIn 0.2s ease',
+      }}
+    >
+      {icon}
+      <span style={{ fontFamily: FONT, fontSize: 13, color: '#fff' }}>{message}</span>
+    </div>
+  )
+}
+
 // ── ReviewCard ────────────────────────────────────────────────────────────────
 
 function ReviewCard({
@@ -48,6 +80,8 @@ function ReviewCard({
   onDelete,
   approving,
   deleting,
+  selected,
+  onToggle,
 }: {
   review: Review
   tab: Tab
@@ -55,20 +89,33 @@ function ReviewCard({
   onDelete: (id: string) => void
   approving: boolean
   deleting: boolean
+  selected: boolean
+  onToggle: () => void
 }) {
   const thumb = review.product?.images?.[0]
 
   return (
     <div
       style={{
-        background: '#EDE8DC',
-        border: '1px solid #E2DAC8',
+        background: selected ? '#F0EAF7' : '#EDE8DC',
+        border: `1px solid ${selected ? '#C4B0E0' : '#E2DAC8'}`,
         borderRadius: 4,
         padding: 16,
         display: 'flex',
         gap: 14,
+        transition: 'background 0.1s, border-color 0.1s',
       }}
     >
+      {/* Checkbox */}
+      <div style={{ flexShrink: 0, display: 'flex', alignItems: 'flex-start', paddingTop: 3 }}>
+        <input
+          type="checkbox"
+          checked={selected}
+          onChange={onToggle}
+          style={{ cursor: 'pointer', accentColor: '#7B5EA7', width: 14, height: 14 }}
+        />
+      </div>
+
       {/* Product thumbnail */}
       <div style={{ flexShrink: 0 }}>
         {thumb ? (
@@ -257,12 +304,32 @@ function ReviewCard({
 export default function ReviewsPage() {
   const qc = useQueryClient()
 
-  const [activeTab, setActiveTab]   = useState<Tab>('pending')
+  const [activeTab, setActiveTab]     = useState<Tab>('pending')
   const [pendingPage, setPendingPage] = useState(1)
   const [approvedPage, setApprovedPage] = useState(1)
 
   // Optimistic approvals: reviews moved to approved before API confirms
   const [justApproved, setJustApproved] = useState<Review[]>([])
+
+  // ── Bulk selection ────────────────────────────────────────────────────────────
+
+  const [selectedIds, setSelectedIds]   = useState<Set<string>>(new Set())
+  const [bulkPending, setBulkPending]   = useState(false)
+  const [confirmDelete, setConfirmDelete] = useState(false)
+  const selectAllRef                    = useRef<HTMLInputElement>(null)
+
+  // ── Toast ─────────────────────────────────────────────────────────────────────
+
+  const [toast, setToast]   = useState<{ type: 'success' | 'error' | 'warning'; message: string } | null>(null)
+  const toastTimer          = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const showToast = (type: 'success' | 'error' | 'warning', message: string) => {
+    if (toastTimer.current) clearTimeout(toastTimer.current)
+    setToast({ type, message })
+    toastTimer.current = setTimeout(() => setToast(null), 3500)
+  }
+
+  useEffect(() => () => { if (toastTimer.current) clearTimeout(toastTimer.current) }, [])
 
   // ── Queries ───────────────────────────────────────────────────────────────────
 
@@ -291,10 +358,9 @@ export default function ReviewsPage() {
     },
   })
 
-  // ── Handlers ──────────────────────────────────────────────────────────────────
+  // ── Single-item handlers ──────────────────────────────────────────────────────
 
   const handleApprove = (review: Review) => {
-    // Optimistic: move review to approved tab immediately
     setJustApproved(prev => [...prev, { ...review, isApproved: true }])
     setActiveTab('approved')
 
@@ -304,7 +370,6 @@ export default function ReviewsPage() {
         qc.invalidateQueries({ queryKey: ['admin-reviews'] })
       },
       onError: () => {
-        // Revert optimistic update
         setJustApproved(prev => prev.filter(r => r._id !== review._id))
         setActiveTab('pending')
       },
@@ -312,37 +377,105 @@ export default function ReviewsPage() {
   }
 
   const handleDelete = (id: string) => {
-    // Also remove from justApproved if it was there
     setJustApproved(prev => prev.filter(r => r._id !== id))
     deleteMutation.mutate(id)
   }
 
+  // ── Bulk action handlers ──────────────────────────────────────────────────────
+
+  const handleApproveAll = async () => {
+    const ids = [...selectedIds]
+    setBulkPending(true)
+    const results = await Promise.allSettled(ids.map(id => approveReview(id)))
+    const fulfilled = results.filter(r => r.status === 'fulfilled').length
+    const failed    = results.filter(r => r.status === 'rejected').length
+    setBulkPending(false)
+    setSelectedIds(new Set())
+    qc.invalidateQueries({ queryKey: ['admin-reviews'] })
+    if (failed === 0) {
+      showToast('success', `Approved ${fulfilled} review${fulfilled !== 1 ? 's' : ''}`)
+    } else {
+      showToast('warning', `${fulfilled} approved, ${failed} failed`)
+    }
+  }
+
+  const handleDeleteAll = async () => {
+    setConfirmDelete(false)
+    const ids = [...selectedIds]
+    setBulkPending(true)
+    const results = await Promise.allSettled(ids.map(id => deleteReview(id)))
+    const fulfilled = results.filter(r => r.status === 'fulfilled').length
+    const failed    = results.filter(r => r.status === 'rejected').length
+    setBulkPending(false)
+    setSelectedIds(new Set())
+    qc.invalidateQueries({ queryKey: ['admin-reviews'] })
+    if (failed === 0) {
+      showToast('success', `Deleted ${fulfilled} review${fulfilled !== 1 ? 's' : ''}`)
+    } else {
+      showToast('warning', `${fulfilled} deleted, ${failed} failed`)
+    }
+  }
+
+  // ── Tab switching clears selection ────────────────────────────────────────────
+
+  const handleTabChange = (tab: Tab) => {
+    setActiveTab(tab)
+    setSelectedIds(new Set())
+  }
+
   // ── Derived data ──────────────────────────────────────────────────────────────
 
-  // Pending: exclude any that we optimistically moved to approved
   const pendingReviews = (pendingData?.reviews ?? []).filter(
     r => !justApproved.some(j => j._id === r._id),
   )
-
-  // Approved: prepend optimistically approved reviews
   const approvedReviews = [...justApproved, ...(approvedData?.reviews ?? [])]
 
   const pendingPagination  = pendingData?.pagination
   const approvedPagination = approvedData?.pagination
 
-  // ── Render ────────────────────────────────────────────────────────────────────
-
-  const isCurrentLoading = activeTab === 'pending' ? pendingLoading : approvedLoading
-  const currentReviews   = activeTab === 'pending' ? pendingReviews : approvedReviews
+  const isCurrentLoading  = activeTab === 'pending' ? pendingLoading : approvedLoading
+  const currentReviews    = activeTab === 'pending' ? pendingReviews : approvedReviews
   const currentPagination = activeTab === 'pending' ? pendingPagination : approvedPagination
-  const setCurrentPage   = activeTab === 'pending' ? setPendingPage : setApprovedPage
-  const currentPage      = activeTab === 'pending' ? pendingPage : approvedPage
+  const setCurrentPage    = activeTab === 'pending' ? setPendingPage : setApprovedPage
+  const currentPage       = activeTab === 'pending' ? pendingPage : approvedPage
 
   const pendingCount  = (pendingData?.pagination.total ?? 0) - justApproved.length
   const approvedCount = approvedData?.pagination.total ?? 0
 
+  // ── Select-all indeterminate state ────────────────────────────────────────────
+
+  const allSelected  = currentReviews.length > 0 && currentReviews.every(r => selectedIds.has(r._id))
+  const someSelected = !allSelected && currentReviews.some(r => selectedIds.has(r._id))
+
+  useEffect(() => {
+    if (selectAllRef.current) {
+      selectAllRef.current.indeterminate = someSelected
+      selectAllRef.current.checked       = allSelected
+    }
+  }, [allSelected, someSelected])
+
+  const toggleSelectAll = () => {
+    if (allSelected) {
+      setSelectedIds(new Set())
+    } else {
+      setSelectedIds(new Set(currentReviews.map(r => r._id)))
+    }
+  }
+
+  const toggleOne = (id: string) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev)
+      next.has(id) ? next.delete(id) : next.add(id)
+      return next
+    })
+  }
+
+  // ── Render ────────────────────────────────────────────────────────────────────
+
   return (
-    <div>
+    <div style={{ paddingBottom: selectedIds.size > 0 ? 72 : 0 }}>
+      {toast && <Toast type={toast.type} message={toast.message} />}
+
       {/* Header */}
       <h1
         style={{
@@ -356,22 +489,22 @@ export default function ReviewsPage() {
         Reviews
       </h1>
 
-      {/* Tabs */}
+      {/* Tabs + Select-all */}
       <div
         style={{
           display: 'flex',
-          gap: 0,
+          alignItems: 'center',
           borderBottom: '2px solid #E2DAC8',
           marginBottom: 24,
         }}
       >
         {([
           { key: 'pending' as Tab, label: 'Pending Approval', count: pendingCount },
-          { key: 'approved' as Tab, label: 'Approved', count: approvedCount },
+          { key: 'approved' as Tab, label: 'Approved',        count: approvedCount },
         ]).map(tab => (
           <button
             key={tab.key}
-            onClick={() => setActiveTab(tab.key)}
+            onClick={() => handleTabChange(tab.key)}
             style={{
               display: 'inline-flex',
               alignItems: 'center',
@@ -411,6 +544,29 @@ export default function ReviewsPage() {
             </span>
           </button>
         ))}
+
+        {/* Select all — pushed to right */}
+        {currentReviews.length > 0 && !isCurrentLoading && (
+          <label
+            style={{
+              marginLeft: 'auto',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 6,
+              padding: '0 4px 0 12px',
+              cursor: 'pointer',
+              userSelect: 'none',
+            }}
+          >
+            <input
+              ref={selectAllRef}
+              type="checkbox"
+              onChange={toggleSelectAll}
+              style={{ cursor: 'pointer', accentColor: '#7B5EA7', width: 14, height: 14 }}
+            />
+            <span style={{ fontFamily: FONT, fontSize: 11, color: '#6B6057' }}>Select all</span>
+          </label>
+        )}
       </div>
 
       {/* Review list */}
@@ -421,17 +577,26 @@ export default function ReviewsPage() {
       ) : currentReviews.length === 0 ? (
         <div
           style={{
-            padding: 48,
+            padding: '64px 24px',
             textAlign: 'center',
             background: '#EDE8DC',
             border: '1px solid #E2DAC8',
             borderRadius: 4,
-            fontFamily: FONT,
-            fontSize: 13,
-            color: '#9E9590',
           }}
         >
-          {activeTab === 'pending' ? 'No reviews pending approval.' : 'No approved reviews yet.'}
+          {activeTab === 'pending' ? (
+            <MessageSquare size={48} style={{ margin: '0 auto 16px', color: '#9E9590', display: 'block' }} />
+          ) : (
+            <CheckSquare size={48} style={{ margin: '0 auto 16px', color: '#9E9590', display: 'block' }} />
+          )}
+          <h3 style={{ fontFamily: FONT, fontSize: 18, fontWeight: 500, color: '#1C1A17', marginBottom: 8, marginTop: 0 }}>
+            {activeTab === 'pending' ? 'No pending reviews' : 'No approved reviews'}
+          </h3>
+          <p style={{ fontFamily: FONT, fontSize: 13, color: '#6B6057', marginBottom: 0, marginTop: 0 }}>
+            {activeTab === 'pending'
+              ? 'All caught up! No reviews waiting for approval.'
+              : 'Approved reviews will appear here.'}
+          </p>
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -444,6 +609,8 @@ export default function ReviewsPage() {
               onDelete={handleDelete}
               approving={approveMutation.isPending && approveMutation.variables === review._id}
               deleting={deleteMutation.isPending && deleteMutation.variables === review._id}
+              selected={selectedIds.has(review._id)}
+              onToggle={() => toggleOne(review._id)}
             />
           ))}
         </div>
@@ -502,6 +669,175 @@ export default function ReviewsPage() {
             >
               Next <ChevronRight size={13} />
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* ── Sticky bulk-action bar ──────────────────────────────────────────── */}
+      {selectedIds.size > 0 && (
+        <div
+          style={{
+            position: 'fixed',
+            bottom: 0,
+            left: 0,
+            right: 0,
+            zIndex: 200,
+            background: '#1C1A17',
+            borderTop: '1px solid #2C2A27',
+            padding: '0 32px',
+            height: 56,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 16,
+            animation: 'fadeIn 0.15s ease',
+          }}
+        >
+          <span style={{ fontFamily: FONT, fontSize: 13, color: '#C4B89A', flex: 1 }}>
+            {selectedIds.size} review{selectedIds.size !== 1 ? 's' : ''} selected
+          </span>
+
+          {activeTab === 'pending' && (
+            <button
+              onClick={handleApproveAll}
+              disabled={bulkPending}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 6,
+                padding: '7px 16px',
+                background: bulkPending ? '#3A5C47' : '#2D6248',
+                border: 'none',
+                borderRadius: 4,
+                fontFamily: FONT,
+                fontSize: 12,
+                fontWeight: 500,
+                color: '#fff',
+                cursor: bulkPending ? 'not-allowed' : 'pointer',
+                opacity: bulkPending ? 0.7 : 1,
+                transition: 'background 0.15s',
+              }}
+            >
+              <CheckCircle size={13} />
+              {bulkPending ? 'Approving…' : 'Approve All'}
+            </button>
+          )}
+
+          <button
+            onClick={() => setConfirmDelete(true)}
+            disabled={bulkPending}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 6,
+              padding: '7px 16px',
+              background: bulkPending ? '#7A3838' : '#A85050',
+              border: 'none',
+              borderRadius: 4,
+              fontFamily: FONT,
+              fontSize: 12,
+              fontWeight: 500,
+              color: '#fff',
+              cursor: bulkPending ? 'not-allowed' : 'pointer',
+              opacity: bulkPending ? 0.7 : 1,
+              transition: 'background 0.15s',
+            }}
+          >
+            <Trash2 size={13} />
+            Delete All
+          </button>
+
+          <button
+            onClick={() => setSelectedIds(new Set())}
+            disabled={bulkPending}
+            style={{
+              background: 'none',
+              border: 'none',
+              fontFamily: FONT,
+              fontSize: 12,
+              color: '#9E9590',
+              cursor: bulkPending ? 'default' : 'pointer',
+              textDecoration: 'underline',
+              padding: 0,
+            }}
+          >
+            Clear selection
+          </button>
+        </div>
+      )}
+
+      {/* ── Confirm-delete modal ────────────────────────────────────────────── */}
+      {confirmDelete && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 400,
+            background: 'rgba(28,26,23,0.55)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+          onClick={() => setConfirmDelete(false)}
+        >
+          <div
+            style={{
+              background: '#F5F0E8',
+              border: '1px solid #E2DAC8',
+              borderRadius: 6,
+              padding: '28px 28px 24px',
+              maxWidth: 380,
+              width: '90%',
+              boxShadow: '0 8px 32px rgba(28,26,23,0.2)',
+            }}
+            onClick={e => e.stopPropagation()}
+          >
+            <p
+              style={{
+                fontFamily: FONT,
+                fontSize: 15,
+                fontWeight: 600,
+                color: '#1C1A17',
+                marginBottom: 10,
+              }}
+            >
+              Delete {selectedIds.size} review{selectedIds.size !== 1 ? 's' : ''}?
+            </p>
+            <p style={{ fontFamily: FONT, fontSize: 13, color: '#6B6057', marginBottom: 24 }}>
+              This cannot be undone.
+            </p>
+            <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
+              <button
+                onClick={() => setConfirmDelete(false)}
+                style={{
+                  padding: '8px 18px',
+                  background: 'transparent',
+                  border: '1px solid #E2DAC8',
+                  borderRadius: 4,
+                  fontFamily: FONT,
+                  fontSize: 12,
+                  color: '#6B6057',
+                  cursor: 'pointer',
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDeleteAll}
+                style={{
+                  padding: '8px 18px',
+                  background: '#A85050',
+                  border: 'none',
+                  borderRadius: 4,
+                  fontFamily: FONT,
+                  fontSize: 12,
+                  fontWeight: 500,
+                  color: '#fff',
+                  cursor: 'pointer',
+                }}
+              >
+                Delete
+              </button>
+            </div>
           </div>
         </div>
       )}

@@ -69,6 +69,7 @@ export interface RecentOrder {
     state: string
   }
   total: number
+  itemCount: number
   status: string
   paymentStatus: string
   createdAt: string
@@ -108,7 +109,7 @@ export async function getLowStockProducts(): Promise<LowStockData> {
   return res.data.data as LowStockData
 }
 
-export async function getRecentOrders(): Promise<RecentOrdersData> {
-  const res = await client.get('/api/v1/admin/orders', { params: { limit: 5, page: 1 } })
-  return res.data.data as RecentOrdersData
+export async function getRecentOrders(limit = 10): Promise<RecentOrder[]> {
+  const res = await client.get('/api/v1/admin/analytics/recent-orders', { params: { limit } })
+  return res.data.data as RecentOrder[]
 }

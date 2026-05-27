@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Copy, Check, X } from 'lucide-react'
+import { Copy, Check, X, Tag } from 'lucide-react'
 import {
   getCoupons,
   createCoupon,
@@ -554,16 +554,34 @@ export default function CouponsPage() {
             Failed to load coupons. Please try again.
           </div>
         ) : coupons.length === 0 ? (
-          <div
-            style={{
-              padding: 48,
-              textAlign: 'center',
-              fontFamily: FONT,
-              fontSize: 13,
-              color: '#9E9590',
-            }}
-          >
-            No coupons yet. Create your first coupon above.
+          <div style={{ padding: '64px 24px', textAlign: 'center' }}>
+            <Tag size={48} style={{ margin: '0 auto 16px', color: '#9E9590', display: 'block' }} />
+            <h3 style={{ fontFamily: FONT, fontSize: 18, fontWeight: 500, color: '#1C1A17', marginBottom: 8, marginTop: 0 }}>
+              No coupons yet
+            </h3>
+            <p style={{ fontFamily: FONT, fontSize: 13, color: '#6B6057', marginBottom: 24, marginTop: 0 }}>
+              Create your first coupon to offer discounts.
+            </p>
+            <button
+              onClick={() => setDrawerOpen(true)}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 6,
+                padding: '9px 18px',
+                background: '#C49A3C',
+                border: 'none',
+                borderRadius: 4,
+                fontFamily: FONT,
+                fontSize: 12,
+                fontWeight: 500,
+                color: '#fff',
+                cursor: 'pointer',
+                letterSpacing: '0.04em',
+              }}
+            >
+              Create Coupon
+            </button>
           </div>
         ) : (
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
