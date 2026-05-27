@@ -1,12 +1,17 @@
-import { useState } from 'react'
+import { forwardRef } from 'react'
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { z } from 'zod'
 import { useMutation } from '@tanstack/react-query'
-import { Check, Eye, EyeOff } from 'lucide-react'
+import { Eye, EyeOff } from 'lucide-react'
 import { useAdminAuthStore } from '../../store/adminAuthStore'
+import { useToast } from '../../store/toastStore'
 import client from '../../api/client'
+import { useState } from 'react'
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
-const FONT = "'Jost', sans-serif"
+const FONT  = "'Jost', sans-serif"
 const SERIF = "'Cormorant Garamond', serif"
 
 const INPUT_BASE: React.CSSProperties = {
@@ -46,32 +51,54 @@ const CARD_HEADER: React.CSSProperties = {
   borderBottom: '1px solid #E2DAC8',
 }
 
-const CARD_BODY: React.CSSProperties = {
-  padding: 24,
+const CARD_BODY: React.CSSProperties = { padding: 24 }
+
+const FIELD_ERROR: React.CSSProperties = {
+  fontFamily: FONT,
+  fontSize: 12,
+  color: '#A85050',
+  marginTop: 4,
 }
 
 // ── API calls ─────────────────────────────────────────────────────────────────
 
 async function updateProfile(data: { name: string }) {
   const res = await client.patch('/api/v1/auth/me', data)
-  return res.data.data
+  return res.data.data as { _id: string; name: string; email: string; role: string }
 }
 
 async function changePassword(data: { currentPassword: string; newPassword: string }) {
   await client.patch('/api/v1/auth/change-password', data)
 }
 
+function apiMessage(err: unknown, fallback: string): string {
+  return (
+    (err as { response?: { data?: { message?: string } } })?.response?.data?.message ?? fallback
+  )
+}
+
+// ── Zod schemas ───────────────────────────────────────────────────────────────
+
+const profileSchema = z.object({
+  name: z.string().min(2, 'Name must be at least 2 characters').max(50),
+})
+type ProfileFormData = z.infer<typeof profileSchema>
+
+const passwordSchema = z
+  .object({
+    currentPassword: z.string().min(1, 'Current password is required'),
+    newPassword:     z.string().min(6, 'New password must be at least 6 characters'),
+    confirmPassword: z.string().min(1, 'Please confirm your new password'),
+  })
+  .refine((d) => d.newPassword === d.confirmPassword, {
+    message: 'Passwords do not match',
+    path: ['confirmPassword'],
+  })
+type PasswordFormData = z.infer<typeof passwordSchema>
+
 // ── SaveButton ────────────────────────────────────────────────────────────────
 
-function SaveButton({
-  isPending,
-  saved,
-  label = 'Save Changes',
-}: {
-  isPending: boolean
-  saved: boolean
-  label?: string
-}) {
+function SaveButton({ isPending, label = 'Save Changes' }: { isPending: boolean; label?: string }) {
   return (
     <button
       type="submit"
@@ -79,9 +106,8 @@ function SaveButton({
       style={{
         display: 'inline-flex',
         alignItems: 'center',
-        gap: 6,
         padding: '9px 20px',
-        background: saved ? '#5A8A6A' : isPending ? '#C4B89A' : '#C49A3C',
+        background: isPending ? '#C4B89A' : '#C49A3C',
         color: '#fff',
         border: 'none',
         borderRadius: 4,
@@ -93,82 +119,72 @@ function SaveButton({
         transition: 'background 0.2s',
       }}
     >
-      {saved && <Check size={14} />}
-      {isPending ? 'Saving…' : saved ? 'Saved' : label}
+      {isPending ? 'Saving…' : label}
     </button>
   )
 }
 
-// ── PasswordField ─────────────────────────────────────────────────────────────
+// ── PasswordField (forwardRef for RHF register compat) ────────────────────────
 
-function PasswordField({
-  value,
-  onChange,
-  placeholder,
-}: {
-  value: string
-  onChange: (v: string) => void
-  placeholder?: string
-}) {
-  const [visible, setVisible] = useState(false)
-
-  return (
-    <div style={{ position: 'relative' }}>
-      <input
-        type={visible ? 'text' : 'password'}
-        value={value}
-        onChange={e => onChange(e.target.value)}
-        placeholder={placeholder}
-        required
-        style={{ ...INPUT_BASE, paddingRight: 38 }}
-      />
-      <button
-        type="button"
-        onClick={() => setVisible(v => !v)}
-        style={{
-          position: 'absolute',
-          right: 10,
-          top: '50%',
-          transform: 'translateY(-50%)',
-          background: 'none',
-          border: 'none',
-          cursor: 'pointer',
-          color: '#9E9590',
-          display: 'flex',
-          padding: 0,
-        }}
-      >
-        {visible ? <EyeOff size={14} /> : <Eye size={14} />}
-      </button>
-    </div>
-  )
-}
+const PasswordField = forwardRef<HTMLInputElement, React.InputHTMLAttributes<HTMLInputElement>>(
+  ({ placeholder, ...rest }, ref) => {
+    const [visible, setVisible] = useState(false)
+    return (
+      <div style={{ position: 'relative' }}>
+        <input
+          ref={ref}
+          type={visible ? 'text' : 'password'}
+          placeholder={placeholder}
+          style={{ ...INPUT_BASE, paddingRight: 38 }}
+          {...rest}
+        />
+        <button
+          type="button"
+          onClick={() => setVisible((v) => !v)}
+          style={{
+            position: 'absolute',
+            right: 10,
+            top: '50%',
+            transform: 'translateY(-50%)',
+            background: 'none',
+            border: 'none',
+            cursor: 'pointer',
+            color: '#9E9590',
+            display: 'flex',
+            padding: 0,
+          }}
+        >
+          {visible ? <EyeOff size={14} /> : <Eye size={14} />}
+        </button>
+      </div>
+    )
+  }
+)
+PasswordField.displayName = 'PasswordField'
 
 // ── ProfileSection ────────────────────────────────────────────────────────────
 
 function ProfileSection() {
   const { admin, setAdmin } = useAdminAuthStore()
-  const [name, setName] = useState(admin?.name ?? '')
-  const [saved, setSaved] = useState(false)
-  const [error, setError] = useState('')
+  const toast = useToast()
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<ProfileFormData>({
+    resolver: zodResolver(profileSchema),
+    defaultValues: { name: admin?.name ?? '' },
+  })
 
   const mutation = useMutation({
     mutationFn: updateProfile,
-    onSuccess: (data) => {
-      const updated = data as { name: string; email: string; role: string; _id: string }
+    onSuccess: (updated) => {
       setAdmin({ ...admin!, name: updated.name })
-      setSaved(true)
-      setError('')
-      setTimeout(() => setSaved(false), 2500)
+      toast.success('Profile updated')
     },
-    onError: () => setError('Failed to update profile. Please try again.'),
+    onError: (err) => toast.error(apiMessage(err, 'Failed to update profile')),
   })
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!name.trim()) return
-    mutation.mutate({ name: name.trim() })
-  }
 
   return (
     <div style={CARD}>
@@ -241,24 +257,18 @@ function ProfileSection() {
           </div>
         </div>
 
-        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16, maxWidth: 400 }}>
+        <form
+          onSubmit={handleSubmit((data) => mutation.mutate({ name: data.name.trim() }))}
+          style={{ display: 'flex', flexDirection: 'column', gap: 16, maxWidth: 400 }}
+        >
           <div>
             <label style={LABEL}>Display Name</label>
-            <input
-              type="text"
-              required
-              value={name}
-              onChange={e => setName(e.target.value)}
-              style={INPUT_BASE}
-            />
+            <input {...register('name')} type="text" style={INPUT_BASE} />
+            {errors.name && <p style={FIELD_ERROR}>{errors.name.message}</p>}
           </div>
 
-          {error && (
-            <div style={{ fontFamily: FONT, fontSize: 12, color: '#A85050' }}>{error}</div>
-          )}
-
           <div>
-            <SaveButton isPending={mutation.isPending} saved={saved} />
+            <SaveButton isPending={mutation.isPending} />
           </div>
         </form>
       </div>
@@ -269,41 +279,25 @@ function ProfileSection() {
 // ── PasswordSection ───────────────────────────────────────────────────────────
 
 function PasswordSection() {
-  const [current, setCurrent] = useState('')
-  const [next, setNext] = useState('')
-  const [confirm, setConfirm] = useState('')
-  const [saved, setSaved] = useState(false)
-  const [error, setError] = useState('')
+  const toast = useToast()
+
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useForm<PasswordFormData>({
+    resolver: zodResolver(passwordSchema),
+  })
 
   const mutation = useMutation({
     mutationFn: changePassword,
     onSuccess: () => {
-      setSaved(true)
-      setError('')
-      setCurrent('')
-      setNext('')
-      setConfirm('')
-      setTimeout(() => setSaved(false), 2500)
+      toast.success('Password changed successfully')
+      reset()
     },
-    onError: (err: unknown) => {
-      const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message
-      setError(msg ?? 'Failed to change password.')
-    },
+    onError: (err) => toast.error(apiMessage(err, 'Failed to change password')),
   })
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    setError('')
-    if (next !== confirm) {
-      setError('New passwords do not match.')
-      return
-    }
-    if (next.length < 6) {
-      setError('New password must be at least 6 characters.')
-      return
-    }
-    mutation.mutate({ currentPassword: current, newPassword: next })
-  }
 
   return (
     <div style={CARD}>
@@ -317,40 +311,36 @@ function PasswordSection() {
       </div>
 
       <div style={CARD_BODY}>
-        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16, maxWidth: 400 }}>
+        <form
+          onSubmit={handleSubmit((data) =>
+            mutation.mutate({ currentPassword: data.currentPassword, newPassword: data.newPassword })
+          )}
+          style={{ display: 'flex', flexDirection: 'column', gap: 16, maxWidth: 400 }}
+        >
           <div>
             <label style={LABEL}>Current Password</label>
-            <PasswordField value={current} onChange={setCurrent} placeholder="Enter current password" />
+            <PasswordField {...register('currentPassword')} placeholder="Enter current password" />
+            {errors.currentPassword && (
+              <p style={FIELD_ERROR}>{errors.currentPassword.message}</p>
+            )}
           </div>
 
           <div>
             <label style={LABEL}>New Password</label>
-            <PasswordField value={next} onChange={setNext} placeholder="Min. 6 characters" />
+            <PasswordField {...register('newPassword')} placeholder="Min. 6 characters" />
+            {errors.newPassword && <p style={FIELD_ERROR}>{errors.newPassword.message}</p>}
           </div>
 
           <div>
             <label style={LABEL}>Confirm New Password</label>
-            <PasswordField value={confirm} onChange={setConfirm} placeholder="Repeat new password" />
+            <PasswordField {...register('confirmPassword')} placeholder="Repeat new password" />
+            {errors.confirmPassword && (
+              <p style={FIELD_ERROR}>{errors.confirmPassword.message}</p>
+            )}
           </div>
 
-          {error && (
-            <div
-              style={{
-                padding: '8px 12px',
-                background: '#FEF2F2',
-                border: '1px solid #FECACA',
-                borderRadius: 4,
-                fontFamily: FONT,
-                fontSize: 12,
-                color: '#A85050',
-              }}
-            >
-              {error}
-            </div>
-          )}
-
           <div>
-            <SaveButton isPending={mutation.isPending} saved={saved} label="Update Password" />
+            <SaveButton isPending={mutation.isPending} label="Update Password" />
           </div>
         </form>
       </div>
@@ -388,7 +378,7 @@ function StoreInfoSection() {
             gap: 12,
           }}
         >
-          {INFO_ROWS.map(row => (
+          {INFO_ROWS.map((row) => (
             <div
               key={row.label}
               style={{
@@ -398,7 +388,17 @@ function StoreInfoSection() {
                 borderRadius: 6,
               }}
             >
-              <div style={{ fontFamily: FONT, fontSize: 10, fontWeight: 600, color: '#9E9590', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 4 }}>
+              <div
+                style={{
+                  fontFamily: FONT,
+                  fontSize: 10,
+                  fontWeight: 600,
+                  color: '#9E9590',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.07em',
+                  marginBottom: 4,
+                }}
+              >
                 {row.label}
               </div>
               <div style={{ fontFamily: FONT, fontSize: 13, fontWeight: 500, color: '#1C1A17' }}>

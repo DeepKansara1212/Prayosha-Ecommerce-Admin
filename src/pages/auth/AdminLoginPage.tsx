@@ -79,13 +79,21 @@ export default function AdminLoginPage() {
   const sendOtp = async (data: PhoneFormData) => {
     setServerError(null)
     try {
-      await client.post('/api/v1/auth/send-otp', { phone: data.phone, purpose: 'login' })
+      await client.post('/api/v1/auth/send-otp', {
+        phone:     data.phone,
+        purpose:   'login',
+        adminOnly: true,
+      })
       setPhone(data.phone)
       setOtpSent(true)
       setStep('verify')
     } catch (err: unknown) {
-      const e = err as { response?: { data?: { message?: string } } }
-      setServerError(e.response?.data?.message ?? 'Failed to send OTP. Try again.')
+      const e = err as { response?: { status?: number; data?: { message?: string } } }
+      if (e.response?.status === 403) {
+        setServerError('This phone number is not registered as an admin account.')
+      } else {
+        setServerError(e.response?.data?.message ?? 'Failed to send OTP. Try again.')
+      }
     }
   }
 
@@ -100,31 +108,39 @@ export default function AdminLoginPage() {
     try {
       const res = await client.post('/api/v1/auth/verify-otp', {
         phone,
-        otp:      data.otp,
-        password: data.password,
+        otp:        data.otp,
+        password:   data.password,
+        adminLogin: true,
       })
       const { user, accessToken } = res.data.data as { user: Admin; accessToken: string }
-
-      if (user.role !== 'admin') {
-        setServerError('Access denied. This portal is for admins only.')
-        return
-      }
-
       login(user, accessToken)
       navigate('/admin/dashboard')
     } catch (err: unknown) {
-      const e = err as { response?: { data?: { message?: string } } }
-      setServerError(e.response?.data?.message ?? 'Verification failed. Try again.')
+      const e = err as { response?: { status?: number; data?: { message?: string } } }
+      if (e.response?.status === 403) {
+        setServerError('This account does not have admin access.')
+      } else {
+        setServerError(e.response?.data?.message ?? 'Verification failed. Try again.')
+      }
     }
   }
 
   const handleResend = async () => {
     setServerError(null)
     try {
-      await client.post('/api/v1/auth/send-otp', { phone, purpose: 'login' })
+      await client.post('/api/v1/auth/send-otp', {
+        phone,
+        purpose:   'login',
+        adminOnly: true,
+      })
       setOtpSent(true)
-    } catch {
-      setServerError('Failed to resend OTP. Try again.')
+    } catch (err: unknown) {
+      const e = err as { response?: { status?: number; data?: { message?: string } } }
+      if (e.response?.status === 403) {
+        setServerError('This phone number is not registered as an admin account.')
+      } else {
+        setServerError(e.response?.data?.message ?? 'Failed to resend OTP. Try again.')
+      }
     }
   }
 

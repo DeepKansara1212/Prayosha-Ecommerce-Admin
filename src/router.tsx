@@ -15,8 +15,13 @@ import CouponsPage from "./pages/coupons/CouponsPage";
 import SettingsPage from "./pages/settings/SettingsPage";
 
 function ProtectedAdminRoute() {
-  const admin = useAdminAuthStore((state) => state.admin);
+  const admin  = useAdminAuthStore((state) => state.admin);
+  const logout = useAdminAuthStore((state) => state.logout);
   if (!admin) return <Navigate to="/admin/login" replace />;
+  if (admin.role !== 'admin') {
+    logout();
+    return <Navigate to="/admin/login" replace />;
+  }
   return <Outlet />;
 }
 
