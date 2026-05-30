@@ -10,6 +10,7 @@ import {
   Settings,
   Bell,
   LogOut,
+  BookOpen,
 } from 'lucide-react'
 import { useAdminAuthStore } from '../../store/adminAuthStore'
 import Toaster from '../ui/Toaster'
@@ -22,6 +23,7 @@ const NAV_ITEMS = [
   { label: 'Customers', path: '/admin/customers', icon: Users },
   { label: 'Reviews',   path: '/admin/reviews',   icon: Star },
   { label: 'Coupons',   path: '/admin/coupons',   icon: Ticket },
+  { label: 'Blogs',     path: '/admin/blogs',     icon: BookOpen },
   { label: 'Settings',  path: '/admin/settings',  icon: Settings },
 ] as const
 
@@ -42,6 +44,7 @@ function getPageTitle(pathname: string): string {
     '/admin/customers':  'Customers',
     '/admin/reviews':    'Reviews',
     '/admin/coupons':    'Coupons',
+    '/admin/blogs':      'Blog Posts',
     '/admin/settings':   'Settings',
   }
   return map[pathname] ?? 'Admin'

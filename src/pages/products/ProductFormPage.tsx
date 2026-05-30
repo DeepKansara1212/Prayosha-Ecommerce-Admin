@@ -421,6 +421,7 @@ export default function ProductFormPage() {
         qc.invalidateQueries({ queryKey: ['admin-products'] })
         qc.invalidateQueries({ queryKey: ['product', slugParam] })
         showToast('success', 'Product updated successfully')
+        navigate('/admin/products')
       } else {
         // Create
         const created      = await createProduct(payload)

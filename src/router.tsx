@@ -13,6 +13,7 @@ import CustomersPage from "./pages/customers/CustomersPage";
 import ReviewsPage from "./pages/reviews/ReviewsPage";
 import CouponsPage from "./pages/coupons/CouponsPage";
 import SettingsPage from "./pages/settings/SettingsPage";
+import BlogsPage from "./pages/blog/BlogsPage";
 
 function ProtectedAdminRoute() {
   const admin  = useAdminAuthStore((state) => state.admin);
@@ -53,6 +54,7 @@ export default function AppRouter() {
           <Route path="/admin/reviews" element={<ReviewsPage />} />
           <Route path="/admin/coupons" element={<CouponsPage />} />
           <Route path="/admin/settings" element={<SettingsPage />} />
+          <Route path="/admin/blogs" element={<BlogsPage />} />
         </Route>
       </Route>
 
