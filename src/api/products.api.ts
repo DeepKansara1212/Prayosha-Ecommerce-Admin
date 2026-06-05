@@ -29,6 +29,7 @@ export interface Product {
   metaphysicalProperties?: string
   isFeatured: boolean
   isActive: boolean
+  hasFreeGift: boolean
   ratings: { average: number; count: number }
   createdAt: string
   updatedAt: string
@@ -76,6 +77,7 @@ export type ProductPayload = {
   metaphysicalProperties?: string
   isFeatured?: boolean
   isActive?: boolean
+  hasFreeGift?: boolean
 }
 
 // ── API calls ─────────────────────────────────────────────────────────────────

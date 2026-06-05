@@ -469,8 +469,32 @@ export default function ProductsPage() {
 
                   {/* Name + SKU */}
                   <td style={TD}>
-                    <div style={{ fontFamily: FONT, fontSize: 13, fontWeight: 500, color: '#1C1A17', marginBottom: 2 }}>
-                      {product.name}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 2 }}>
+                      <span style={{ fontFamily: FONT, fontSize: 13, fontWeight: 500, color: '#1C1A17' }}>
+                        {product.name}
+                      </span>
+                      {product.hasFreeGift && (
+                        <span
+                          title="Includes free gift"
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            padding: '1px 6px',
+                            borderRadius: 3,
+                            background: '#FEF9EC',
+                            border: '1px solid #C49A3C',
+                            color: '#C49A3C',
+                            fontFamily: FONT,
+                            fontSize: 9,
+                            fontWeight: 600,
+                            letterSpacing: '0.05em',
+                            textTransform: 'uppercase',
+                            gap: 3,
+                          }}
+                        >
+                          🎁 Gift
+                        </span>
+                      )}
                     </div>
                     <div style={{ fontFamily: FONT, fontSize: 11, color: '#9E9590' }}>
                       {product.sku}

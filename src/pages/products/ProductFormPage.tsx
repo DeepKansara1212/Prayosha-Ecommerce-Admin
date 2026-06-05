@@ -36,6 +36,7 @@ const schema = z.object({
   badge:                  z.string(),
   isFeatured:             z.boolean(),
   isActive:               z.boolean(),
+  hasFreeGift:            z.boolean(),
 })
 
 type FormValues = z.infer<typeof schema>
@@ -295,16 +296,17 @@ export default function ProductFormPage() {
       name: '', slug: '', sku: '', shortDescription: '', description: '',
       careInstructions: '', metaphysicalProperties: '',
       price: 0, comparePrice: '', costPrice: '', stock: 0, lowStockThreshold: 5, weight: '',
-      category: '', tags: [], chakra: '', badge: '', isFeatured: false, isActive: true,
+      category: '', tags: [], chakra: '', badge: '', isFeatured: false, isActive: true, hasFreeGift: false,
     },
   })
 
-  const watchName     = watch('name')
-  const watchSlug     = watch('slug')
-  const watchBadge    = watch('badge')
-  const watchTags     = watch('tags')
-  const watchFeatured = watch('isFeatured')
-  const watchActive   = watch('isActive')
+  const watchName       = watch('name')
+  const watchSlug       = watch('slug')
+  const watchBadge      = watch('badge')
+  const watchTags       = watch('tags')
+  const watchFeatured   = watch('isFeatured')
+  const watchActive     = watch('isActive')
+  const watchHasFreeGift = watch('hasFreeGift')
 
   // Slug lock/edit state
   // On create: start unlocked (auto-gen active). On edit: start locked (preserve existing slug).
@@ -371,6 +373,7 @@ export default function ProductFormPage() {
       badge:                  product.badge ?? '',
       isFeatured:             product.isFeatured,
       isActive:               product.isActive,
+      hasFreeGift:            product.hasFreeGift,
     })
     setImages((product.images ?? []).map(url => ({ url, isExisting: true })))
   }, [product, isEditing, reset])
@@ -390,6 +393,7 @@ export default function ProductFormPage() {
       tags:             data.tags,
       isFeatured:       data.isFeatured,
       isActive:         data.isActive,
+      hasFreeGift:      data.hasFreeGift,
       ...(data.shortDescription       && { shortDescription: data.shortDescription }),
       ...(data.careInstructions       && { careInstructions: data.careInstructions }),
       ...(data.metaphysicalProperties && { metaphysicalProperties: data.metaphysicalProperties }),
@@ -1072,6 +1076,31 @@ export default function ProductFormPage() {
               <Toggle
                 checked={watchActive}
                 onChange={() => setValue('isActive', !watchActive)}
+              />
+            </label>
+
+            <div style={{ height: 1, background: '#E2DAC8' }} />
+
+            <label
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                cursor: 'pointer',
+                userSelect: 'none',
+              }}
+            >
+              <div>
+                <div style={{ fontFamily: FONT, fontSize: 13, fontWeight: 500, color: '#1C1A17' }}>
+                  Free Gift
+                </div>
+                <div style={{ fontFamily: FONT, fontSize: 11, color: '#9E9590', marginTop: 2 }}>
+                  Orders containing this product will include a free gift
+                </div>
+              </div>
+              <Toggle
+                checked={watchHasFreeGift}
+                onChange={() => setValue('hasFreeGift', !watchHasFreeGift)}
               />
             </label>
           </div>

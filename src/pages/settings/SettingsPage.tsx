@@ -1,13 +1,13 @@
-import { forwardRef } from 'react'
+import { forwardRef, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { useMutation } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Eye, EyeOff } from 'lucide-react'
 import { useAdminAuthStore } from '../../store/adminAuthStore'
 import { useToast } from '../../store/toastStore'
 import client from '../../api/client'
-import { useState } from 'react'
+import { getAdminSettings, updateAdminSettings } from '../../api/settings.api'
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -412,6 +412,127 @@ function StoreInfoSection() {
   )
 }
 
+// ── FreeGiftSection ───────────────────────────────────────────────────────────
+
+function Toggle({ checked, onChange }: { checked: boolean; onChange: () => void }) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={checked}
+      onClick={onChange}
+      style={{
+        width: 44,
+        height: 24,
+        borderRadius: 12,
+        border: 'none',
+        background: checked ? '#7B5EA7' : '#D4CFC8',
+        cursor: 'pointer',
+        position: 'relative',
+        transition: 'background 0.2s',
+        flexShrink: 0,
+      }}
+    >
+      <span
+        style={{
+          position: 'absolute',
+          top: 3,
+          left: checked ? 23 : 3,
+          width: 18,
+          height: 18,
+          borderRadius: '50%',
+          background: '#fff',
+          boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
+          transition: 'left 0.2s',
+        }}
+      />
+    </button>
+  )
+}
+
+function FreeGiftSection() {
+  const toast = useToast()
+  const queryClient = useQueryClient()
+
+  const { data: settings, isLoading } = useQuery({
+    queryKey: ['admin-settings'],
+    queryFn: getAdminSettings,
+  })
+
+  const [freeGiftEnabled, setFreeGiftEnabled] = useState<boolean | null>(null)
+
+  // Sync local state when query data arrives (only once)
+  const resolved = freeGiftEnabled !== null ? freeGiftEnabled : (settings?.freeGiftEnabled ?? false)
+
+  const mutation = useMutation({
+    mutationFn: () => updateAdminSettings({ freeGiftEnabled: resolved }),
+    onSuccess: () => {
+      toast.success('Settings saved successfully')
+      void queryClient.invalidateQueries({ queryKey: ['admin-settings'] })
+    },
+    onError: () => toast.error('Failed to save settings'),
+  })
+
+  return (
+    <div style={CARD}>
+      <div style={CARD_HEADER}>
+        <div style={{ fontFamily: FONT, fontSize: 13, fontWeight: 600, color: '#1C1A17' }}>
+          Free Gift Settings
+        </div>
+        <div style={{ fontFamily: FONT, fontSize: 11, color: '#9E9590', marginTop: 2 }}>
+          Control whether customers receive a free gift with their order
+        </div>
+      </div>
+
+      <div style={CARD_BODY}>
+        {isLoading ? (
+          <div style={{ fontFamily: FONT, fontSize: 13, color: '#9E9590' }}>Loading…</div>
+        ) : (
+          <>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 24 }}>
+              <Toggle
+                checked={resolved}
+                onChange={() => setFreeGiftEnabled(!resolved)}
+              />
+              <div>
+                <div style={{ fontFamily: FONT, fontSize: 13, fontWeight: 500, color: '#1C1A17' }}>
+                  Enable Free Gift on all orders
+                </div>
+                <div style={{ fontFamily: FONT, fontSize: 12, color: '#9E9590', marginTop: 2 }}>
+                  When enabled, every order will be marked with a free gift regardless of the products purchased
+                </div>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              disabled={mutation.isPending}
+              onClick={() => mutation.mutate()}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                padding: '9px 20px',
+                background: mutation.isPending ? '#C4B89A' : '#C49A3C',
+                color: '#fff',
+                border: 'none',
+                borderRadius: 4,
+                fontFamily: FONT,
+                fontSize: 13,
+                fontWeight: 500,
+                cursor: mutation.isPending ? 'not-allowed' : 'pointer',
+                letterSpacing: '0.04em',
+                transition: 'background 0.2s',
+              }}
+            >
+              {mutation.isPending ? 'Saving…' : 'Save Changes'}
+            </button>
+          </>
+        )}
+      </div>
+    </div>
+  )
+}
+
 // ── Main component ─────────────────────────────────────────────────────────────
 
 export default function SettingsPage() {
@@ -432,6 +553,7 @@ export default function SettingsPage() {
       <ProfileSection />
       <PasswordSection />
       <StoreInfoSection />
+      <FreeGiftSection />
     </div>
   )
 }
