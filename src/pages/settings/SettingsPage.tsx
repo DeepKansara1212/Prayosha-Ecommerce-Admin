@@ -7,7 +7,7 @@ import { Eye, EyeOff } from 'lucide-react'
 import { useAdminAuthStore } from '../../store/adminAuthStore'
 import { useToast } from '../../store/toastStore'
 import client from '../../api/client'
-import { getAdminSettings, updateAdminSettings } from '../../api/settings.api'
+import { getAdminSettings, updateAdminSettings, type AdminSettings } from '../../api/settings.api'
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -533,6 +533,156 @@ function FreeGiftSection() {
   )
 }
 
+// ── WhatsApp Support Section ──────────────────────────────────────────────────
+
+const whatsappSchema = z.object({
+  whatsappNumber: z
+    .string()
+    .regex(/^\d*$/, 'Digits only')
+    .refine((v) => v === '' || (v.length >= 10 && v.length <= 15), {
+      message: '10–15 digits',
+    }),
+  whatsappDefaultMessage: z.string().max(300),
+})
+type WhatsappFormData = z.infer<typeof whatsappSchema>
+
+function WhatsAppSection() {
+  const toast = useToast()
+  const queryClient = useQueryClient()
+
+  const { data: settings, isLoading } = useQuery({
+    queryKey: ['admin-settings'],
+    queryFn: getAdminSettings,
+  })
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<WhatsappFormData>({
+    resolver: zodResolver(whatsappSchema),
+    values: {
+      whatsappNumber: settings?.whatsappNumber ?? '',
+      whatsappDefaultMessage: settings?.whatsappDefaultMessage ?? '',
+    },
+  })
+
+  const mutation = useMutation({
+    mutationFn: (data: WhatsappFormData) =>
+      updateAdminSettings(data as Partial<AdminSettings>),
+    onSuccess: () => {
+      toast.success('WhatsApp settings saved')
+      void queryClient.invalidateQueries({ queryKey: ['admin-settings'] })
+    },
+    onError: () => toast.error('Failed to save WhatsApp settings'),
+  })
+
+  return (
+    <div style={CARD}>
+      <div style={CARD_HEADER}>
+        <div style={{ fontFamily: FONT, fontSize: 13, fontWeight: 600, color: '#1C1A17' }}>
+          WhatsApp Support
+        </div>
+        <div style={{ fontFamily: FONT, fontSize: 11, color: '#9E9590', marginTop: 2 }}>
+          Configure the WhatsApp number for 24/7 customer support
+        </div>
+      </div>
+
+      <div style={CARD_BODY}>
+        {isLoading ? (
+          <div style={{ fontFamily: FONT, fontSize: 13, color: '#9E9590' }}>Loading…</div>
+        ) : (
+          <form
+            onSubmit={handleSubmit((data) => mutation.mutate(data))}
+            style={{ display: 'flex', flexDirection: 'column', gap: 20 }}
+          >
+            {/* WhatsApp Number */}
+            <div style={{ maxWidth: 400 }}>
+              <label style={LABEL}>WhatsApp Number</label>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 0 }}>
+                <span
+                  style={{
+                    ...INPUT_BASE,
+                    width: 'auto',
+                    padding: '9px 10px',
+                    borderRight: 'none',
+                    borderRadius: '4px 0 0 4px',
+                    color: '#9E9590',
+                    flexShrink: 0,
+                    background: '#EDE8DC',
+                  }}
+                >
+                  +91
+                </span>
+                <input
+                  {...register('whatsappNumber')}
+                  type="text"
+                  placeholder="919876543210"
+                  maxLength={15}
+                  style={{ ...INPUT_BASE, borderRadius: '0 4px 4px 0' }}
+                />
+              </div>
+              {errors.whatsappNumber && (
+                <p style={FIELD_ERROR}>{errors.whatsappNumber.message}</p>
+              )}
+              <p style={{ fontFamily: FONT, fontSize: 12, color: '#9E9590', marginTop: 4 }}>
+                International format without +, e.g. 919876543210
+              </p>
+            </div>
+
+            {/* Default Message Override */}
+            <div style={{ maxWidth: 500 }}>
+              <label style={LABEL}>Default Message Override (optional)</label>
+              <textarea
+                {...register('whatsappDefaultMessage')}
+                rows={3}
+                maxLength={300}
+                placeholder="Leave blank to use auto-generated messages"
+                style={{
+                  ...INPUT_BASE,
+                  resize: 'vertical',
+                  minHeight: 72,
+                  fontFamily: FONT,
+                }}
+              />
+              {errors.whatsappDefaultMessage && (
+                <p style={FIELD_ERROR}>{errors.whatsappDefaultMessage.message}</p>
+              )}
+              <p style={{ fontFamily: FONT, fontSize: 12, color: '#9E9590', marginTop: 4 }}>
+                Leave blank to use auto-generated messages based on the current page
+              </p>
+            </div>
+
+            <div>
+              <button
+                type="submit"
+                disabled={mutation.isPending}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  padding: '9px 20px',
+                  background: mutation.isPending ? '#C4B89A' : '#7B5EA7',
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: 4,
+                  fontFamily: FONT,
+                  fontSize: 13,
+                  fontWeight: 500,
+                  cursor: mutation.isPending ? 'not-allowed' : 'pointer',
+                  letterSpacing: '0.04em',
+                  transition: 'background 0.2s',
+                }}
+              >
+                {mutation.isPending ? 'Saving…' : 'Save Changes'}
+              </button>
+            </div>
+          </form>
+        )}
+      </div>
+    </div>
+  )
+}
+
 // ── Main component ─────────────────────────────────────────────────────────────
 
 export default function SettingsPage() {
@@ -554,6 +704,7 @@ export default function SettingsPage() {
       <PasswordSection />
       <StoreInfoSection />
       <FreeGiftSection />
+      <WhatsAppSection />
     </div>
   )
 }

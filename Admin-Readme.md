@@ -31,7 +31,7 @@ A full-featured admin dashboard for the **Prayosha Crystal** e-commerce platform
 | Language | TypeScript 6 |
 | Styling | Tailwind CSS 4 (`@tailwindcss/vite`) + inline styles for admin chrome |
 | Routing | React Router DOM 7 |
-| Auth state | Zustand + `persist` middleware → `localStorage` key `admin-auth` |
+| Auth state | Zustand 5 + `persist` middleware → `localStorage` key `admin-auth` |
 | Server state | TanStack React Query 5 (`staleTime`: 30s, `retry`: 1) |
 | HTTP | Axios (`withCredentials: true`, Bearer token interceptor) |
 | Forms | React Hook Form 7 + Zod 4 (`@hookform/resolvers`) |
@@ -214,8 +214,9 @@ Shared client: `src/api/client.ts`.
 | `analytics.api.ts` | `/api/v1/admin/analytics/*` | `getOverview`, `getSalesOverTime`, `getOrdersByStatus`, `getLowStockProducts`, `getRecentOrders` |
 | `blogs.api.ts` | `/api/v1/admin/blogs` | `getAdminBlogs`, `createBlog`, `updateBlog`, `deleteBlog` |
 | `heroBanners.api.ts` | `/api/v1/admin/hero-banners` | `getAdminBanners`, `createBanner`, `updateBanner`, `toggleBanner`, `reorderBanners`, `deleteBanner` |
+| `settings.api.ts` | `/api/v1/admin/settings` | `getAdminSettings`, `updateAdminSettings` |
 
-Settings page uses inline calls: `PATCH /api/v1/auth/me`, `PATCH /api/v1/auth/change-password`.
+Profile and password changes use inline calls: `PATCH /api/v1/auth/me`, `PATCH /api/v1/auth/change-password`.
 
 Types are co-located in each API file (no shared `types/` folder).
 
@@ -326,7 +327,7 @@ Six sections, shared create/edit:
 
 ---
 
-### Blog posts (`/admin/blogs`) — **NEW**
+### Blog posts (`/admin/blogs`)
 
 Manage storefront blog content for `/blog/:slug`.
 
@@ -368,7 +369,7 @@ Toasts on create, update, delete.
 
 ---
 
-### Hero banners (`/admin/banners`) — **NEW**
+### Hero banners (`/admin/banners`)
 
 Manage homepage carousel slides.
 
@@ -404,6 +405,7 @@ Three cards:
 |---|---|
 | Profile | Avatar initial, name, email, role; edit name → `PATCH /api/v1/auth/me`; updates Zustand `setAdmin` |
 | Password | Current / new / confirm; show-hide; Zod min 6 + match → `PATCH /api/v1/auth/change-password` |
+| Store settings | Free Gift toggle (`freeGiftEnabled`) → `GET/PATCH /api/v1/admin/settings`; React Query `admin-settings` |
 | Store info | Read-only: store name, currency, country, payment provider, image storage |
 
 Toasts on profile/password success and errors.
@@ -459,6 +461,7 @@ Admin/
       orders.api.ts
       products.api.ts
       reviews.api.ts
+      settings.api.ts           # store settings (free gift toggle)
     components/
       layout/
         AdminLayout.tsx
