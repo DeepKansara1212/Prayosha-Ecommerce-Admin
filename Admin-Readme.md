@@ -214,7 +214,7 @@ Shared client: `src/api/client.ts`.
 | `analytics.api.ts` | `/api/v1/admin/analytics/*` | `getOverview`, `getSalesOverTime`, `getOrdersByStatus`, `getLowStockProducts`, `getRecentOrders` |
 | `blogs.api.ts` | `/api/v1/admin/blogs` | `getAdminBlogs`, `createBlog`, `updateBlog`, `deleteBlog` |
 | `heroBanners.api.ts` | `/api/v1/admin/hero-banners` | `getAdminBanners`, `createBanner`, `updateBanner`, `toggleBanner`, `reorderBanners`, `deleteBanner` |
-| `settings.api.ts` | `/api/v1/admin/settings` | `getAdminSettings`, `updateAdminSettings` |
+| `settings.api.ts` | `/api/v1/admin/settings` | `getAdminSettings`, `updateAdminSettings`; `AdminSettings` type includes `freeGiftEnabled`, `whatsappNumber`, `whatsappDefaultMessage` |
 
 Profile and password changes use inline calls: `PATCH /api/v1/auth/me`, `PATCH /api/v1/auth/change-password`.
 
@@ -399,13 +399,14 @@ Endpoints: `GET/POST /api/v1/admin/hero-banners`, `PATCH/DELETE .../:id`, `PATCH
 
 ### Settings (`/admin/settings`)
 
-Three cards:
+Four cards:
 
 | Section | Features |
 |---|---|
 | Profile | Avatar initial, name, email, role; edit name → `PATCH /api/v1/auth/me`; updates Zustand `setAdmin` |
 | Password | Current / new / confirm; show-hide; Zod min 6 + match → `PATCH /api/v1/auth/change-password` |
 | Store settings | Free Gift toggle (`freeGiftEnabled`) → `GET/PATCH /api/v1/admin/settings`; React Query `admin-settings` |
+| WhatsApp Support | WhatsApp number input (10–15 digits), optional default message override (max 300 chars); saves via `updateAdminSettings`; toast on success/error |
 | Store info | Read-only: store name, currency, country, payment provider, image storage |
 
 Toasts on profile/password success and errors.
@@ -550,7 +551,7 @@ Admin/
 | Coupons | ✓ | ✓ | ✓ | — | Toggle active, copy code |
 | Blogs | ✓ | ✓ | ✓ | ✓ | Section editor, gradients |
 | Hero banners | ✓ | ✓ | ✓ | ✓ | Reorder, toggle, preview |
-| Settings | ✓ | — | ✓ | — | Profile, password |
+| Settings | ✓ | — | ✓ | — | Profile, password, WhatsApp support config |
 
 ---
 
