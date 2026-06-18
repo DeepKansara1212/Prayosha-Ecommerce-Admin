@@ -548,15 +548,35 @@ export default function OrdersPage() {
 
                   {/* Status dropdown */}
                   <td style={TD}>
-                    <StatusDropdown
-                      orderId={order._id}
-                      current={order.status}
-                      onSelect={(id, status) =>
-                        handleStatusChange(id, order.orderNumber, status)
-                      }
-                      disabled={updatingId !== null && updatingId !== order._id}
-                      isLoading={updatingId === order._id}
-                    />
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                      <StatusDropdown
+                        orderId={order._id}
+                        current={order.status}
+                        onSelect={(id, status) =>
+                          handleStatusChange(id, order.orderNumber, status)
+                        }
+                        disabled={updatingId !== null && updatingId !== order._id}
+                        isLoading={updatingId === order._id}
+                      />
+                      {order.awbCode && (
+                        <span style={{
+                          display: 'inline-block', padding: '2px 8px', borderRadius: 10,
+                          background: '#F3F4F6', color: '#6B6057',
+                          fontFamily: FONT, fontSize: 10, width: 'fit-content',
+                        }}>
+                          📦 Tracking Available
+                        </span>
+                      )}
+                      {order.aftershipStatus === 'Delivered' && (
+                        <span style={{
+                          display: 'inline-block', padding: '2px 8px', borderRadius: 10,
+                          background: '#ECFDF5', color: '#5A8A6A',
+                          fontFamily: FONT, fontSize: 10, width: 'fit-content',
+                        }}>
+                          ✓ Delivered
+                        </span>
+                      )}
+                    </div>
                   </td>
 
                   {/* Actions */}

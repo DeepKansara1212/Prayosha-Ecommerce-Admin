@@ -1,13 +1,20 @@
 import { useState, useEffect, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { ArrowLeft, Package, MapPin, Clock, CreditCard, Loader2, CheckCircle, AlertCircle } from 'lucide-react'
+import { ArrowLeft, Package, MapPin, Clock, CreditCard, Loader2, CheckCircle, AlertCircle, Truck, ExternalLink } from 'lucide-react'
 import {
   getOrderDetail,
   updateOrderStatus,
   type Order,
   type OrderStatus,
 } from '../../api/orders.api'
+import {
+  pushToShipRocket,
+  generateLabel,
+  syncTracking,
+  cancelShipment,
+} from '../../api/shipping.api'
+import { useToast } from '../../store/toastStore'
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -118,6 +125,207 @@ function SectionCard({
       </div>
       <div style={{ padding: 16 }}>{children}</div>
     </div>
+  )
+}
+
+const fmtCheckpointDate = (iso: string) =>
+  new Date(iso).toLocaleString('en-IN', {
+    day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit',
+  })
+
+// ── Shipping & Fulfillment ────────────────────────────────────────────────────
+
+function ShippingPanel({ order }: { order: Order }) {
+  const qc = useQueryClient()
+  const toast = useToast()
+
+  const showCard = ['confirmed', 'processing', 'shipped', 'delivered'].includes(order.status)
+  if (!showCard) return null
+
+  const invalidate = () => {
+    qc.invalidateQueries({ queryKey: ['admin-order', order._id] })
+    qc.invalidateQueries({ queryKey: ['admin-orders'] })
+  }
+
+  const shipMutation = useMutation({
+    mutationFn: () => pushToShipRocket(order._id),
+    onSuccess: () => {
+      toast.success('Order pushed to ShipRocket')
+      invalidate()
+    },
+    onError: (err: unknown) => {
+      const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message
+      toast.error(msg || 'Failed to push order to ShipRocket')
+    },
+  })
+
+  const labelMutation = useMutation({
+    mutationFn: () => generateLabel(order._id),
+    onSuccess: () => {
+      toast.success('Shipping label generated')
+      invalidate()
+    },
+    onError: (err: unknown) => {
+      const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message
+      toast.error(msg || 'Failed to generate label')
+    },
+  })
+
+  const syncMutation = useMutation({
+    mutationFn: () => syncTracking(order._id),
+    onSuccess: () => {
+      toast.success('Tracking synced')
+      invalidate()
+    },
+    onError: (err: unknown) => {
+      const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message
+      toast.error(msg || 'Failed to sync tracking')
+    },
+  })
+
+  const cancelMutation = useMutation({
+    mutationFn: () => cancelShipment(order._id),
+    onSuccess: () => {
+      toast.success('Shipment cancelled')
+      invalidate()
+    },
+    onError: (err: unknown) => {
+      const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message
+      toast.error(msg || 'Failed to cancel shipment')
+    },
+  })
+
+  const busy = shipMutation.isPending || labelMutation.isPending || syncMutation.isPending || cancelMutation.isPending
+
+  const btnPrimary: React.CSSProperties = {
+    display: 'inline-flex', alignItems: 'center', gap: 6,
+    padding: '8px 16px', background: '#7B5EA7', border: 'none', borderRadius: 4,
+    fontFamily: FONT, fontSize: 12, fontWeight: 500, color: '#fff',
+    cursor: busy ? 'not-allowed' : 'pointer', opacity: busy ? 0.6 : 1,
+  }
+
+  const btnSecondary: React.CSSProperties = {
+    ...btnPrimary, background: '#F5F0E8', color: '#1C1A17', border: '1px solid #E2DAC8',
+  }
+
+  const btnDanger: React.CSSProperties = {
+    ...btnPrimary, background: 'transparent', color: '#A85050', border: '1px solid #E2DAC8',
+  }
+
+  const statusLabel = order.awbCode
+    ? (order.shiprocketStatus || order.aftershipStatus || 'In Transit')
+    : order.shiprocketOrderId
+      ? 'Awaiting AWB assignment'
+      : 'Not yet dispatched'
+
+  return (
+    <SectionCard title="Shipping & Fulfillment" icon={<Truck size={14} />}>
+      {!order.shiprocketOrderId ? (
+        <>
+          <p style={{ fontFamily: FONT, fontSize: 13, color: '#6B6057', margin: '0 0 16px' }}>
+            Status: Not yet dispatched
+          </p>
+          <button
+            style={btnPrimary}
+            disabled={busy}
+            onClick={() => shipMutation.mutate()}
+          >
+            {shipMutation.isPending && <Loader2 size={13} style={{ animation: 'spin 1s linear infinite' }} />}
+            Push to ShipRocket
+          </button>
+        </>
+      ) : (
+        <>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 16 }}>
+            <div style={{ fontFamily: FONT, fontSize: 12, color: '#6B6057' }}>
+              ShipRocket Order ID:{' '}
+              <span style={{ color: '#1C1A17', fontWeight: 500 }}>{order.shiprocketOrderId}</span>
+            </div>
+            {order.awbCode && (
+              <>
+                <div style={{ fontFamily: FONT, fontSize: 12, color: '#6B6057' }}>
+                  AWB: <span style={{ color: '#1C1A17', fontWeight: 500 }}>{order.awbCode}</span>
+                </div>
+                {order.courierName && (
+                  <div style={{ fontFamily: FONT, fontSize: 12, color: '#6B6057' }}>
+                    Courier: <span style={{ color: '#1C1A17', fontWeight: 500 }}>{order.courierName}</span>
+                  </div>
+                )}
+              </>
+            )}
+            <div style={{ fontFamily: FONT, fontSize: 12, color: '#6B6057' }}>
+              Status: <span style={{ color: '#7B5EA7', fontWeight: 500 }}>{statusLabel}</span>
+            </div>
+            {order.labelUrl && (
+              <a
+                href={order.labelUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 4,
+                  fontFamily: FONT, fontSize: 12, color: '#7B5EA7', textDecoration: 'none',
+                }}
+              >
+                View Label <ExternalLink size={12} />
+              </a>
+            )}
+          </div>
+
+          {order.trackingCheckpoints && order.trackingCheckpoints.length > 0 && (
+            <div style={{ marginBottom: 16 }}>
+              <p style={{
+                fontFamily: FONT, fontSize: 11, fontWeight: 600, textTransform: 'uppercase',
+                letterSpacing: '0.07em', color: '#9E9590', margin: '0 0 12px',
+              }}>
+                Tracking Timeline
+              </p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                {[...order.trackingCheckpoints].reverse().map((cp, i) => (
+                  <div key={i} style={{ display: 'flex', gap: 10 }}>
+                    <div style={{
+                      width: 8, height: 8, borderRadius: '50%', background: '#7B5EA7',
+                      marginTop: 4, flexShrink: 0,
+                    }} />
+                    <div>
+                      <div style={{ fontFamily: FONT, fontSize: 11, color: '#9E9590' }}>
+                        {fmtCheckpointDate(cp.time)}
+                      </div>
+                      <div style={{ fontFamily: FONT, fontSize: 12, fontWeight: 500, color: '#1C1A17' }}>
+                        {cp.message}
+                      </div>
+                      {cp.location && (
+                        <div style={{ fontFamily: FONT, fontSize: 11, color: '#6B6057' }}>
+                          {cp.location}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+            {!order.awbCode && (
+              <button style={btnPrimary} disabled={busy} onClick={() => labelMutation.mutate()}>
+                {labelMutation.isPending && <Loader2 size={13} style={{ animation: 'spin 1s linear infinite' }} />}
+                Generate Label
+              </button>
+            )}
+            <button style={btnSecondary} disabled={busy} onClick={() => syncMutation.mutate()}>
+              {syncMutation.isPending && <Loader2 size={13} style={{ animation: 'spin 1s linear infinite' }} />}
+              Sync Tracking
+            </button>
+            {order.status !== 'delivered' && (
+              <button style={btnDanger} disabled={busy} onClick={() => cancelMutation.mutate()}>
+                {cancelMutation.isPending && <Loader2 size={13} style={{ animation: 'spin 1s linear infinite' }} />}
+                Cancel Shipment
+              </button>
+            )}
+          </div>
+        </>
+      )}
+    </SectionCard>
   )
 }
 
@@ -516,6 +724,8 @@ export default function OrderDetailPage() {
               </div>
             )}
           </SectionCard>
+
+          <ShippingPanel order={order} />
 
           {/* Payment info */}
           <SectionCard title="Payment" icon={<CreditCard size={14} />}>

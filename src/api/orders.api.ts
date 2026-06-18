@@ -46,6 +46,12 @@ export interface StatusHistoryEntry {
   timestamp: string
 }
 
+export interface TrackingCheckpoint {
+  time: string
+  message: string
+  location: string
+}
+
 export interface Order {
   _id: string
   orderNumber: string
@@ -64,6 +70,16 @@ export interface Order {
   razorpayPaymentId?: string
   status: OrderStatus
   trackingNumber?: string
+  shiprocketOrderId?: string
+  shiprocketShipmentId?: string
+  awbCode?: string
+  courierName?: string
+  labelUrl?: string
+  shiprocketStatus?: string
+  aftershipTrackingId?: string
+  aftershipStatus?: string
+  trackingUrl?: string
+  trackingCheckpoints?: TrackingCheckpoint[]
   statusHistory: StatusHistoryEntry[]
   notes?: string
   createdAt: string
