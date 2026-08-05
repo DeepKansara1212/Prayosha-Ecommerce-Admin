@@ -29,7 +29,11 @@ const schema = z.object({
   costPrice:              z.string(),
   stock:                  z.coerce.number().min(0, 'Stock cannot be negative'),
   lowStockThreshold:      z.coerce.number().min(0),
-  weight:                 z.string(),
+  useCategoryShipping:    z.boolean(),
+  shippingWeight:         z.string(),
+  shippingLength:         z.string(),
+  shippingBreadth:        z.string(),
+  shippingHeight:         z.string(),
   category:               z.string().min(1, 'Category is required'),
   tags:                   z.array(z.string()),
   chakra:                 z.string(),
@@ -295,7 +299,8 @@ export default function ProductFormPage() {
     defaultValues: {
       name: '', slug: '', sku: '', shortDescription: '', description: '',
       careInstructions: '', metaphysicalProperties: '',
-      price: 0, comparePrice: '', costPrice: '', stock: 0, lowStockThreshold: 5, weight: '',
+      price: 0, comparePrice: '', costPrice: '', stock: 0, lowStockThreshold: 5,
+      useCategoryShipping: true, shippingWeight: '', shippingLength: '', shippingBreadth: '', shippingHeight: '',
       category: '', tags: [], chakra: '', badge: '', isFeatured: false, isActive: true, hasFreeGift: false,
     },
   })
@@ -307,6 +312,8 @@ export default function ProductFormPage() {
   const watchFeatured   = watch('isFeatured')
   const watchActive     = watch('isActive')
   const watchHasFreeGift = watch('hasFreeGift')
+  const watchCategory    = watch('category')
+  const watchUseCategoryShipping = watch('useCategoryShipping')
 
   // Slug lock/edit state
   // On create: start unlocked (auto-gen active). On edit: start locked (preserve existing slug).
@@ -348,6 +355,24 @@ export default function ProductFormPage() {
     staleTime: 5 * 60_000,
   })
 
+  // The category dropdown's list already carries `shipping` — no extra fetch needed.
+  // Fall back to the edited product's own populated category (covers the case where
+  // its category is inactive and therefore missing from the public categories list).
+  const productCategory = product && typeof product.category === 'object' ? product.category : undefined
+  const selectedCategoryShipping =
+    categories?.find(c => c._id === watchCategory)?.shipping ??
+    (productCategory?._id === watchCategory ? productCategory.shipping : undefined)
+
+  // Auto-fill shipping fields from the selected category whenever the category
+  // changes or "Use Category Shipping" is (re-)enabled.
+  useEffect(() => {
+    if (!watchUseCategoryShipping || !selectedCategoryShipping) return
+    setValue('shippingWeight', selectedCategoryShipping.weight != null ? String(selectedCategoryShipping.weight) : '')
+    setValue('shippingLength', selectedCategoryShipping.length != null ? String(selectedCategoryShipping.length) : '')
+    setValue('shippingBreadth', selectedCategoryShipping.breadth != null ? String(selectedCategoryShipping.breadth) : '')
+    setValue('shippingHeight', selectedCategoryShipping.height != null ? String(selectedCategoryShipping.height) : '')
+  }, [watchUseCategoryShipping, selectedCategoryShipping, setValue])
+
   // Pre-fill form when product loads
   useEffect(() => {
     if (!product || !isEditing) return
@@ -364,7 +389,11 @@ export default function ProductFormPage() {
       costPrice:              '',
       stock:                  product.stock,
       lowStockThreshold:      product.lowStockThreshold,
-      weight:                 product.weight ? String(product.weight) : '',
+      useCategoryShipping:    product.useCategoryShipping ?? true,
+      shippingWeight:         product.shipping?.weight != null ? String(product.shipping.weight) : '',
+      shippingLength:         product.shipping?.length != null ? String(product.shipping.length) : '',
+      shippingBreadth:        product.shipping?.breadth != null ? String(product.shipping.breadth) : '',
+      shippingHeight:         product.shipping?.height != null ? String(product.shipping.height) : '',
       category:               typeof product.category === 'object'
                                 ? product.category._id
                                 : product.category,
@@ -394,6 +423,7 @@ export default function ProductFormPage() {
       isFeatured:       data.isFeatured,
       isActive:         data.isActive,
       hasFreeGift:      data.hasFreeGift,
+      useCategoryShipping: data.useCategoryShipping,
       ...(data.shortDescription       && { shortDescription: data.shortDescription }),
       ...(data.careInstructions       && { careInstructions: data.careInstructions }),
       ...(data.metaphysicalProperties && { metaphysicalProperties: data.metaphysicalProperties }),
@@ -401,7 +431,14 @@ export default function ProductFormPage() {
       ...(data.badge                  && { badge: data.badge }),
       ...(data.comparePrice           && { comparePrice: +data.comparePrice }),
       ...(data.costPrice              && { costPrice: +data.costPrice }),
-      ...(data.weight                 && { weight: +data.weight }),
+      ...(!data.useCategoryShipping && {
+        shipping: {
+          ...(data.shippingWeight   && { weight: +data.shippingWeight }),
+          ...(data.shippingLength   && { length: +data.shippingLength }),
+          ...(data.shippingBreadth  && { breadth: +data.shippingBreadth }),
+          ...(data.shippingHeight   && { height: +data.shippingHeight }),
+        },
+      }),
     }
 
     try {
@@ -683,7 +720,7 @@ export default function ProductFormPage() {
             </div>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 16 }}>
+          <div style={GRID2}>
             <div style={FIELD}>
               <label style={LABEL}>Stock <span style={{ color: '#A85050' }}>*</span></label>
               <input
@@ -707,18 +744,63 @@ export default function ProductFormPage() {
                 style={INPUT}
               />
             </div>
+          </div>
+        </div>
 
-            <div style={FIELD}>
-              <label style={LABEL}>Weight (g)</label>
-              <input
-                {...register('weight')}
-                type="number"
-                min="0"
-                placeholder="Optional"
-                className="admin-input"
-                style={INPUT}
-              />
+        {/* ── Section 3b: Shipping Details ─────────────────────────────────────── */}
+        <div style={SECTION}>
+          <p style={SECTION_TITLE}>Shipping Details</p>
+
+          <label
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              cursor: 'pointer',
+              userSelect: 'none',
+              marginBottom: 20,
+            }}
+          >
+            <div>
+              <div style={{ fontFamily: FONT, fontSize: 13, fontWeight: 500, color: '#1C1A17' }}>
+                Use Category Shipping
+              </div>
+              <div style={{ fontFamily: FONT, fontSize: 11, color: '#9E9590', marginTop: 2 }}>
+                Inherit weight and dimensions from the selected category
+              </div>
             </div>
+            <Toggle
+              checked={watchUseCategoryShipping}
+              onChange={() => setValue('useCategoryShipping', !watchUseCategoryShipping)}
+            />
+          </label>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: 16 }}>
+            {([
+              ['shippingWeight', 'Weight (g)'],
+              ['shippingLength', 'Length (cm)'],
+              ['shippingBreadth', 'Breadth (cm)'],
+              ['shippingHeight', 'Height (cm)'],
+            ] as const).map(([field, label]) => (
+              <div style={FIELD} key={field}>
+                <label style={LABEL}>{label}</label>
+                <input
+                  {...register(field)}
+                  type="number"
+                  min="0"
+                  step="any"
+                  disabled={watchUseCategoryShipping}
+                  placeholder={watchUseCategoryShipping ? '' : 'Optional'}
+                  className="admin-input"
+                  style={{
+                    ...INPUT,
+                    ...(watchUseCategoryShipping
+                      ? { background: '#EDE8DC', color: '#9E9590', cursor: 'not-allowed' }
+                      : {}),
+                  }}
+                />
+              </div>
+            ))}
           </div>
         </div>
 

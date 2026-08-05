@@ -2,6 +2,13 @@ import client from './client'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
+export interface CategoryShipping {
+  weight: number
+  length?: number
+  breadth?: number
+  height?: number
+}
+
 export interface Category {
   _id: string
   name: string
@@ -10,6 +17,7 @@ export interface Category {
   image?: string
   isActive: boolean
   sortOrder: number
+  shipping: CategoryShipping
 }
 
 // ── API calls ─────────────────────────────────────────────────────────────────

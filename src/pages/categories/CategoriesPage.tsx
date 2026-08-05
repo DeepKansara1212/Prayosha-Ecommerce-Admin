@@ -128,6 +128,10 @@ function CategoryDrawer({ open, editing, onClose, onSave, isPending }: DrawerPro
   const [description, setDescription] = useState('')
   const [sortOrder, setSortOrder] = useState(0)
   const [isActive, setIsActive] = useState(true)
+  const [shippingWeight, setShippingWeight] = useState('')
+  const [shippingLength, setShippingLength] = useState('')
+  const [shippingBreadth, setShippingBreadth] = useState('')
+  const [shippingHeight, setShippingHeight] = useState('')
   const [imageFile, setImageFile] = useState<File | null>(null)
   const [imagePreview, setImagePreview] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -142,6 +146,10 @@ function CategoryDrawer({ open, editing, onClose, onSave, isPending }: DrawerPro
         setDescription(editing.description ?? '')
         setSortOrder(editing.sortOrder)
         setIsActive(editing.isActive)
+        setShippingWeight(String(editing.shipping?.weight ?? ''))
+        setShippingLength(editing.shipping?.length != null ? String(editing.shipping.length) : '')
+        setShippingBreadth(editing.shipping?.breadth != null ? String(editing.shipping.breadth) : '')
+        setShippingHeight(editing.shipping?.height != null ? String(editing.shipping.height) : '')
         setImagePreview(editing.image ?? null)
         setImageFile(null)
       } else {
@@ -151,6 +159,10 @@ function CategoryDrawer({ open, editing, onClose, onSave, isPending }: DrawerPro
         setDescription('')
         setSortOrder(0)
         setIsActive(true)
+        setShippingWeight('')
+        setShippingLength('')
+        setShippingBreadth('')
+        setShippingHeight('')
         setImagePreview(null)
         setImageFile(null)
       }
@@ -188,6 +200,10 @@ function CategoryDrawer({ open, editing, onClose, onSave, isPending }: DrawerPro
     if (description) fd.append('description', description)
     fd.append('sortOrder', String(sortOrder))
     fd.append('isActive', String(isActive))
+    fd.append('shippingWeight', shippingWeight)
+    if (shippingLength) fd.append('shippingLength', shippingLength)
+    if (shippingBreadth) fd.append('shippingBreadth', shippingBreadth)
+    if (shippingHeight) fd.append('shippingHeight', shippingHeight)
     if (imageFile) fd.append('image', imageFile)
     onSave(fd, editing?._id)
   }
@@ -368,6 +384,73 @@ function CategoryDrawer({ open, editing, onClose, onSave, isPending }: DrawerPro
             />
             <span style={{ fontFamily: FONT, fontSize: 10, color: '#9E9590', marginTop: 4, display: 'block' }}>
               Lower numbers appear first.
+            </span>
+          </div>
+
+          {/* Shipping Details */}
+          <div>
+            <label style={LABEL}>Shipping Details</label>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+              <div>
+                <span style={{ fontFamily: FONT, fontSize: 10, color: '#9E9590', marginBottom: 4, display: 'block' }}>
+                  Weight (g) *
+                </span>
+                <input
+                  type="number"
+                  min={0}
+                  step="any"
+                  required
+                  value={shippingWeight}
+                  onChange={e => setShippingWeight(e.target.value)}
+                  placeholder="e.g. 120"
+                  style={INPUT_BASE}
+                />
+              </div>
+              <div>
+                <span style={{ fontFamily: FONT, fontSize: 10, color: '#9E9590', marginBottom: 4, display: 'block' }}>
+                  Length (cm)
+                </span>
+                <input
+                  type="number"
+                  min={0}
+                  step="any"
+                  value={shippingLength}
+                  onChange={e => setShippingLength(e.target.value)}
+                  placeholder="Optional"
+                  style={INPUT_BASE}
+                />
+              </div>
+              <div>
+                <span style={{ fontFamily: FONT, fontSize: 10, color: '#9E9590', marginBottom: 4, display: 'block' }}>
+                  Breadth (cm)
+                </span>
+                <input
+                  type="number"
+                  min={0}
+                  step="any"
+                  value={shippingBreadth}
+                  onChange={e => setShippingBreadth(e.target.value)}
+                  placeholder="Optional"
+                  style={INPUT_BASE}
+                />
+              </div>
+              <div>
+                <span style={{ fontFamily: FONT, fontSize: 10, color: '#9E9590', marginBottom: 4, display: 'block' }}>
+                  Height (cm)
+                </span>
+                <input
+                  type="number"
+                  min={0}
+                  step="any"
+                  value={shippingHeight}
+                  onChange={e => setShippingHeight(e.target.value)}
+                  placeholder="Optional"
+                  style={INPUT_BASE}
+                />
+              </div>
+            </div>
+            <span style={{ fontFamily: FONT, fontSize: 10, color: '#9E9590', marginTop: 6, display: 'block' }}>
+              Products in this category inherit these values unless overridden individually.
             </span>
           </div>
 

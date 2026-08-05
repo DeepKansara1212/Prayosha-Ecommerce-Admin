@@ -123,6 +123,13 @@ All admin API calls are prefixed with `/api/v1/...` on that base URL.
 | `/admin/customers` | Protected | Customers |
 | `/admin/reviews` | Protected | Review moderation |
 | `/admin/coupons` | Protected | Coupons |
+| `/admin/astrology/rashis` | Protected | Rashis (fixed reference data, edit-only) |
+| `/admin/astrology/purposes` | Protected | Purposes |
+| `/admin/astrology/rudraksha-types` | Protected | Rudraksha types |
+| `/admin/astrology/rashi-mappings` | Protected | Rashi → Bracelet product mappings |
+| `/admin/astrology/purpose-mappings` | Protected | Purpose → Rudraksha type mappings |
+| `/admin/astrology/rudraksha-mappings` | Protected | Rudraksha type → product mappings |
+| `/admin/astrology/leads` | Protected | Calculator leads (read-only) |
 | `/admin/blogs` | Protected | Blog posts |
 | `/admin/banners` | Protected | Hero banners (homepage carousel) |
 | `/admin/settings` | Protected | Admin settings |
@@ -139,7 +146,7 @@ Protected routes use `ProtectedAdminRoute`: requires a logged-in user with `admi
 
 **Sidebar navigation (in order):**
 
-Dashboard · Products · Categories · Orders · Customers · Reviews · Coupons · **Blogs** · **Banners** · Settings
+Dashboard · Products · Categories · Orders · Customers · Reviews · Coupons · **Rashis · Purposes · Rudraksha Types · Rashi Mappings · Purpose Mappings · Rudraksha Mappings · Calculator Leads** · Blogs · Banners · Settings
 
 ---
 
@@ -215,6 +222,13 @@ Shared client: `src/api/client.ts`.
 | `blogs.api.ts` | `/api/v1/admin/blogs` | `getAdminBlogs`, `createBlog`, `updateBlog`, `deleteBlog` |
 | `heroBanners.api.ts` | `/api/v1/admin/hero-banners` | `getAdminBanners`, `createBanner`, `updateBanner`, `toggleBanner`, `reorderBanners`, `deleteBanner` |
 | `settings.api.ts` | `/api/v1/admin/settings` | `getAdminSettings`, `updateAdminSettings`; `AdminSettings` type includes `freeGiftEnabled`, `whatsappNumber`, `whatsappDefaultMessage` |
+| `rashis.api.ts` | `/api/v1/admin/rashis` | `getRashis`, `createRashi`, `updateRashi`, `deleteRashi` |
+| `purposes.api.ts` | `/api/v1/admin/purposes` | `getPurposes`, `createPurpose`, `updatePurpose`, `deletePurpose` |
+| `rudrakshaTypes.api.ts` | `/api/v1/admin/rudraksha-types` | `getRudrakshaTypes`, `createRudrakshaType`, `updateRudrakshaType`, `deleteRudrakshaType` |
+| `rashiProductMappings.api.ts` | `/api/v1/admin/rashi-product-mappings` | `getRashiProductMappings(rashi?)`, `createRashiProductMapping`, `updateRashiProductMapping`, `deleteRashiProductMapping` |
+| `purposeRudrakshaMappings.api.ts` | `/api/v1/admin/purpose-rudraksha-mappings` | `getPurposeRudrakshaMappings(purpose?)`, `createPurposeRudrakshaMapping`, `updatePurposeRudrakshaMapping`, `deletePurposeRudrakshaMapping` |
+| `rudrakshaProductMappings.api.ts` | `/api/v1/admin/rudraksha-product-mappings` | `getRudrakshaProductMappings(rudrakshaType?)`, `createRudrakshaProductMapping`, `updateRudrakshaProductMapping`, `deleteRudrakshaProductMapping` |
+| `calculatorLeads.api.ts` | `/api/v1/admin/calculator-leads` | `getCalculatorLeads(params)` — paginated, read-only |
 
 Profile and password changes use inline calls: `PATCH /api/v1/auth/me`, `PATCH /api/v1/auth/change-password`.
 
@@ -324,6 +338,26 @@ Six sections, shared create/edit:
 - Table: code (copy), type (Flat ₹ / Percent %), value, min order, usage used/max, valid until, active toggle; expired styling
 - Drawer: code, type radio, value, min order, max usage, valid from/until
 - Optimistic active toggle with revert on error
+
+---
+
+### Astrology calculators (`/admin/astrology/*`)
+
+Reference data and mappings behind the storefront Bracelet and Rudraksha calculators. All follow the real list+drawer CRUD pattern (plain `useState` forms, not React Hook Form — matching Coupons/Categories, not the RHF used in Product/Settings forms).
+
+| Page | Route | Notes |
+|---|---|---|
+| Rashis | `/admin/astrology/rashis` | Fixed 12-row reference data (seeded via backend `npm run seed:astrology`); table shows mapped product count; **edit-only** — no add/delete, the set of 12 Rashis is astronomical fact |
+| Purposes | `/admin/astrology/purposes` | Full CRUD; name + active toggle (optimistic, revert on error); table shows mapped Rudraksha-type count |
+| Rudraksha Types | `/admin/astrology/rudraksha-types` | Full CRUD; name + description; table shows mapped product count |
+| Rashi Mappings | `/admin/astrology/rashi-mappings` | Select a Rashi → add/remove mapped bracelet products with priority (display order) and active toggle |
+| Purpose Mappings | `/admin/astrology/purpose-mappings` | Select a Purpose → add/remove mapped Rudraksha types with priority and active toggle |
+| Rudraksha Mappings | `/admin/astrology/rudraksha-mappings` | Select a Rudraksha type → add/remove mapped products with priority and active toggle |
+| Calculator Leads | `/admin/astrology/leads` | Read-only, paginated, search by name/mobile — everyone who submitted either storefront calculator, with calculator type, purpose (if applicable), and place of birth (`birthLocation.displayName` — a structured location with lat/lng/timezone, resolved via the storefront's Open-Meteo-backed location search, not a plain text field). No Rashi column, by design |
+
+Product pickers on the mapping pages pull from `GET /api/v1/products` (first 48 active products) via the existing `products.api.ts` — no dedicated search-as-you-type picker in v1.
+
+**Seed data**: 12 real Rashis, 7 real Purposes (Health, Relationship & Family, Career & Success, Spirituality, Protection, Money & Business, Study & Knowledge), 28 real Rudraksha types (1–25 Mukhi + Gauri Shankar, Garbh Gauri, Ganesh Mukhi), and 43 client-approved Purpose→Rudraksha-type mappings are seeded by the backend (`npm run seed:astrology`, idempotent). **Rashi→product and Rudraksha-type→product mappings are not seeded** — an admin must wire those up here once real product SKUs are decided.
 
 ---
 
@@ -463,6 +497,13 @@ Admin/
       products.api.ts
       reviews.api.ts
       settings.api.ts           # store settings (free gift toggle)
+      rashis.api.ts
+      purposes.api.ts
+      rudrakshaTypes.api.ts
+      rashiProductMappings.api.ts
+      purposeRudrakshaMappings.api.ts
+      rudrakshaProductMappings.api.ts
+      calculatorLeads.api.ts
     components/
       layout/
         AdminLayout.tsx
@@ -487,6 +528,14 @@ Admin/
         ReviewsPage.tsx
       coupons/
         CouponsPage.tsx
+      astrology/
+        RashisPage.tsx
+        PurposesPage.tsx
+        RudrakshaTypesPage.tsx
+        RashiProductMappingsPage.tsx
+        PurposeRudrakshaMappingsPage.tsx
+        RudrakshaProductMappingsPage.tsx
+        CalculatorLeadsPage.tsx
       blog/
         BlogsPage.tsx
       banners/
@@ -524,6 +573,7 @@ Admin/
 - Double-click delete confirmation pattern on blogs and banners (3s window).
 - Types live next to API functions; import from `*.api.ts` in pages.
 - `ProtectedAdminRoute` enforces `role === 'admin'` only.
+- **Known issue:** `npm run build` (`tsc -b`) currently fails on a `zodResolver` generic-type mismatch in `ProductFormPage.tsx`, unrelated to any specific feature — `npx vite build` alone still succeeds and bundles the app correctly.
 
 ### Recommended workflow
 
@@ -549,6 +599,13 @@ Admin/
 | Customers | ✓ | — | — | — | Search, pagination |
 | Reviews | ✓ | — | — | ✓ | Approve, tabs |
 | Coupons | ✓ | ✓ | ✓ | — | Toggle active, copy code |
+| Rashis | ✓ | — | ✓ | — | Fixed 12 rows, edit-only |
+| Purposes | ✓ | ✓ | ✓ | ✓ | Active toggle, optimistic |
+| Rudraksha types | ✓ | ✓ | ✓ | ✓ | — |
+| Rashi ↔ product mappings | ✓ | ✓ | ✓ | ✓ | Priority + active per row |
+| Purpose ↔ Rudraksha-type mappings | ✓ | ✓ | ✓ | ✓ | Priority + active per row |
+| Rudraksha-type ↔ product mappings | ✓ | ✓ | ✓ | ✓ | Priority + active per row |
+| Calculator leads | ✓ | — | — | — | Read-only, search + pagination |
 | Blogs | ✓ | ✓ | ✓ | ✓ | Section editor, gradients |
 | Hero banners | ✓ | ✓ | ✓ | ✓ | Reorder, toggle, preview |
 | Settings | ✓ | — | ✓ | — | Profile, password, WhatsApp support config |

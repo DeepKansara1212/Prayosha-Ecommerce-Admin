@@ -2,10 +2,18 @@ import client from './client'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
+export interface ProductShipping {
+  weight?: number
+  length?: number
+  breadth?: number
+  height?: number
+}
+
 export interface ProductCategory {
   _id: string
   name: string
   slug: string
+  shipping?: ProductShipping
 }
 
 export interface Product {
@@ -24,7 +32,8 @@ export interface Product {
   badge?: string
   stock: number
   lowStockThreshold: number
-  weight?: number
+  useCategoryShipping: boolean
+  shipping?: ProductShipping
   careInstructions?: string
   metaphysicalProperties?: string
   isFeatured: boolean
@@ -72,7 +81,8 @@ export type ProductPayload = {
   badge?: string
   stock: number
   lowStockThreshold?: number
-  weight?: number
+  useCategoryShipping?: boolean
+  shipping?: ProductShipping
   careInstructions?: string
   metaphysicalProperties?: string
   isFeatured?: boolean

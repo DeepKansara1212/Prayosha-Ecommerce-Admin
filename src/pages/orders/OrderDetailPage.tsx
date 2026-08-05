@@ -139,9 +139,6 @@ function ShippingPanel({ order }: { order: Order }) {
   const qc = useQueryClient()
   const toast = useToast()
 
-  const showCard = ['confirmed', 'processing', 'shipped', 'delivered'].includes(order.status)
-  if (!showCard) return null
-
   const invalidate = () => {
     qc.invalidateQueries({ queryKey: ['admin-order', order._id] })
     qc.invalidateQueries({ queryKey: ['admin-orders'] })
@@ -196,6 +193,9 @@ function ShippingPanel({ order }: { order: Order }) {
   })
 
   const busy = shipMutation.isPending || labelMutation.isPending || syncMutation.isPending || cancelMutation.isPending
+
+  const showCard = ['confirmed', 'processing', 'shipped', 'delivered'].includes(order.status)
+  if (!showCard) return null
 
   const btnPrimary: React.CSSProperties = {
     display: 'inline-flex', alignItems: 'center', gap: 6,

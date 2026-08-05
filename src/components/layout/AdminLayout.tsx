@@ -12,6 +12,10 @@ import {
   LogOut,
   BookOpen,
   GalleryHorizontal,
+  Moon,
+  Target,
+  Link2,
+  Sparkles,
 } from 'lucide-react'
 import { useAdminAuthStore } from '../../store/adminAuthStore'
 import Toaster from '../ui/Toaster'
@@ -24,6 +28,10 @@ const NAV_ITEMS = [
   { label: 'Customers', path: '/admin/customers', icon: Users },
   { label: 'Reviews',   path: '/admin/reviews',   icon: Star },
   { label: 'Coupons',   path: '/admin/coupons',   icon: Ticket },
+  { label: 'Rashis',              path: '/admin/astrology/rashis',           icon: Moon },
+  { label: 'Purposes',            path: '/admin/astrology/purposes',         icon: Target },
+  { label: 'Rashi Mappings',      path: '/admin/astrology/rashi-mappings',   icon: Link2 },
+  { label: 'Calculator Leads',    path: '/admin/astrology/leads',            icon: Sparkles },
   { label: 'Blogs',     path: '/admin/blogs',     icon: BookOpen },
   { label: 'Banners',   path: '/admin/banners',   icon: GalleryHorizontal },
   { label: 'Settings',  path: '/admin/settings',  icon: Settings },
@@ -46,6 +54,10 @@ function getPageTitle(pathname: string): string {
     '/admin/customers':  'Customers',
     '/admin/reviews':    'Reviews',
     '/admin/coupons':    'Coupons',
+    '/admin/astrology/rashis':            'Rashis',
+    '/admin/astrology/purposes':          'Purposes',
+    '/admin/astrology/rashi-mappings':    'Rashi → Bracelet Mappings',
+    '/admin/astrology/leads':             'Calculator Leads',
     '/admin/blogs':      'Blog Posts',
     '/admin/banners':    'Hero Banners',
     '/admin/settings':   'Settings',
