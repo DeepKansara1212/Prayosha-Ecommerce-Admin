@@ -34,8 +34,10 @@ export interface RashiProductMappingPayload {
 
 // ── API calls ─────────────────────────────────────────────────────────────────
 
-export async function getRashiProductMappings(rashi?: string): Promise<RashiProductMapping[]> {
-  const res = await client.get('/api/v1/admin/rashi-product-mappings', { params: rashi ? { rashi } : undefined })
+export async function getRashiProductMappings(
+  params?: { rashi?: string; product?: string },
+): Promise<RashiProductMapping[]> {
+  const res = await client.get('/api/v1/admin/rashi-product-mappings', { params })
   return res.data.data.mappings as RashiProductMapping[]
 }
 

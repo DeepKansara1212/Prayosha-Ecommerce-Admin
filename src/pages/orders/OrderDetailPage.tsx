@@ -9,11 +9,12 @@ import {
   type OrderStatus,
 } from '../../api/orders.api'
 import {
-  pushToShipRocket,
-  generateLabel,
-  syncTracking,
+  createShipment,
+  trackShipment,
   cancelShipment,
+  downloadLabel,
 } from '../../api/shipping.api'
+import { getShippingProviders } from '../../api/shippingProviders.api'
 import { useToast } from '../../store/toastStore'
 
 // ── Constants ─────────────────────────────────────────────────────────────────
@@ -139,25 +140,53 @@ function ShippingPanel({ order }: { order: Order }) {
   const qc = useQueryClient()
   const toast = useToast()
 
+  const { data: providers } = useQuery({
+    queryKey: ['admin-shipping-providers'],
+    queryFn: getShippingProviders,
+  })
+  const activeProviders = (providers ?? []).filter(p => p.isActive)
+
+  const [selectedProvider, setSelectedProvider] = useState('')
+  useEffect(() => {
+    if (selectedProvider || activeProviders.length === 0) return
+    const def = activeProviders.find(p => p.isDefault) ?? activeProviders[0]
+    setSelectedProvider(def.slug)
+  }, [activeProviders, selectedProvider])
+
   const invalidate = () => {
     qc.invalidateQueries({ queryKey: ['admin-order', order._id] })
     qc.invalidateQueries({ queryKey: ['admin-orders'] })
   }
 
-  const shipMutation = useMutation({
-    mutationFn: () => pushToShipRocket(order._id),
+  const providerLabel = (slug?: string) =>
+    (providers ?? []).find(p => p.slug === slug)?.name ?? slug ?? ''
+
+  const createMutation = useMutation({
+    mutationFn: () => createShipment(order._id, selectedProvider),
     onSuccess: () => {
-      toast.success('Order pushed to ShipRocket')
+      toast.success(`Shipment created using ${providerLabel(selectedProvider)}.`)
       invalidate()
     },
     onError: (err: unknown) => {
       const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message
-      toast.error(msg || 'Failed to push order to ShipRocket')
+      toast.error(msg || 'Failed to create shipment')
+    },
+  })
+
+  const trackMutation = useMutation({
+    mutationFn: () => trackShipment(order._id),
+    onSuccess: () => {
+      toast.success('Tracking synced')
+      invalidate()
+    },
+    onError: (err: unknown) => {
+      const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message
+      toast.error(msg || 'Failed to track shipment')
     },
   })
 
   const labelMutation = useMutation({
-    mutationFn: () => generateLabel(order._id),
+    mutationFn: () => downloadLabel(order._id),
     onSuccess: () => {
       toast.success('Shipping label generated')
       invalidate()
@@ -168,22 +197,10 @@ function ShippingPanel({ order }: { order: Order }) {
     },
   })
 
-  const syncMutation = useMutation({
-    mutationFn: () => syncTracking(order._id),
-    onSuccess: () => {
-      toast.success('Tracking synced')
-      invalidate()
-    },
-    onError: (err: unknown) => {
-      const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message
-      toast.error(msg || 'Failed to sync tracking')
-    },
-  })
-
   const cancelMutation = useMutation({
     mutationFn: () => cancelShipment(order._id),
     onSuccess: () => {
-      toast.success('Shipment cancelled')
+      toast.success(`Shipment cancelled using ${providerLabel(order.shippingProvider)}.`)
       invalidate()
     },
     onError: (err: unknown) => {
@@ -192,7 +209,7 @@ function ShippingPanel({ order }: { order: Order }) {
     },
   })
 
-  const busy = shipMutation.isPending || labelMutation.isPending || syncMutation.isPending || cancelMutation.isPending
+  const busy = createMutation.isPending || trackMutation.isPending || labelMutation.isPending || cancelMutation.isPending
 
   const showCard = ['confirmed', 'processing', 'shipped', 'delivered'].includes(order.status)
   if (!showCard) return null
@@ -212,119 +229,140 @@ function ShippingPanel({ order }: { order: Order }) {
     ...btnPrimary, background: 'transparent', color: '#A85050', border: '1px solid #E2DAC8',
   }
 
-  const statusLabel = order.awbCode
-    ? (order.shiprocketStatus || order.aftershipStatus || 'In Transit')
-    : order.shiprocketOrderId
-      ? 'Awaiting AWB assignment'
-      : 'Not yet dispatched'
+  if (!order.shippingProvider) {
+    if (activeProviders.length === 0) {
+      return (
+        <SectionCard title="Shipping & Fulfillment" icon={<Truck size={14} />}>
+          <p style={{ fontFamily: FONT, fontSize: 13, color: '#6B6057', margin: 0 }}>
+            No active shipping providers — configure one in{' '}
+            <a href="/admin/shipping-providers" style={{ color: '#7B5EA7' }}>Settings → Shipping</a>.
+          </p>
+        </SectionCard>
+      )
+    }
+
+    return (
+      <SectionCard title="Shipping & Fulfillment" icon={<Truck size={14} />}>
+        <p style={{ fontFamily: FONT, fontSize: 13, color: '#6B6057', margin: '0 0 12px' }}>
+          Status: Not yet dispatched
+        </p>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <select
+            value={selectedProvider}
+            onChange={e => setSelectedProvider(e.target.value)}
+            disabled={busy}
+            style={{
+              flex: 1, padding: '8px 10px', background: '#F5F0E8', border: '1px solid #E2DAC8',
+              borderRadius: 4, fontFamily: FONT, fontSize: 12, color: '#1C1A17', outline: 'none',
+            }}
+          >
+            {activeProviders.map(p => (
+              <option key={p.slug} value={p.slug}>{p.name}</option>
+            ))}
+          </select>
+          <button style={btnPrimary} disabled={busy} onClick={() => createMutation.mutate()}>
+            {createMutation.isPending && <Loader2 size={13} style={{ animation: 'spin 1s linear infinite' }} />}
+            Create Shipment
+          </button>
+        </div>
+      </SectionCard>
+    )
+  }
 
   return (
     <SectionCard title="Shipping & Fulfillment" icon={<Truck size={14} />}>
-      {!order.shiprocketOrderId ? (
-        <>
-          <p style={{ fontFamily: FONT, fontSize: 13, color: '#6B6057', margin: '0 0 16px' }}>
-            Status: Not yet dispatched
-          </p>
-          <button
-            style={btnPrimary}
-            disabled={busy}
-            onClick={() => shipMutation.mutate()}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 16 }}>
+        <div style={{ fontFamily: FONT, fontSize: 12, color: '#6B6057' }}>
+          Provider: <span style={{ color: '#1C1A17', fontWeight: 500 }}>{providerLabel(order.shippingProvider)}</span>
+        </div>
+        <div style={{ fontFamily: FONT, fontSize: 12, color: '#6B6057' }}>
+          Shipment ID: <span style={{ color: '#1C1A17', fontWeight: 500 }}>{order.shipmentId}</span>
+        </div>
+        {order.awbNumber && (
+          <div style={{ fontFamily: FONT, fontSize: 12, color: '#6B6057' }}>
+            Tracking Number: <span style={{ color: '#1C1A17', fontWeight: 500 }}>{order.awbNumber}</span>
+          </div>
+        )}
+        {order.carrier && (
+          <div style={{ fontFamily: FONT, fontSize: 12, color: '#6B6057' }}>
+            Carrier: <span style={{ color: '#1C1A17', fontWeight: 500 }}>{order.carrier}</span>
+          </div>
+        )}
+        <div style={{ fontFamily: FONT, fontSize: 12, color: '#6B6057' }}>
+          Status: <span style={{ color: '#7B5EA7', fontWeight: 500 }}>{order.shippingStatus || 'Awaiting update'}</span>
+        </div>
+        {order.shipmentCreatedAt && (
+          <div style={{ fontFamily: FONT, fontSize: 12, color: '#6B6057' }}>
+            Shipment Date: <span style={{ color: '#1C1A17', fontWeight: 500 }}>{fmtCheckpointDate(order.shipmentCreatedAt)}</span>
+          </div>
+        )}
+        {order.labelUrl && (
+          <a
+            href={order.labelUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              display: 'inline-flex', alignItems: 'center', gap: 4,
+              fontFamily: FONT, fontSize: 12, color: '#7B5EA7', textDecoration: 'none',
+            }}
           >
-            {shipMutation.isPending && <Loader2 size={13} style={{ animation: 'spin 1s linear infinite' }} />}
-            Push to ShipRocket
-          </button>
-        </>
-      ) : (
-        <>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 16 }}>
-            <div style={{ fontFamily: FONT, fontSize: 12, color: '#6B6057' }}>
-              ShipRocket Order ID:{' '}
-              <span style={{ color: '#1C1A17', fontWeight: 500 }}>{order.shiprocketOrderId}</span>
-            </div>
-            {order.awbCode && (
-              <>
-                <div style={{ fontFamily: FONT, fontSize: 12, color: '#6B6057' }}>
-                  AWB: <span style={{ color: '#1C1A17', fontWeight: 500 }}>{order.awbCode}</span>
-                </div>
-                {order.courierName && (
-                  <div style={{ fontFamily: FONT, fontSize: 12, color: '#6B6057' }}>
-                    Courier: <span style={{ color: '#1C1A17', fontWeight: 500 }}>{order.courierName}</span>
-                  </div>
-                )}
-              </>
-            )}
-            <div style={{ fontFamily: FONT, fontSize: 12, color: '#6B6057' }}>
-              Status: <span style={{ color: '#7B5EA7', fontWeight: 500 }}>{statusLabel}</span>
-            </div>
-            {order.labelUrl && (
-              <a
-                href={order.labelUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{
-                  display: 'inline-flex', alignItems: 'center', gap: 4,
-                  fontFamily: FONT, fontSize: 12, color: '#7B5EA7', textDecoration: 'none',
-                }}
-              >
-                View Label <ExternalLink size={12} />
-              </a>
-            )}
-          </div>
+            View Label <ExternalLink size={12} />
+          </a>
+        )}
+      </div>
 
-          {order.trackingCheckpoints && order.trackingCheckpoints.length > 0 && (
-            <div style={{ marginBottom: 16 }}>
-              <p style={{
-                fontFamily: FONT, fontSize: 11, fontWeight: 600, textTransform: 'uppercase',
-                letterSpacing: '0.07em', color: '#9E9590', margin: '0 0 12px',
-              }}>
-                Tracking Timeline
-              </p>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                {[...order.trackingCheckpoints].reverse().map((cp, i) => (
-                  <div key={i} style={{ display: 'flex', gap: 10 }}>
-                    <div style={{
-                      width: 8, height: 8, borderRadius: '50%', background: '#7B5EA7',
-                      marginTop: 4, flexShrink: 0,
-                    }} />
-                    <div>
-                      <div style={{ fontFamily: FONT, fontSize: 11, color: '#9E9590' }}>
-                        {fmtCheckpointDate(cp.time)}
-                      </div>
-                      <div style={{ fontFamily: FONT, fontSize: 12, fontWeight: 500, color: '#1C1A17' }}>
-                        {cp.message}
-                      </div>
-                      {cp.location && (
-                        <div style={{ fontFamily: FONT, fontSize: 11, color: '#6B6057' }}>
-                          {cp.location}
-                        </div>
-                      )}
+      {order.trackingCheckpoints && order.trackingCheckpoints.length > 0 && (
+        <div style={{ marginBottom: 16 }}>
+          <p style={{
+            fontFamily: FONT, fontSize: 11, fontWeight: 600, textTransform: 'uppercase',
+            letterSpacing: '0.07em', color: '#9E9590', margin: '0 0 12px',
+          }}>
+            Tracking Timeline
+          </p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            {[...order.trackingCheckpoints].reverse().map((cp, i) => (
+              <div key={i} style={{ display: 'flex', gap: 10 }}>
+                <div style={{
+                  width: 8, height: 8, borderRadius: '50%', background: '#7B5EA7',
+                  marginTop: 4, flexShrink: 0,
+                }} />
+                <div>
+                  <div style={{ fontFamily: FONT, fontSize: 11, color: '#9E9590' }}>
+                    {fmtCheckpointDate(cp.time)}
+                  </div>
+                  <div style={{ fontFamily: FONT, fontSize: 12, fontWeight: 500, color: '#1C1A17' }}>
+                    {cp.message}
+                  </div>
+                  {cp.location && (
+                    <div style={{ fontFamily: FONT, fontSize: 11, color: '#6B6057' }}>
+                      {cp.location}
                     </div>
-                  </div>
-                ))}
+                  )}
+                </div>
               </div>
-            </div>
-          )}
-
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-            {!order.awbCode && (
-              <button style={btnPrimary} disabled={busy} onClick={() => labelMutation.mutate()}>
-                {labelMutation.isPending && <Loader2 size={13} style={{ animation: 'spin 1s linear infinite' }} />}
-                Generate Label
-              </button>
-            )}
-            <button style={btnSecondary} disabled={busy} onClick={() => syncMutation.mutate()}>
-              {syncMutation.isPending && <Loader2 size={13} style={{ animation: 'spin 1s linear infinite' }} />}
-              Sync Tracking
-            </button>
-            {order.status !== 'delivered' && (
-              <button style={btnDanger} disabled={busy} onClick={() => cancelMutation.mutate()}>
-                {cancelMutation.isPending && <Loader2 size={13} style={{ animation: 'spin 1s linear infinite' }} />}
-                Cancel Shipment
-              </button>
-            )}
+            ))}
           </div>
-        </>
+        </div>
       )}
+
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+        {!order.labelUrl && (
+          <button style={btnPrimary} disabled={busy} onClick={() => labelMutation.mutate()}>
+            {labelMutation.isPending && <Loader2 size={13} style={{ animation: 'spin 1s linear infinite' }} />}
+            Download Label
+          </button>
+        )}
+        <button style={btnSecondary} disabled={busy} onClick={() => trackMutation.mutate()}>
+          {trackMutation.isPending && <Loader2 size={13} style={{ animation: 'spin 1s linear infinite' }} />}
+          Track Shipment
+        </button>
+        {order.status !== 'delivered' && (
+          <button style={btnDanger} disabled={busy} onClick={() => cancelMutation.mutate()}>
+            {cancelMutation.isPending && <Loader2 size={13} style={{ animation: 'spin 1s linear infinite' }} />}
+            Cancel Shipment
+          </button>
+        )}
+      </div>
     </SectionCard>
   )
 }

@@ -88,6 +88,8 @@ export type ProductPayload = {
   isFeatured?: boolean
   isActive?: boolean
   hasFreeGift?: boolean
+  rashiIds?: string[]
+  purposeIds?: string[]
 }
 
 // ── API calls ─────────────────────────────────────────────────────────────────

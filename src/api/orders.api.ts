@@ -70,14 +70,14 @@ export interface Order {
   razorpayPaymentId?: string
   status: OrderStatus
   trackingNumber?: string
-  shiprocketOrderId?: string
-  shiprocketShipmentId?: string
-  awbCode?: string
-  courierName?: string
+  shippingProvider?: string
+  shipmentId?: string
+  awbNumber?: string
+  carrier?: string
+  shippingStatus?: string
   labelUrl?: string
-  shiprocketStatus?: string
-  aftershipTrackingId?: string
-  aftershipStatus?: string
+  invoiceUrl?: string
+  shipmentCreatedAt?: string
   trackingUrl?: string
   trackingCheckpoints?: TrackingCheckpoint[]
   statusHistory: StatusHistoryEntry[]

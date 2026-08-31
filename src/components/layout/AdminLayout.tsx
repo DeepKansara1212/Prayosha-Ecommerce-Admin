@@ -16,6 +16,7 @@ import {
   Target,
   Link2,
   Sparkles,
+  Truck,
 } from 'lucide-react'
 import { useAdminAuthStore } from '../../store/adminAuthStore'
 import Toaster from '../ui/Toaster'
@@ -34,6 +35,7 @@ const NAV_ITEMS = [
   { label: 'Calculator Leads',    path: '/admin/astrology/leads',            icon: Sparkles },
   { label: 'Blogs',     path: '/admin/blogs',     icon: BookOpen },
   { label: 'Banners',   path: '/admin/banners',   icon: GalleryHorizontal },
+  { label: 'Shipping',  path: '/admin/shipping-providers', icon: Truck },
   { label: 'Settings',  path: '/admin/settings',  icon: Settings },
 ] as const
 
@@ -60,6 +62,7 @@ function getPageTitle(pathname: string): string {
     '/admin/astrology/leads':             'Calculator Leads',
     '/admin/blogs':      'Blog Posts',
     '/admin/banners':    'Hero Banners',
+    '/admin/shipping-providers': 'Shipping Providers',
     '/admin/settings':   'Settings',
   }
   return map[pathname] ?? 'Admin'
@@ -107,18 +110,12 @@ export default function AdminLayout() {
             gap: 2,
           }}
         >
-          <span
-            style={{
-              fontFamily: "'Cormorant Garamond', serif",
-              fontSize: 18,
-              fontWeight: 500,
-              letterSpacing: '0.08em',
-              color: '#1C1A17',
-            }}
-          >
-            Prayosha Crystal
-          </span>
-          <span
+          <img
+            src="/prayosha-logo.png"
+            alt="Prayosha Crystals"
+            style={{ height: 56, width: 'auto', objectFit: 'contain' }}
+          />
+          {/* <span
             style={{
               fontFamily: "'Jost', sans-serif",
               fontSize: 10,
@@ -128,7 +125,7 @@ export default function AdminLayout() {
             }}
           >
             Admin Panel
-          </span>
+          </span> */}
         </div>
 
         {/* Nav */}

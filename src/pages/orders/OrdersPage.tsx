@@ -558,7 +558,7 @@ export default function OrdersPage() {
                         disabled={updatingId !== null && updatingId !== order._id}
                         isLoading={updatingId === order._id}
                       />
-                      {order.awbCode && (
+                      {order.awbNumber && (
                         <span style={{
                           display: 'inline-block', padding: '2px 8px', borderRadius: 10,
                           background: '#F3F4F6', color: '#6B6057',
@@ -567,7 +567,7 @@ export default function OrdersPage() {
                           📦 Tracking Available
                         </span>
                       )}
-                      {order.aftershipStatus === 'Delivered' && (
+                      {order.shippingStatus === 'Delivered' && (
                         <span style={{
                           display: 'inline-block', padding: '2px 8px', borderRadius: 10,
                           background: '#ECFDF5', color: '#5A8A6A',

@@ -8,37 +8,35 @@ export interface TrackingCheckpoint {
 }
 
 export interface TrackingInfo {
-  awbCode?: string
-  courierName?: string
-  shiprocketStatus?: string
-  aftershipStatus?: string
+  status: string
+  trackingNumber?: string
+  carrier?: string
   trackingUrl?: string
-  labelUrl?: string
-  trackingCheckpoints?: TrackingCheckpoint[]
-  status?: string
+  estimatedDelivery?: string
+  checkpoints: TrackingCheckpoint[]
 }
 
-export async function pushToShipRocket(orderId: string): Promise<Order> {
-  const res = await client.post(`/api/v1/admin/orders/${orderId}/ship`)
+export async function createShipment(orderId: string, provider: string): Promise<Order> {
+  const res = await client.post(`/api/v1/admin/orders/${orderId}/shipments`, { provider })
   return res.data.data as Order
 }
 
-export async function generateLabel(orderId: string): Promise<{ labelUrl: string }> {
-  const res = await client.post(`/api/v1/admin/orders/${orderId}/generate-label`)
-  return res.data.data as { labelUrl: string }
-}
-
-export async function trackOrder(orderId: string): Promise<TrackingInfo> {
-  const res = await client.get(`/api/v1/admin/orders/${orderId}/track`)
+export async function trackShipment(orderId: string): Promise<TrackingInfo> {
+  const res = await client.get(`/api/v1/admin/orders/${orderId}/shipments/track`)
   return res.data.data as TrackingInfo
 }
 
-export async function syncTracking(orderId: string): Promise<Order> {
-  const res = await client.post(`/api/v1/admin/orders/${orderId}/sync-tracking`)
+export async function cancelShipment(orderId: string): Promise<Order> {
+  const res = await client.post(`/api/v1/admin/orders/${orderId}/shipments/cancel`)
   return res.data.data as Order
 }
 
-export async function cancelShipment(orderId: string): Promise<Order> {
-  const res = await client.post(`/api/v1/admin/orders/${orderId}/cancel-shipment`)
-  return res.data.data as Order
+export async function downloadLabel(orderId: string): Promise<{ labelUrl: string }> {
+  const res = await client.post(`/api/v1/admin/orders/${orderId}/shipments/label`)
+  return res.data.data as { labelUrl: string }
+}
+
+export async function generateInvoice(orderId: string): Promise<{ invoiceUrl: string }> {
+  const res = await client.post(`/api/v1/admin/orders/${orderId}/shipments/invoice`)
+  return res.data.data as { invoiceUrl: string }
 }

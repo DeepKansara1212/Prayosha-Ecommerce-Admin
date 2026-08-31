@@ -127,7 +127,7 @@ export default function RashiProductMappingsPage() {
 
   const { data: mappings, isLoading } = useQuery({
     queryKey: ['admin-rashi-mappings', selectedRashi],
-    queryFn: () => getRashiProductMappings(selectedRashi),
+    queryFn: () => getRashiProductMappings({ rashi: selectedRashi }),
     enabled: !!selectedRashi,
   })
 

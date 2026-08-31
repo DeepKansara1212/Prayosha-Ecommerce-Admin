@@ -3,29 +3,18 @@ import { useNavigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { ArrowLeft } from 'lucide-react'
 import client from '../../api/client'
 import { useAdminAuthStore } from '../../store/adminAuthStore'
 import type { Admin } from '../../store/adminAuthStore'
 
 // ── Schemas ───────────────────────────────────────────────────────────────────
 
-const phoneSchema = z.object({
-  phone: z
-    .string()
-    .regex(/^\+?[0-9]{10,15}$/, 'Enter a valid phone number'),
-})
-
-const verifySchema = z.object({
-  otp: z
-    .string()
-    .length(6, 'OTP must be exactly 6 digits')
-    .regex(/^\d+$/, 'OTP must contain only digits'),
+const loginSchema = z.object({
+  email: z.string().email('Enter a valid email address'),
   password: z.string().min(1, 'Password is required'),
 })
 
-type PhoneFormData  = z.infer<typeof phoneSchema>
-type VerifyFormData = z.infer<typeof verifySchema>
+type LoginFormData = z.infer<typeof loginSchema>
 
 // ── Shared styles ─────────────────────────────────────────────────────────────
 
@@ -65,89 +54,20 @@ export default function AdminLoginPage() {
   const navigate = useNavigate()
   const login    = useAdminAuthStore(state => state.login)
 
-  const [step,        setStep]        = useState<'phone' | 'verify'>('phone')
-  const [phone,       setPhone]       = useState('')
   const [serverError, setServerError] = useState<string | null>(null)
-  const [otpSent,     setOtpSent]     = useState(false)
+  const form = useForm<LoginFormData>({ resolver: zodResolver(loginSchema) })
 
-  // ── Step 1: phone form ──────────────────────────────────────────────────────
-
-  const phoneForm = useForm<PhoneFormData>({
-    resolver: zodResolver(phoneSchema),
-  })
-
-  const sendOtp = async (data: PhoneFormData) => {
+  const loginWithEmail = async (data: LoginFormData) => {
     setServerError(null)
     try {
-      await client.post('/api/v1/auth/send-otp', {
-        phone:     data.phone,
-        purpose:   'login',
-        adminOnly: true,
-      })
-      setPhone(data.phone)
-      setOtpSent(true)
-      setStep('verify')
-    } catch (err: unknown) {
-      const e = err as { response?: { status?: number; data?: { message?: string } } }
-      if (e.response?.status === 403) {
-        setServerError('This phone number is not registered as an admin account.')
-      } else {
-        setServerError(e.response?.data?.message ?? 'Failed to send OTP. Try again.')
-      }
-    }
-  }
-
-  // ── Step 2: OTP + password form ─────────────────────────────────────────────
-
-  const verifyForm = useForm<VerifyFormData>({
-    resolver: zodResolver(verifySchema),
-  })
-
-  const verifyOtp = async (data: VerifyFormData) => {
-    setServerError(null)
-    try {
-      const res = await client.post('/api/v1/auth/verify-otp', {
-        phone,
-        otp:        data.otp,
-        password:   data.password,
-        adminLogin: true,
-      })
+      const res = await client.post('/api/v1/auth/email-login', data)
       const { user, accessToken } = res.data.data as { user: Admin; accessToken: string }
       login(user, accessToken)
       navigate('/admin/dashboard')
     } catch (err: unknown) {
       const e = err as { response?: { status?: number; data?: { message?: string } } }
-      if (e.response?.status === 403) {
-        setServerError('This account does not have admin access.')
-      } else {
-        setServerError(e.response?.data?.message ?? 'Verification failed. Try again.')
-      }
+      setServerError(e.response?.data?.message ?? 'Invalid email or password.')
     }
-  }
-
-  const handleResend = async () => {
-    setServerError(null)
-    try {
-      await client.post('/api/v1/auth/send-otp', {
-        phone,
-        purpose:   'login',
-        adminOnly: true,
-      })
-      setOtpSent(true)
-    } catch (err: unknown) {
-      const e = err as { response?: { status?: number; data?: { message?: string } } }
-      if (e.response?.status === 403) {
-        setServerError('This phone number is not registered as an admin account.')
-      } else {
-        setServerError(e.response?.data?.message ?? 'Failed to resend OTP. Try again.')
-      }
-    }
-  }
-
-  const handleBack = () => {
-    setStep('phone')
-    setServerError(null)
-    verifyForm.reset()
   }
 
   // ── Render ──────────────────────────────────────────────────────────────────
@@ -175,17 +95,11 @@ export default function AdminLoginPage() {
       >
         {/* Logo */}
         <div style={{ textAlign: 'center', marginBottom: 36 }}>
-          <div
-            style={{
-              fontFamily: "'Cormorant Garamond', serif",
-              fontSize: 24,
-              fontWeight: 500,
-              letterSpacing: '0.08em',
-              color: '#1C1A17',
-            }}
-          >
-            Prayosha Crystal
-          </div>
+          <img
+            src="/prayosha-logo.png"
+            alt="Prayosha Crystals"
+            style={{ height: 60, width: 'auto', objectFit: 'contain', margin: '0 auto' }}
+          />
           <div
             style={{
               fontFamily: "'Jost', sans-serif",
@@ -200,155 +114,25 @@ export default function AdminLoginPage() {
           </div>
         </div>
 
-        {/* ── Step 1: Phone ── */}
-        {step === 'phone' && (
-          <form onSubmit={phoneForm.handleSubmit(sendOtp)} noValidate>
-            <div style={{ marginBottom: 24 }}>
-              <label style={labelStyle}>Phone Number</label>
-              <input
-                {...phoneForm.register('phone')}
-                type="tel"
-                placeholder="e.g. 9876543210"
-                className="admin-input"
-                style={fieldStyle}
-                autoComplete="tel"
-              />
-              {phoneForm.formState.errors.phone && (
-                <p style={errorStyle}>{phoneForm.formState.errors.phone.message}</p>
-              )}
-            </div>
+        <form onSubmit={form.handleSubmit(loginWithEmail)} noValidate>
+          <div style={{ marginBottom: 16 }}>
+            <label style={labelStyle}>Email Address</label>
+            <input {...form.register('email')} type="email" placeholder="admin@example.com" className="admin-input" style={fieldStyle} autoComplete="email" />
+            {form.formState.errors.email && <p style={errorStyle}>{form.formState.errors.email.message}</p>}
+          </div>
 
-            {serverError && <ErrorBanner message={serverError} />}
+          <div style={{ marginBottom: 24 }}>
+            <label style={labelStyle}>Password</label>
+            <input {...form.register('password')} type="password" placeholder="Your password" className="admin-input" style={fieldStyle} autoComplete="current-password" />
+            {form.formState.errors.password && <p style={errorStyle}>{form.formState.errors.password.message}</p>}
+          </div>
 
-            <button
-              type="submit"
-              disabled={phoneForm.formState.isSubmitting}
-              style={submitButtonStyle(phoneForm.formState.isSubmitting)}
-            >
-              {phoneForm.formState.isSubmitting ? 'Sending OTP…' : 'Send OTP'}
-            </button>
-          </form>
-        )}
+          {serverError && <ErrorBanner message={serverError} />}
 
-        {/* ── Step 2: OTP + Password ── */}
-        {step === 'verify' && (
-          <form onSubmit={verifyForm.handleSubmit(verifyOtp)} noValidate>
-            {/* Phone display */}
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                marginBottom: 20,
-                padding: '8px 12px',
-                background: '#F5F0E8',
-                border: '1px solid #E2DAC8',
-                borderRadius: 2,
-              }}
-            >
-              <span style={{ fontFamily: "'Jost', sans-serif", fontSize: 13, color: '#1C1A17' }}>
-                {phone}
-              </span>
-              <button
-                type="button"
-                onClick={handleBack}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 4,
-                  fontFamily: "'Jost', sans-serif",
-                  fontSize: 11,
-                  color: '#7B5EA7',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.06em',
-                  padding: 0,
-                }}
-              >
-                <ArrowLeft size={12} /> Change
-              </button>
-            </div>
-
-            {/* OTP hint */}
-            {otpSent && (
-              <p
-                style={{
-                  fontFamily: "'Jost', sans-serif",
-                  fontSize: 12,
-                  color: '#6B6057',
-                  marginBottom: 20,
-                  lineHeight: 1.5,
-                }}
-              >
-                OTP sent to your phone. Enter it below along with your password.
-              </p>
-            )}
-
-            <div style={{ marginBottom: 16 }}>
-              <label style={labelStyle}>OTP (6 digits)</label>
-              <input
-                {...verifyForm.register('otp')}
-                type="text"
-                inputMode="numeric"
-                maxLength={6}
-                placeholder="——————"
-                className="admin-input"
-                style={{ ...fieldStyle, letterSpacing: '0.3em', textAlign: 'center' }}
-                autoComplete="one-time-code"
-              />
-              {verifyForm.formState.errors.otp && (
-                <p style={errorStyle}>{verifyForm.formState.errors.otp.message}</p>
-              )}
-            </div>
-
-            <div style={{ marginBottom: 24 }}>
-              <label style={labelStyle}>Password</label>
-              <input
-                {...verifyForm.register('password')}
-                type="password"
-                className="admin-input"
-                style={fieldStyle}
-                autoComplete="current-password"
-              />
-              {verifyForm.formState.errors.password && (
-                <p style={errorStyle}>{verifyForm.formState.errors.password.message}</p>
-              )}
-            </div>
-
-            {serverError && <ErrorBanner message={serverError} />}
-
-            <button
-              type="submit"
-              disabled={verifyForm.formState.isSubmitting}
-              style={submitButtonStyle(verifyForm.formState.isSubmitting)}
-            >
-              {verifyForm.formState.isSubmitting ? 'Signing in…' : 'Sign In'}
-            </button>
-
-            <button
-              type="button"
-              onClick={handleResend}
-              style={{
-                display: 'block',
-                width: '100%',
-                marginTop: 12,
-                background: 'none',
-                border: 'none',
-                cursor: 'pointer',
-                fontFamily: "'Jost', sans-serif",
-                fontSize: 11,
-                textTransform: 'uppercase',
-                letterSpacing: '0.08em',
-                color: '#9E9590',
-                padding: '8px 0',
-              }}
-            >
-              Resend OTP
-            </button>
-          </form>
-        )}
+          <button type="submit" disabled={form.formState.isSubmitting} style={submitButtonStyle(form.formState.isSubmitting)}>
+            {form.formState.isSubmitting ? 'Signing in…' : 'Sign In'}
+          </button>
+        </form>
       </div>
     </div>
   )

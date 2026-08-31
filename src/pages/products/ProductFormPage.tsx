@@ -13,6 +13,10 @@ import {
   type ProductPayload,
 } from '../../api/products.api'
 import { getCategories } from '../../api/categories.api'
+import { getRashis } from '../../api/rashis.api'
+import { getPurposes } from '../../api/purposes.api'
+import { getRashiProductMappings } from '../../api/rashiProductMappings.api'
+import { getPurposeProductMappings } from '../../api/purposeProductMappings.api'
 
 // ── Schema ────────────────────────────────────────────────────────────────────
 
@@ -37,6 +41,8 @@ const schema = z.object({
   category:               z.string().min(1, 'Category is required'),
   tags:                   z.array(z.string()),
   chakra:                 z.string(),
+  rashiIds:               z.array(z.string()),
+  purposeIds:             z.array(z.string()),
   badge:                  z.string(),
   isFeatured:             z.boolean(),
   isActive:               z.boolean(),
@@ -174,6 +180,79 @@ function Toggle({ checked, onChange }: { checked: boolean; onChange: () => void 
   )
 }
 
+// ── Multi-select chips (pick from a fixed list, e.g. Rashi/Purpose) ────────────
+
+function MultiSelectChips({
+  options,
+  selected = [],
+  onChange,
+  placeholder,
+}: {
+  options: { id: string; label: string }[]
+  selected?: string[]
+  onChange: (ids: string[]) => void
+  placeholder: string
+}) {
+  const available = options.filter(o => !selected.includes(o.id))
+  const labelFor = (id: string) => options.find(o => o.id === id)?.label ?? id
+
+  return (
+    <div>
+      <select
+        value=""
+        onChange={e => {
+          if (e.target.value) onChange([...selected, e.target.value])
+        }}
+        className="admin-input"
+        style={{ ...INPUT, appearance: 'auto', cursor: 'pointer' }}
+      >
+        <option value="">{placeholder}</option>
+        {available.map(o => (
+          <option key={o.id} value={o.id}>{o.label}</option>
+        ))}
+      </select>
+      {selected.length > 0 && (
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 8 }}>
+          {selected.map(id => (
+            <span
+              key={id}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 4,
+                padding: '3px 8px',
+                background: '#EDE8DC',
+                border: '1px solid #E2DAC8',
+                borderRadius: 2,
+                fontFamily: FONT,
+                fontSize: 11,
+                color: '#1C1A17',
+              }}
+            >
+              {labelFor(id)}
+              <button
+                type="button"
+                onClick={() => onChange(selected.filter(s => s !== id))}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  padding: 0,
+                  color: '#9E9590',
+                  display: 'flex',
+                  alignItems: 'center',
+                }}
+              >
+                <X size={10} />
+              </button>
+            </span>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
 // ── Toast ──────────────────────────────────────────────────────────────────────
 
 function Toast({ type, message }: { type: 'success' | 'error'; message: string }) {
@@ -287,6 +366,17 @@ export default function ProductFormPage() {
 
   // ── Form ───────────────────────────────────────────────────────────────────
 
+  const form = useForm({
+    resolver: zodResolver(schema),
+    defaultValues: {
+      name: '', slug: '', sku: '', shortDescription: '', description: '',
+      careInstructions: '', metaphysicalProperties: '',
+      price: 0, comparePrice: '', costPrice: '', stock: 0, lowStockThreshold: 5,
+      useCategoryShipping: true, shippingWeight: '', shippingLength: '', shippingBreadth: '', shippingHeight: '',
+      category: '', tags: [], chakra: '', rashiIds: [], purposeIds: [], badge: '', isFeatured: false, isActive: true, hasFreeGift: false,
+    },
+  })
+
   const {
     register,
     handleSubmit,
@@ -294,21 +384,14 @@ export default function ProductFormPage() {
     setValue,
     watch,
     formState: { errors, isSubmitting },
-  } = useForm<FormValues>({
-    resolver: zodResolver(schema),
-    defaultValues: {
-      name: '', slug: '', sku: '', shortDescription: '', description: '',
-      careInstructions: '', metaphysicalProperties: '',
-      price: 0, comparePrice: '', costPrice: '', stock: 0, lowStockThreshold: 5,
-      useCategoryShipping: true, shippingWeight: '', shippingLength: '', shippingBreadth: '', shippingHeight: '',
-      category: '', tags: [], chakra: '', badge: '', isFeatured: false, isActive: true, hasFreeGift: false,
-    },
-  })
+  } = form
 
   const watchName       = watch('name')
   const watchSlug       = watch('slug')
   const watchBadge      = watch('badge')
   const watchTags       = watch('tags')
+  const watchRashiIds   = watch('rashiIds')
+  const watchPurposeIds = watch('purposeIds')
   const watchFeatured   = watch('isFeatured')
   const watchActive     = watch('isActive')
   const watchHasFreeGift = watch('hasFreeGift')
@@ -355,6 +438,45 @@ export default function ProductFormPage() {
     staleTime: 5 * 60_000,
   })
 
+  const { data: rashis } = useQuery({
+    queryKey: ['admin-rashis'],
+    queryFn: getRashis,
+    staleTime: 5 * 60_000,
+  })
+
+  const { data: purposes } = useQuery({
+    queryKey: ['admin-purposes'],
+    queryFn: getPurposes,
+    staleTime: 5 * 60_000,
+  })
+
+  // Rashi/Purpose selections live in separate mapping collections, not on the
+  // product itself — fetch this product's current mappings separately so the
+  // form can pre-populate them when editing.
+  const { data: existingRashiMappings } = useQuery({
+    queryKey: ['rashi-mappings-for-product', product?._id],
+    queryFn: () => getRashiProductMappings({ product: product!._id }),
+    enabled: isEditing && !!product,
+  })
+
+  const { data: existingPurposeMappings } = useQuery({
+    queryKey: ['purpose-mappings-for-product', product?._id],
+    queryFn: () => getPurposeProductMappings({ product: product!._id }),
+    enabled: isEditing && !!product,
+  })
+
+  useEffect(() => {
+    if (existingRashiMappings) {
+      setValue('rashiIds', existingRashiMappings.map(m => m.rashi._id))
+    }
+  }, [existingRashiMappings, setValue])
+
+  useEffect(() => {
+    if (existingPurposeMappings) {
+      setValue('purposeIds', existingPurposeMappings.map(m => m.purpose._id))
+    }
+  }, [existingPurposeMappings, setValue])
+
   // The category dropdown's list already carries `shipping` — no extra fetch needed.
   // Fall back to the edited product's own populated category (covers the case where
   // its category is inactive and therefore missing from the public categories list).
@@ -399,6 +521,8 @@ export default function ProductFormPage() {
                                 : product.category,
       tags:                   product.tags ?? [],
       chakra:                 product.chakra ?? '',
+      rashiIds:               [],
+      purposeIds:             [],
       badge:                  product.badge ?? '',
       isFeatured:             product.isFeatured,
       isActive:               product.isActive,
@@ -420,6 +544,8 @@ export default function ProductFormPage() {
       lowStockThreshold: data.lowStockThreshold,
       category:         data.category,
       tags:             data.tags,
+      rashiIds:         data.rashiIds,
+      purposeIds:       data.purposeIds,
       isFeatured:       data.isFeatured,
       isActive:         data.isActive,
       hasFreeGift:      data.hasFreeGift,
@@ -833,6 +959,30 @@ export default function ProductFormPage() {
                 placeholder="e.g. Heart, Crown"
                 className="admin-input"
                 style={INPUT}
+              />
+            </div>
+          </div>
+
+          <div style={GRID2}>
+            {/* Rashi */}
+            <div style={FIELD}>
+              <label style={LABEL}>Rashi</label>
+              <MultiSelectChips
+                options={(rashis ?? []).map(r => ({ id: r._id, label: r.name }))}
+                selected={watchRashiIds}
+                onChange={ids => setValue('rashiIds', ids)}
+                placeholder="Add a Rashi…"
+              />
+            </div>
+
+            {/* Purpose */}
+            <div style={FIELD}>
+              <label style={LABEL}>Purpose</label>
+              <MultiSelectChips
+                options={(purposes ?? []).map(p => ({ id: p._id, label: p.name }))}
+                selected={watchPurposeIds}
+                onChange={ids => setValue('purposeIds', ids)}
+                placeholder="Add a Purpose…"
               />
             </div>
           </div>
