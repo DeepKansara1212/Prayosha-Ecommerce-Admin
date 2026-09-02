@@ -10,6 +10,8 @@ import {
   createProduct,
   updateProduct,
   updateImages,
+  updateVideo,
+  deleteVideo,
   type ProductPayload,
 } from '../../api/products.api'
 import { getCategories } from '../../api/categories.api'
@@ -73,6 +75,7 @@ const BADGE_BG: Record<string, string> = {
 }
 
 const ACCEPTED = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp']
+const ACCEPTED_VIDEO = ['video/mp4', 'video/webm', 'video/quicktime', 'video/x-m4v']
 
 // ── Shared styles ─────────────────────────────────────────────────────────────
 
@@ -314,6 +317,7 @@ export default function ProductFormPage() {
   type ImageItem = { url: string; file?: File; isExisting: boolean }
 
   const [images, setImages]         = useState<ImageItem[]>([])
+  const [video, setVideo]           = useState<{ url: string; file?: File; isExisting: boolean } | null>(null)
   const [isDragging, setIsDragging] = useState(false)
   const fileInputRef                = useRef<HTMLInputElement>(null)
 
@@ -321,8 +325,26 @@ export default function ProductFormPage() {
   const imagesRef = useRef<ImageItem[]>([])
   useEffect(() => { imagesRef.current = images }, [images])
   useEffect(() => () => imagesRef.current.forEach(img => { if (!img.isExisting) URL.revokeObjectURL(img.url) }), [])
+  useEffect(() => () => {
+    if (video && !video.isExisting) URL.revokeObjectURL(video.url)
+  }, [video])
 
   const totalImages = images.length
+
+  const handleVideoFile = (file?: File) => {
+    if (!file || !ACCEPTED_VIDEO.includes(file.type)) return
+    setVideo(previous => {
+      if (previous && !previous.isExisting) URL.revokeObjectURL(previous.url)
+      return { url: URL.createObjectURL(file), file, isExisting: false }
+    })
+  }
+
+  const removeVideo = () => {
+    setVideo(previous => {
+      if (previous && !previous.isExisting) URL.revokeObjectURL(previous.url)
+      return null
+    })
+  }
 
   const handleFiles = (files: File[]) => {
     const valid     = files.filter(f => ACCEPTED.includes(f.type))
@@ -529,6 +551,7 @@ export default function ProductFormPage() {
       hasFreeGift:            product.hasFreeGift,
     })
     setImages((product.images ?? []).map(url => ({ url, isExisting: true })))
+    setVideo(product.video ? { url: product.video, isExisting: true } : null)
   }, [product, isEditing, reset])
 
   // ── Submit handler ─────────────────────────────────────────────────────────
@@ -585,6 +608,13 @@ export default function ProductFormPage() {
           setImages(updatedImages.map(url => ({ url, isExisting: true })))
         }
 
+        if (video?.file) {
+          const updatedVideo = await updateVideo(product._id, video.file)
+          setVideo({ url: updatedVideo, isExisting: true })
+        } else if (!video && product.video) {
+          await deleteVideo(product._id)
+        }
+
         qc.invalidateQueries({ queryKey: ['admin-products'] })
         qc.invalidateQueries({ queryKey: ['product', slugParam] })
         showToast('success', 'Product updated successfully')
@@ -596,6 +626,7 @@ export default function ProductFormPage() {
         if (newImgFiles.length > 0) {
           await updateImages(created._id, [], newImgFiles)
         }
+        if (video?.file) await updateVideo(created._id, video.file)
         navigate('/admin/products')
       }
     } catch (err) {
@@ -1258,7 +1289,46 @@ export default function ProductFormPage() {
           )}
         </div>
 
-        {/* ── Section 6: Visibility ──────────────────────────────────────────── */}
+        {/* ── Section 6: Product video ──────────────────────────────────────── */}
+        <div style={SECTION}>
+          <p style={SECTION_TITLE}>Product video</p>
+          {video ? (
+            <div style={{ position: 'relative', maxWidth: 360 }}>
+              <video
+                src={video.url}
+                controls
+                muted
+                preload="metadata"
+                style={{ width: '100%', aspectRatio: '16 / 9', objectFit: 'cover', display: 'block', borderRadius: 4, background: '#1C1A17' }}
+              />
+              <button
+                type="button"
+                onClick={removeVideo}
+                title="Remove video"
+                style={{ position: 'absolute', top: -8, right: -8, width: 24, height: 24, borderRadius: '50%', background: '#A85050', border: '2px solid #F5F0E8', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+              >
+                <X size={12} />
+              </button>
+              {!video.isExisting && <p style={{ fontFamily: FONT, fontSize: 11, color: '#7B5EA7', marginTop: 8 }}>Pending upload</p>}
+            </div>
+          ) : (
+            <label style={{ display: 'block', maxWidth: 420, cursor: 'pointer' }}>
+              <div style={{ background: '#EDE8DC', border: '2px dashed #C4B89A', borderRadius: 4, padding: '28px 20px', textAlign: 'center' }}>
+                <Upload size={22} color="#9E9590" style={{ marginBottom: 8 }} />
+                <p style={{ fontFamily: FONT, fontSize: 13, color: '#6B6057', marginBottom: 4 }}>Click to upload a product video</p>
+                <p style={{ fontFamily: FONT, fontSize: 11, color: '#9E9590' }}>MP4, WebM, MOV · max 100 MB</p>
+              </div>
+              <input
+                type="file"
+                accept="video/mp4,video/webm,video/quicktime,video/x-m4v"
+                style={{ display: 'none' }}
+                onChange={e => { handleVideoFile(e.target.files?.[0]); e.target.value = '' }}
+              />
+            </label>
+          )}
+        </div>
+
+        {/* ── Section 7: Visibility ──────────────────────────────────────────── */}
         <div style={SECTION}>
           <p style={SECTION_TITLE}>Visibility</p>
 

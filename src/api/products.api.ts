@@ -26,6 +26,7 @@ export interface Product {
   price: number
   comparePrice?: number
   images: string[]
+  video?: string
   category: ProductCategory
   tags: string[]
   chakra?: string
@@ -75,6 +76,7 @@ export type ProductPayload = {
   price: number
   comparePrice?: number
   costPrice?: number
+  video?: string
   category: string
   tags?: string[]
   chakra?: string
@@ -128,4 +130,15 @@ export async function updateImages(
   newFiles.forEach((f) => form.append('images', f))
   const res = await client.post(`/api/v1/products/${id}/images`, form)
   return res.data.data.images as string[]
+}
+
+export async function updateVideo(id: string, file: File): Promise<string> {
+  const form = new FormData()
+  form.append('video', file)
+  const res = await client.post(`/api/v1/products/${id}/video`, form)
+  return res.data.data.video as string
+}
+
+export async function deleteVideo(id: string): Promise<void> {
+  await client.delete(`/api/v1/products/${id}/video`)
 }
