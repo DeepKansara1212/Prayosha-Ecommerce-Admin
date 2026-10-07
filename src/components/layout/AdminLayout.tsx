@@ -25,6 +25,7 @@ const NAV_ITEMS = [
   { label: 'Dashboard', path: '/admin/dashboard', icon: LayoutDashboard },
   { label: 'Products',  path: '/admin/products',  icon: Package },
   { label: 'Categories',path: '/admin/categories',icon: Tag },
+  { label: 'Sub-Categories', path: '/admin/subcategories', icon: Tag },
   { label: 'Orders',    path: '/admin/orders',    icon: ShoppingBag },
   { label: 'Customers', path: '/admin/customers', icon: Users },
   { label: 'Reviews',   path: '/admin/reviews',   icon: Star },
@@ -53,6 +54,7 @@ function getPageTitle(pathname: string): string {
   const map: Record<string, string> = {
     '/admin/dashboard':  'Dashboard',
     '/admin/categories': 'Categories',
+    '/admin/subcategories': 'Sub-Categories',
     '/admin/customers':  'Customers',
     '/admin/reviews':    'Reviews',
     '/admin/coupons':    'Coupons',

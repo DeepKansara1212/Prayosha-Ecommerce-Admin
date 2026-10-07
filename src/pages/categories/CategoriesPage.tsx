@@ -393,12 +393,10 @@ function CategoryDrawer({ open, editing, onClose, onSave, isPending }: DrawerPro
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
               <div>
                 <span style={{ fontFamily: FONT, fontSize: 10, color: '#9E9590', marginBottom: 4, display: 'block' }}>
-                  Weight (g) *
+                  Weight *
                 </span>
                 <input
-                  type="number"
-                  min={0}
-                  step="any"
+                  type="text"
                   required
                   value={shippingWeight}
                   onChange={e => setShippingWeight(e.target.value)}
@@ -408,12 +406,10 @@ function CategoryDrawer({ open, editing, onClose, onSave, isPending }: DrawerPro
               </div>
               <div>
                 <span style={{ fontFamily: FONT, fontSize: 10, color: '#9E9590', marginBottom: 4, display: 'block' }}>
-                  Length (cm)
+                  Length
                 </span>
                 <input
-                  type="number"
-                  min={0}
-                  step="any"
+                  type="text"
                   value={shippingLength}
                   onChange={e => setShippingLength(e.target.value)}
                   placeholder="Optional"
@@ -422,12 +418,10 @@ function CategoryDrawer({ open, editing, onClose, onSave, isPending }: DrawerPro
               </div>
               <div>
                 <span style={{ fontFamily: FONT, fontSize: 10, color: '#9E9590', marginBottom: 4, display: 'block' }}>
-                  Breadth (cm)
+                  Breadth
                 </span>
                 <input
-                  type="number"
-                  min={0}
-                  step="any"
+                  type="text"
                   value={shippingBreadth}
                   onChange={e => setShippingBreadth(e.target.value)}
                   placeholder="Optional"
@@ -436,12 +430,10 @@ function CategoryDrawer({ open, editing, onClose, onSave, isPending }: DrawerPro
               </div>
               <div>
                 <span style={{ fontFamily: FONT, fontSize: 10, color: '#9E9590', marginBottom: 4, display: 'block' }}>
-                  Height (cm)
+                  Height
                 </span>
                 <input
-                  type="number"
-                  min={0}
-                  step="any"
+                  type="text"
                   value={shippingHeight}
                   onChange={e => setShippingHeight(e.target.value)}
                   placeholder="Optional"

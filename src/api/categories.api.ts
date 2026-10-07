@@ -3,10 +3,10 @@ import client from './client'
 // ── Types ─────────────────────────────────────────────────────────────────────
 
 export interface CategoryShipping {
-  weight: number
-  length?: number
-  breadth?: number
-  height?: number
+  weight: string
+  length?: string
+  breadth?: string
+  height?: string
 }
 
 export interface Category {
@@ -33,15 +33,15 @@ export async function getAdminCategories(): Promise<Category[]> {
 }
 
 export async function createCategory(data: FormData): Promise<Category> {
-  const res = await client.post('/api/v1/categories', data)
+  const res = await client.post('/api/v1/admin/categories', data)
   return res.data.data.category as Category
 }
 
 export async function updateCategory(id: string, data: FormData): Promise<Category> {
-  const res = await client.patch(`/api/v1/categories/${id}`, data)
+  const res = await client.patch(`/api/v1/admin/categories/${id}`, data)
   return res.data.data.category as Category
 }
 
 export async function deleteCategory(id: string): Promise<void> {
-  await client.delete(`/api/v1/categories/${id}`)
+  await client.delete(`/api/v1/admin/categories/${id}`)
 }

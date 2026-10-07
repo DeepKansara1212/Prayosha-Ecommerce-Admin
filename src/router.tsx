@@ -8,6 +8,7 @@ const DashboardPage = lazy(() => import("./pages/dashboard/DashboardPage"));
 const ProductsPage = lazy(() => import("./pages/products/ProductsPage"));
 const ProductFormPage = lazy(() => import("./pages/products/ProductFormPage"));
 const CategoriesPage = lazy(() => import("./pages/categories/CategoriesPage"));
+const SubCategoriesPage = lazy(() => import("./pages/subcategories/SubCategoriesPage"));
 const OrdersPage = lazy(() => import("./pages/orders/OrdersPage"));
 const OrderDetailPage = lazy(() => import("./pages/orders/OrderDetailPage"));
 const CustomersPage = lazy(() => import("./pages/customers/CustomersPage"));
@@ -74,6 +75,7 @@ export default function AppRouter() {
               element={<ProductFormPage />}
             />
             <Route path="/admin/categories" element={<CategoriesPage />} />
+            <Route path="/admin/subcategories" element={<SubCategoriesPage />} />
             <Route path="/admin/orders" element={<OrdersPage />} />
             <Route path="/admin/orders/:id" element={<OrderDetailPage />} />
             <Route path="/admin/customers" element={<CustomersPage />} />

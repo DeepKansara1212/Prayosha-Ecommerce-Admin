@@ -15,6 +15,7 @@ import {
   type ProductPayload,
 } from '../../api/products.api'
 import { getCategories } from '../../api/categories.api'
+import { getSubCategories } from '../../api/subcategories.api'
 import { getRashis } from '../../api/rashis.api'
 import { getPurposes } from '../../api/purposes.api'
 import { getRashiProductMappings } from '../../api/rashiProductMappings.api'
@@ -29,6 +30,7 @@ const schema = z.object({
   shortDescription:       z.string().max(200, 'Max 200 characters'),
   description:            z.string().min(1, 'Description is required'),
   careInstructions:       z.string(),
+  howToUse:               z.string(),
   metaphysicalProperties: z.string(),
   price:                  z.coerce.number().min(0.01, 'Price is required'),
   comparePrice:           z.string(),
@@ -41,8 +43,18 @@ const schema = z.object({
   shippingBreadth:        z.string(),
   shippingHeight:         z.string(),
   category:               z.string().min(1, 'Category is required'),
+  subCategory:            z.string(),
   tags:                   z.array(z.string()),
   chakra:                 z.string(),
+  purposeTags:            z.array(z.string()),
+  shape:                  z.string().max(100, 'Max 100 characters'),
+  color:                  z.string().max(100, 'Max 100 characters'),
+  rudrakshaFaces:         z.string().max(50, 'Max 50 characters'),
+  beadSize:               z.string().max(50, 'Max 50 characters'),
+  noOfSticks:             z.preprocess(
+    value => value === '' ? undefined : value,
+    z.coerce.number().int().min(1, 'Must be at least 1').optional(),
+  ),
   rashiIds:               z.array(z.string()),
   purposeIds:             z.array(z.string()),
   badge:                  z.string(),
@@ -392,10 +404,10 @@ export default function ProductFormPage() {
     resolver: zodResolver(schema),
     defaultValues: {
       name: '', slug: '', sku: '', shortDescription: '', description: '',
-      careInstructions: '', metaphysicalProperties: '',
+      careInstructions: '', howToUse: '', metaphysicalProperties: '',
       price: 0, comparePrice: '', costPrice: '', stock: 0, lowStockThreshold: 5,
       useCategoryShipping: true, shippingWeight: '', shippingLength: '', shippingBreadth: '', shippingHeight: '',
-      category: '', tags: [], chakra: '', rashiIds: [], purposeIds: [], badge: '', isFeatured: false, isActive: true, hasFreeGift: false,
+      category: '', subCategory: '', tags: [], chakra: '', purposeTags: [], shape: '', color: '', rudrakshaFaces: '', beadSize: '', noOfSticks: '', rashiIds: [], purposeIds: [], badge: '', isFeatured: false, isActive: true, hasFreeGift: false,
     },
   })
 
@@ -506,6 +518,31 @@ export default function ProductFormPage() {
   const selectedCategoryShipping =
     categories?.find(c => c._id === watchCategory)?.shipping ??
     (productCategory?._id === watchCategory ? productCategory.shipping : undefined)
+  const selectedCategory =
+    categories?.find(c => c._id === watchCategory) ??
+    (productCategory?._id === watchCategory ? productCategory : undefined)
+  const { data: subcategories = [], isFetched: subcategoriesFetched } = useQuery({
+    queryKey: ['subcategories-for-category', selectedCategory?.slug],
+    queryFn: () => getSubCategories(selectedCategory!.slug),
+    enabled: !!selectedCategory?.slug,
+    staleTime: 5 * 60_000,
+  })
+  const isBraceletCategory = Boolean(
+    selectedCategory && /bracelet/i.test(`${selectedCategory.name} ${selectedCategory.slug}`),
+  )
+  const isDhoopstickCategory = Boolean(
+    selectedCategory && /dhoop\s*stick|incense/i.test(`${selectedCategory.name} ${selectedCategory.slug}`),
+  )
+  const isRudrakshaCategory = Boolean(
+    selectedCategory && /rudraksha/i.test(`${selectedCategory.name} ${selectedCategory.slug}`),
+  )
+
+  useEffect(() => {
+    if (!watchCategory || !subcategoriesFetched) return
+    if (!subcategories.some(subcategory => subcategory._id === watch('subCategory'))) {
+      setValue('subCategory', '')
+    }
+  }, [watchCategory, subcategories, subcategoriesFetched, setValue, watch])
 
   // Auto-fill shipping fields from the selected category whenever the category
   // changes or "Use Category Shipping" is (re-)enabled.
@@ -527,6 +564,7 @@ export default function ProductFormPage() {
       shortDescription:       product.shortDescription ?? '',
       description:            product.description,
       careInstructions:       product.careInstructions ?? '',
+      howToUse:               product.howToUse ?? '',
       metaphysicalProperties: product.metaphysicalProperties ?? '',
       price:                  product.price,
       comparePrice:           product.comparePrice ? String(product.comparePrice) : '',
@@ -541,8 +579,17 @@ export default function ProductFormPage() {
       category:               typeof product.category === 'object'
                                 ? product.category._id
                                 : product.category,
+      subCategory:            typeof product.subCategory === 'object'
+                ? product.subCategory._id
+                : product.subCategory ?? '',
       tags:                   product.tags ?? [],
       chakra:                 product.chakra ?? '',
+      purposeTags:            product.purposeTags ?? [],
+      shape:                  product.shape ?? '',
+      color:                  product.color ?? '',
+      rudrakshaFaces:         product.rudrakshaFaces ?? '',
+      beadSize:               product.beadSize ?? '',
+      noOfSticks:             product.noOfSticks ?? '',
       rashiIds:               [],
       purposeIds:             [],
       badge:                  product.badge ?? '',
@@ -566,7 +613,9 @@ export default function ProductFormPage() {
       stock:            data.stock,
       lowStockThreshold: data.lowStockThreshold,
       category:         data.category,
+      subCategory: data.subCategory || null,
       tags:             data.tags,
+      purposeTags:      data.purposeTags,
       rashiIds:         data.rashiIds,
       purposeIds:       data.purposeIds,
       isFeatured:       data.isFeatured,
@@ -575,17 +624,23 @@ export default function ProductFormPage() {
       useCategoryShipping: data.useCategoryShipping,
       ...(data.shortDescription       && { shortDescription: data.shortDescription }),
       ...(data.careInstructions       && { careInstructions: data.careInstructions }),
+      ...(data.howToUse               && { howToUse: data.howToUse }),
       ...(data.metaphysicalProperties && { metaphysicalProperties: data.metaphysicalProperties }),
       ...(data.chakra                 && { chakra: data.chakra }),
+      ...(data.shape                  && { shape: data.shape.trim() }),
+      ...(data.color                  && { color: data.color.trim() }),
+      ...(data.rudrakshaFaces         && { rudrakshaFaces: data.rudrakshaFaces.trim() }),
+      ...(isBraceletCategory && data.beadSize.trim() && { beadSize: data.beadSize.trim() }),
+      ...(isDhoopstickCategory && data.noOfSticks !== undefined && { noOfSticks: data.noOfSticks }),
       ...(data.badge                  && { badge: data.badge }),
       ...(data.comparePrice           && { comparePrice: +data.comparePrice }),
       ...(data.costPrice              && { costPrice: +data.costPrice }),
       ...(!data.useCategoryShipping && {
         shipping: {
-          ...(data.shippingWeight   && { weight: +data.shippingWeight }),
-          ...(data.shippingLength   && { length: +data.shippingLength }),
-          ...(data.shippingBreadth  && { breadth: +data.shippingBreadth }),
-          ...(data.shippingHeight   && { height: +data.shippingHeight }),
+          ...(data.shippingWeight   && { weight: data.shippingWeight }),
+          ...(data.shippingLength   && { length: data.shippingLength }),
+          ...(data.shippingBreadth  && { breadth: data.shippingBreadth }),
+          ...(data.shippingHeight   && { height: data.shippingHeight }),
         },
       }),
     }
@@ -792,6 +847,9 @@ export default function ProductFormPage() {
               className="admin-input"
               style={{ ...TEXTAREA, minHeight: 130 }}
             />
+            <span style={{ display: 'block', marginTop: 6, fontFamily: FONT, fontSize: 11, color: '#9E9590' }}>
+              Enter one point per line — each line will show as a bullet on the site.
+            </span>
             {errors.description && <span style={ERR}>{errors.description.message}</span>}
           </div>
 
@@ -807,7 +865,17 @@ export default function ProductFormPage() {
             </div>
 
             <div style={FIELD}>
-              <label style={LABEL}>Metaphysical Properties</label>
+              <label style={LABEL}>How to Use</label>
+              <textarea
+                {...register('howToUse')}
+                placeholder="Ritual or usage guidance for this product…"
+                className="admin-input"
+                style={{ ...TEXTAREA, minHeight: 80 }}
+              />
+            </div>
+
+            <div style={FIELD}>
+              <label style={LABEL}>Properties &amp; Benefits</label>
               <textarea
                 {...register('metaphysicalProperties')}
                 placeholder="Healing properties, chakras, intentions…"
@@ -934,18 +1002,16 @@ export default function ProductFormPage() {
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: 16 }}>
             {([
-              ['shippingWeight', 'Weight (g)'],
-              ['shippingLength', 'Length (cm)'],
-              ['shippingBreadth', 'Breadth (cm)'],
-              ['shippingHeight', 'Height (cm)'],
+              ['shippingWeight', 'Weight'],
+              ['shippingLength', 'Length'],
+              ['shippingBreadth', 'Breadth'],
+              ['shippingHeight', 'Height'],
             ] as const).map(([field, label]) => (
               <div style={FIELD} key={field}>
                 <label style={LABEL}>{label}</label>
                 <input
                   {...register(field)}
-                  type="number"
-                  min="0"
-                  step="any"
+                  type="text"
                   disabled={watchUseCategoryShipping}
                   placeholder={watchUseCategoryShipping ? '' : 'Optional'}
                   className="admin-input"
@@ -982,6 +1048,22 @@ export default function ProductFormPage() {
               {errors.category && <span style={ERR}>{errors.category.message}</span>}
             </div>
 
+            {subcategories.length > 0 && (
+              <div style={FIELD}>
+                <label style={LABEL}>Sub-Category</label>
+                <select
+                  {...register('subCategory')}
+                  className="admin-input"
+                  style={{ ...INPUT, appearance: 'auto', cursor: 'pointer' }}
+                >
+                  <option value="">No sub-category</option>
+                  {subcategories.map(subcategory => (
+                    <option key={subcategory._id} value={subcategory._id}>{subcategory.name}</option>
+                  ))}
+                </select>
+              </div>
+            )}
+
             {/* Chakra */}
             <div style={FIELD}>
               <label style={LABEL}>Chakra</label>
@@ -992,7 +1074,52 @@ export default function ProductFormPage() {
                 style={INPUT}
               />
             </div>
+
           </div>
+
+          {(isBraceletCategory || isDhoopstickCategory || isRudrakshaCategory) && (
+            <div style={GRID2}>
+              {isBraceletCategory && (
+                <div style={FIELD}>
+                  <label style={LABEL}>Bead Size</label>
+                  <input
+                    {...register('beadSize')}
+                    placeholder="e.g. 8mm or 8-10mm"
+                    className="admin-input"
+                    style={INPUT}
+                  />
+                </div>
+              )}
+
+              {isDhoopstickCategory && (
+                <div style={FIELD}>
+                  <label style={LABEL}>No. of Sticks</label>
+                  <input
+                    {...register('noOfSticks')}
+                    type="number"
+                    min="1"
+                    step="1"
+                    placeholder="e.g. 20"
+                    className="admin-input"
+                    style={INPUT}
+                  />
+                  {errors.noOfSticks && <span style={ERR}>{errors.noOfSticks.message}</span>}
+                </div>
+              )}
+
+              {isRudrakshaCategory && (
+                <div style={FIELD}>
+                  <label style={LABEL}>Rudraksha Faces</label>
+                  <input
+                    {...register('rudrakshaFaces')}
+                    placeholder="e.g. 5 or Gauri Shankar"
+                    className="admin-input"
+                    style={INPUT}
+                  />
+                </div>
+              )}
+            </div>
+          )}
 
           <div style={GRID2}>
             {/* Rashi */}
@@ -1014,6 +1141,26 @@ export default function ProductFormPage() {
                 selected={watchPurposeIds}
                 onChange={ids => setValue('purposeIds', ids)}
                 placeholder="Add a Purpose…"
+              />
+            </div>
+
+            <div style={FIELD}>
+              <label style={LABEL}>Shape</label>
+              <input
+                {...register('shape')}
+                placeholder="e.g. Round, Oval, Tumbled"
+                className="admin-input"
+                style={INPUT}
+              />
+            </div>
+
+            <div style={FIELD}>
+              <label style={LABEL}>Color</label>
+              <input
+                {...register('color')}
+                placeholder="e.g. Clear, Rose, Green"
+                className="admin-input"
+                style={INPUT}
               />
             </div>
           </div>

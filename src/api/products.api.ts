@@ -3,10 +3,10 @@ import client from './client'
 // ── Types ─────────────────────────────────────────────────────────────────────
 
 export interface ProductShipping {
-  weight?: number
-  length?: number
-  breadth?: number
-  height?: number
+  weight?: string
+  length?: string
+  breadth?: string
+  height?: string
 }
 
 export interface ProductCategory {
@@ -14,6 +14,12 @@ export interface ProductCategory {
   name: string
   slug: string
   shipping?: ProductShipping
+}
+
+export interface ProductSubCategory {
+  _id: string
+  name: string
+  slug: string
 }
 
 export interface Product {
@@ -28,14 +34,22 @@ export interface Product {
   images: string[]
   video?: string
   category: ProductCategory
+  subCategory?: string | ProductSubCategory
   tags: string[]
   chakra?: string
+  purposeTags?: string[]
+  shape?: string
+  color?: string
+  rudrakshaFaces?: string
+  beadSize?: string
+  noOfSticks?: number
   badge?: string
   stock: number
   lowStockThreshold: number
   useCategoryShipping: boolean
   shipping?: ProductShipping
   careInstructions?: string
+  howToUse?: string
   metaphysicalProperties?: string
   isFeatured: boolean
   isActive: boolean
@@ -78,14 +92,22 @@ export type ProductPayload = {
   costPrice?: number
   video?: string
   category: string
+  subCategory?: string | null
   tags?: string[]
   chakra?: string
+  purposeTags?: string[]
+  shape?: string
+  color?: string
+  rudrakshaFaces?: string
+  beadSize?: string
+  noOfSticks?: number
   badge?: string
   stock: number
   lowStockThreshold?: number
   useCategoryShipping?: boolean
   shipping?: ProductShipping
   careInstructions?: string
+  howToUse?: string
   metaphysicalProperties?: string
   isFeatured?: boolean
   isActive?: boolean
