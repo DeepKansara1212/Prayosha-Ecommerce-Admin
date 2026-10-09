@@ -95,6 +95,28 @@ function makeId() {
   return Math.random().toString(36).slice(2);
 }
 
+function normalizeContent(content: BlogSection[]) {
+  return content.flatMap((section) => {
+    if (section.type) return [{ ...section, _id: makeId() }];
+    const normalized: Array<BlogSection & { _id: string }> = [];
+    if (section.title) {
+      normalized.push({
+        type: "heading",
+        text: section.title,
+        _id: makeId(),
+      });
+    }
+    if (section.description) {
+      normalized.push({
+        type: "paragraph",
+        text: section.description,
+        _id: makeId(),
+      });
+    }
+    return normalized;
+  });
+}
+
 // ── ActiveToggle ──────────────────────────────────────────────────────────────
 
 function ActiveToggle({
@@ -142,15 +164,14 @@ function ActiveToggle({
 
 // ── ImagesField ───────────────────────────────────────────────────────────────
 // Native file picker: selected files upload straight to Cloudinary via the
-// backend's /admin/blogs/upload-images route, and the returned secure_urls
-// are what actually get stored on the blog.
+// backend's /admin/blogs/upload-images route and are added as article content.
 
 function ImagesField({
-  images,
+  label,
   onChange,
 }: {
-  images: string[];
-  onChange: (imgs: string[]) => void;
+  label: string;
+  onChange: (urls: string[]) => void;
 }) {
   const toast = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -165,7 +186,7 @@ function ImagesField({
     setPendingCount(files.length);
     try {
       const urls = await uploadBlogImages(files);
-      onChange([...images, ...urls]);
+      onChange(urls);
     } catch (err: unknown) {
       const msg =
         (err as { response?: { data?: { message?: string } } })?.response?.data
@@ -176,10 +197,6 @@ function ImagesField({
       setPendingCount(0);
       if (fileInputRef.current) fileInputRef.current.value = "";
     }
-  };
-
-  const removeImage = (index: number) => {
-    onChange(images.filter((_, i) => i !== index));
   };
 
   return (
@@ -213,93 +230,14 @@ function ImagesField({
         }}
       >
         <ImagePlus size={14} />
-        {uploading ? `Uploading ${pendingCount}…` : "Select Images"}
+        {uploading ? `Uploading ${pendingCount}…` : label}
       </button>
 
-      {(images.length > 0 || uploading) && (
-        <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-          {images.map((url, index) => (
-            <div
-              key={`${url}-${index}`}
-              style={{
-                position: "relative",
-                width: 72,
-                height: 72,
-                borderRadius: 4,
-                overflow: "hidden",
-                border: "1px solid #E2DAC8",
-                background: "#F5F0E8",
-                flexShrink: 0,
-              }}
-            >
-              <img
-                src={url}
-                alt=""
-                style={{
-                  width: "100%",
-                  height: "100%",
-                  objectFit: "cover",
-                  display: "block",
-                }}
-                onError={(e) => {
-                  (e.currentTarget as HTMLImageElement).style.display = "none";
-                }}
-              />
-              <button
-                type="button"
-                onClick={() => removeImage(index)}
-                title="Remove image"
-                style={{
-                  position: "absolute",
-                  top: 2,
-                  right: 2,
-                  width: 18,
-                  height: 18,
-                  display: "inline-flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  borderRadius: "50%",
-                  border: "none",
-                  background: "rgba(28,26,23,0.65)",
-                  color: "#fff",
-                  cursor: "pointer",
-                  padding: 0,
-                }}
-              >
-                <X size={11} />
-              </button>
-            </div>
-          ))}
-
-          {uploading &&
-            Array.from({ length: pendingCount }).map((_, i) => (
-              <div
-                key={`pending-${i}`}
-                style={{
-                  width: 72,
-                  height: 72,
-                  borderRadius: 4,
-                  border: "1px dashed #C4B89A",
-                  background: "#EDE8DC",
-                  flexShrink: 0,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  fontFamily: FONT,
-                  fontSize: 10,
-                  color: "#9E9590",
-                }}
-              >
-                …
-              </div>
-            ))}
-        </div>
-      )}
     </div>
   );
 }
 
-// ── Section editor row (title + description only) ────────────────────────────
+// ── Article content editor row ────────────────────────────────────────────────
 
 interface SectionRowProps {
   section: BlogSection & { _id: string };
@@ -309,6 +247,8 @@ interface SectionRowProps {
 }
 
 function SectionRow({ section, index, onChange, onRemove }: SectionRowProps) {
+  const isImage = section.type === "image" && Boolean(section.image);
+
   return (
     <div
       style={{
@@ -335,24 +275,74 @@ function SectionRow({ section, index, onChange, onRemove }: SectionRowProps) {
       <div
         style={{ flex: 1, display: "flex", flexDirection: "column", gap: 6 }}
       >
-        <input
-          type="text"
-          value={section.title}
-          onChange={(e) =>
-            onChange(index, { ...section, title: e.target.value })
-          }
-          placeholder="Section title"
-          style={{ ...INPUT_BASE, fontWeight: 500 }}
-        />
-        <textarea
-          value={section.description}
-          onChange={(e) =>
-            onChange(index, { ...section, description: e.target.value })
-          }
-          placeholder="Section description"
-          rows={4}
-          style={{ ...INPUT_BASE, resize: "vertical", lineHeight: 1.6 }}
-        />
+        {isImage ? (
+          <>
+            <img
+              src={section.image}
+              alt=""
+              style={{
+                width: "100%",
+                maxWidth: 280,
+                aspectRatio: "1",
+                objectFit: "cover",
+                borderRadius: 4,
+                border: "1px solid #E2DAC8",
+              }}
+            />
+            <span style={{ fontFamily: FONT, fontSize: 10, color: "#9E9590" }}>
+              Square article image
+            </span>
+          </>
+        ) : (
+          <>
+            <select
+              value={section.type ?? "paragraph"}
+              onChange={(event) =>
+                onChange(index, {
+                  ...section,
+                  type: event.target.value as BlogSection["type"],
+                  text: section.text ?? "",
+                })
+              }
+              style={INPUT_BASE}
+            >
+              <option value="paragraph">Paragraph</option>
+              <option value="heading">Heading</option>
+              <option value="subheading">Subheading</option>
+              <option value="quote">Quote</option>
+              <option value="list">List</option>
+            </select>
+            {section.type === "list" ? (
+              <textarea
+                value={(section.items ?? []).join("\n")}
+                onChange={(event) =>
+                  onChange(index, {
+                    ...section,
+                    type: "list",
+                    items: event.target.value.split("\n"),
+                  })
+                }
+                placeholder="Enter one list item per line"
+                rows={4}
+                style={{ ...INPUT_BASE, resize: "vertical", lineHeight: 1.6 }}
+              />
+            ) : (
+              <textarea
+                value={section.text ?? ""}
+                onChange={(event) =>
+                  onChange(index, { ...section, text: event.target.value })
+                }
+                placeholder={
+                  section.type === "heading" ? "Heading" :
+                    section.type === "subheading" ? "Subheading" :
+                      section.type === "quote" ? "Quote" : "Write your article content…"
+                }
+                rows={section.type === "heading" || section.type === "subheading" ? 2 : 4}
+                style={{ ...INPUT_BASE, resize: "vertical", lineHeight: 1.6 }}
+              />
+            )}
+          </>
+        )}
       </div>
 
       <button
@@ -397,7 +387,6 @@ function BlogDrawer({
   const [subtitle, setSubtitle] = useState("");
   const [excerpt, setExcerpt] = useState("");
   const [category, setCategory] = useState<BlogCategory>("Crystal Guides");
-  const [images, setImages] = useState<string[]>([]);
   const [featured, setFeatured] = useState(false);
   const [isPublished, setIsPublished] = useState(true);
   const [sections, setSections] = useState<
@@ -413,10 +402,16 @@ function BlogDrawer({
         setSubtitle(editing.subtitle ?? "");
         setExcerpt(editing.excerpt);
         setCategory(editing.category);
-        setImages(editing.images ?? []);
         setFeatured(editing.featured);
         setIsPublished(editing.isPublished);
-        setSections(editing.content.map((s) => ({ ...s, _id: makeId() })));
+        setSections([
+          ...normalizeContent(editing.content),
+          ...(editing.images ?? []).map((image) => ({
+            type: "image" as const,
+            image,
+            _id: makeId(),
+          })),
+        ]);
       } else {
         setTitle("");
         setSlug("");
@@ -424,7 +419,6 @@ function BlogDrawer({
         setSubtitle("");
         setExcerpt("");
         setCategory("Crystal Guides");
-        setImages([]);
         setFeatured(false);
         setIsPublished(true);
         setSections([]);
@@ -439,7 +433,7 @@ function BlogDrawer({
   const addSection = () => {
     setSections((prev) => [
       ...prev,
-      { _id: makeId(), title: "", description: "" },
+      { _id: makeId(), type: "paragraph", text: "" },
     ]);
   };
 
@@ -454,6 +448,14 @@ function BlogDrawer({
     setSections((prev) => prev.filter((_, i) => i !== index));
   };
 
+  const insertImages = (index: number, urls: string[]) => {
+    setSections((previous) => [
+      ...previous.slice(0, index),
+      ...urls.map((image) => ({ type: "image" as const, image, _id: makeId() })),
+      ...previous.slice(index),
+    ]);
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const content: BlogSection[] = sections.map(
@@ -466,7 +468,7 @@ function BlogDrawer({
         subtitle: subtitle || undefined,
         excerpt,
         category,
-        images,
+        images: [],
         featured,
         isPublished,
         content,
@@ -658,12 +660,6 @@ function BlogDrawer({
             </div>
           </div>
 
-          {/* Images */}
-          <div>
-            <label style={LABEL}>Images</label>
-            <ImagesField images={images} onChange={setImages} />
-          </div>
-
           {/* Toggles */}
           <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
             <ActiveToggle
@@ -685,13 +681,20 @@ function BlogDrawer({
             </label>
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
               {sections.map((section, index) => (
-                <SectionRow
-                  key={section._id}
-                  section={section}
-                  index={index}
-                  onChange={updateSection}
-                  onRemove={removeSection}
-                />
+                <div key={section._id}>
+                  <SectionRow
+                    section={section}
+                    index={index}
+                    onChange={updateSection}
+                    onRemove={removeSection}
+                  />
+                  <div style={{ padding: "6px 0 2px 28px" }}>
+                    <ImagesField
+                      label="Insert Square Image Here"
+                      onChange={(urls) => insertImages(index + 1, urls)}
+                    />
+                  </div>
+                </div>
               ))}
             </div>
 
@@ -1020,9 +1023,9 @@ export default function BlogsPage() {
                         flexShrink: 0,
                       }}
                     >
-                      {blog.images?.[0] ? (
+                      {blog.content?.find((section) => section.type === "image" && section.image)?.image ?? blog.images?.[0] ? (
                         <img
-                          src={blog.images[0]}
+                          src={blog.content?.find((section) => section.type === "image" && section.image)?.image ?? blog.images[0]}
                           alt=""
                           style={{
                             width: "100%",

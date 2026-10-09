@@ -18,6 +18,7 @@ export interface SubCategory {
   name: string
   slug: string
   parentCategory: string | SubCategoryParent
+  image?: string
   shipping?: SubCategoryShipping
   isActive: boolean
   sortOrder: number
@@ -29,6 +30,7 @@ export interface SubCategoryPayload {
   name: string
   slug?: string
   parentCategory: string
+  image?: string
   shipping?: SubCategoryShipping
   isActive?: boolean
   sortOrder?: number
@@ -44,12 +46,12 @@ export async function getAdminSubCategories(): Promise<SubCategory[]> {
   return res.data.data.subcategories as SubCategory[]
 }
 
-export async function createSubCategory(data: SubCategoryPayload): Promise<SubCategory> {
+export async function createSubCategory(data: FormData | SubCategoryPayload): Promise<SubCategory> {
   const res = await client.post('/api/v1/admin/subcategories', data)
   return res.data.data.subcategory as SubCategory
 }
 
-export async function updateSubCategory(id: string, data: Partial<SubCategoryPayload>): Promise<SubCategory> {
+export async function updateSubCategory(id: string, data: FormData | Partial<SubCategoryPayload>): Promise<SubCategory> {
   const res = await client.patch(`/api/v1/admin/subcategories/${id}`, data)
   return res.data.data.subcategory as SubCategory
 }

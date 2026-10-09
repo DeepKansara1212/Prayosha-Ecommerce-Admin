@@ -10,8 +10,12 @@ export type BlogCategory =
   | "Spiritual Practice";
 
 export interface BlogSection {
-  title: string;
-  description: string;
+  type?: "paragraph" | "heading" | "subheading" | "quote" | "list" | "image";
+  title?: string;
+  description?: string;
+  text?: string;
+  items?: string[];
+  image?: string;
 }
 
 export interface Blog {

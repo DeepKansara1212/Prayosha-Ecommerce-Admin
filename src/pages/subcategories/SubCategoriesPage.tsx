@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Pencil, Trash2, X } from 'lucide-react'
+import { ImageOff, Pencil, Trash2, X } from 'lucide-react'
 import { getAdminCategories, type Category } from '../../api/categories.api'
 import {
   createSubCategory,
@@ -83,7 +83,7 @@ function SubCategoryDrawer({
   editing: SubCategory | null
   categories: Category[]
   onClose: () => void
-  onSave: (data: SubCategoryPayload, id?: string) => void
+  onSave: (data: FormData | SubCategoryPayload, id?: string) => void
   isPending: boolean
 }) {
   const [name, setName] = useState('')
@@ -96,6 +96,10 @@ function SubCategoryDrawer({
   const [shippingLength, setShippingLength] = useState('')
   const [shippingBreadth, setShippingBreadth] = useState('')
   const [shippingHeight, setShippingHeight] = useState('')
+  const [imageFile, setImageFile] = useState<File | null>(null)
+  const [imagePreview, setImagePreview] = useState<string | null>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const prevUrlRef = useRef<string | null>(null)
 
   useEffect(() => {
     if (!open) return
@@ -110,6 +114,8 @@ function SubCategoryDrawer({
       setShippingLength(editing.shipping?.length ?? '')
       setShippingBreadth(editing.shipping?.breadth ?? '')
       setShippingHeight(editing.shipping?.height ?? '')
+      setImagePreview(editing.image ?? null)
+      setImageFile(null)
     } else {
       setName('')
       setSlug('')
@@ -121,6 +127,8 @@ function SubCategoryDrawer({
       setShippingLength('')
       setShippingBreadth('')
       setShippingHeight('')
+      setImagePreview(null)
+      setImageFile(null)
     }
   }, [open, editing])
 
@@ -128,21 +136,38 @@ function SubCategoryDrawer({
     if (!slugManual) setSlug(toSlug(name))
   }, [name, slugManual])
 
+  useEffect(() => {
+    return () => {
+      if (prevUrlRef.current?.startsWith('blob:')) {
+        URL.revokeObjectURL(prevUrlRef.current)
+      }
+    }
+  }, [])
+
+  const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (!file) return
+    if (prevUrlRef.current?.startsWith('blob:')) URL.revokeObjectURL(prevUrlRef.current)
+    const url = URL.createObjectURL(file)
+    prevUrlRef.current = url
+    setImageFile(file)
+    setImagePreview(url)
+  }
+
   const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault()
-    onSave({
-      name: name.trim(),
-      slug: slug.trim(),
-      parentCategory,
-      sortOrder,
-      isActive,
-      shipping: {
-        weight: shippingWeight.trim(),
-        length: shippingLength.trim(),
-        breadth: shippingBreadth.trim(),
-        height: shippingHeight.trim(),
-      },
-    }, editing?._id)
+    const formData = new FormData()
+    formData.append('name', name.trim())
+    formData.append('slug', slug.trim())
+    formData.append('parentCategory', parentCategory)
+    formData.append('sortOrder', String(sortOrder))
+    formData.append('isActive', String(isActive))
+    formData.append('shippingWeight', shippingWeight.trim())
+    formData.append('shippingLength', shippingLength.trim())
+    formData.append('shippingBreadth', shippingBreadth.trim())
+    formData.append('shippingHeight', shippingHeight.trim())
+    if (imageFile) formData.append('image', imageFile)
+    onSave(formData, editing?._id)
   }
 
   return (
@@ -158,6 +183,51 @@ function SubCategoryDrawer({
           <button type="button" onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#9E9590', display: 'flex', padding: 4 }}><X size={18} /></button>
         </div>
         <form onSubmit={handleSubmit} style={{ flex: 1, overflowY: 'auto', padding: 24, display: 'flex', flexDirection: 'column', gap: 20 }}>
+          <div>
+            <label style={LABEL}>Image</label>
+            <div
+              onClick={() => fileInputRef.current?.click()}
+              style={{
+                width: '100%',
+                height: 140,
+                border: '1.5px dashed #C4B89A',
+                borderRadius: 6,
+                background: '#EDE8DC',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                overflow: 'hidden',
+                position: 'relative',
+              }}
+            >
+              {imagePreview ? (
+                <img src={imagePreview} alt="preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              ) : (
+                <div style={{ textAlign: 'center', color: '#9E9590' }}>
+                  <ImageOff size={28} style={{ marginBottom: 6, opacity: 0.5 }} />
+                  <div style={{ fontFamily: FONT, fontSize: 11 }}>Click to upload image</div>
+                  <div style={{ fontFamily: FONT, fontSize: 10, marginTop: 2 }}>JPG, PNG, WebP · max 5MB</div>
+                </div>
+              )}
+            </div>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              onChange={handleImageChange}
+              style={{ display: 'none' }}
+            />
+            {imagePreview && (
+              <button
+                type="button"
+                onClick={() => { setImagePreview(null); setImageFile(null) }}
+                style={{ marginTop: 6, background: 'none', border: 'none', cursor: 'pointer', fontFamily: FONT, fontSize: 11, color: '#A85050', padding: 0 }}
+              >
+                Remove image
+              </button>
+            )}
+          </div>
           <div>
             <label style={LABEL}>Parent Category *</label>
             <select required value={parentCategory} onChange={e => setParentCategory(e.target.value)} style={{ ...INPUT, appearance: 'auto', cursor: 'pointer' }}>
@@ -232,7 +302,7 @@ export default function SubCategoriesPage() {
     (error as { response?: { data?: { message?: string } } })?.response?.data?.message ?? fallback
 
   const saveMutation = useMutation({
-    mutationFn: ({ data, id }: { data: SubCategoryPayload; id?: string }) => id ? updateSubCategory(id, data) : createSubCategory(data),
+    mutationFn: ({ data, id }: { data: FormData | SubCategoryPayload; id?: string }) => id ? updateSubCategory(id, data) : createSubCategory(data),
     onSuccess: (_data, variables) => {
       qc.invalidateQueries({ queryKey: ['admin-subcategories'] })
       setDrawerOpen(false)
