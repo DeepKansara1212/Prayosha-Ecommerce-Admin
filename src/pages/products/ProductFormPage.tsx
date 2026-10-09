@@ -32,16 +32,29 @@ const schema = z.object({
   careInstructions:       z.string(),
   howToUse:               z.string(),
   metaphysicalProperties: z.string(),
-  price:                  z.coerce.number().min(0.01, 'Price is required'),
+  price:                  z.preprocess(
+    value => value === '' || value === null ? undefined : value,
+    z.coerce.number().min(0, 'Price cannot be negative').optional(),
+  ),
   comparePrice:           z.string(),
   costPrice:              z.string(),
   stock:                  z.coerce.number().min(0, 'Stock cannot be negative'),
   lowStockThreshold:      z.coerce.number().min(0),
   useCategoryShipping:    z.boolean(),
   shippingWeight:         z.string(),
+  shippingTotalWeight:    z.string().refine(
+    value => !value.trim() || /^\s*\d+(?:\.\d+)?\s*(?:kg|kgs|kilograms?|g|grams?|mg|milligrams?|lb|lbs|pounds?|oz|ounces?)\s*$/i.test(value),
+    'Enter a weight with units, for example 250 g or 1.2 kg',
+  ),
   shippingLength:         z.string(),
   shippingBreadth:        z.string(),
   shippingHeight:         z.string(),
+  productWeight:          z.string(),
+  productLength:          z.string(),
+  productBreadth:         z.string(),
+  productHeight:          z.string(),
+  productDimensions:      z.string(),
+  productSize:            z.string(),
   category:               z.string().min(1, 'Category is required'),
   subCategory:            z.string(),
   tags:                   z.array(z.string()),
@@ -405,8 +418,9 @@ export default function ProductFormPage() {
     defaultValues: {
       name: '', slug: '', sku: '', shortDescription: '', description: '',
       careInstructions: '', howToUse: '', metaphysicalProperties: '',
-      price: 0, comparePrice: '', costPrice: '', stock: 0, lowStockThreshold: 5,
-      useCategoryShipping: true, shippingWeight: '', shippingLength: '', shippingBreadth: '', shippingHeight: '',
+      price: '', comparePrice: '', costPrice: '', stock: 0, lowStockThreshold: 5,
+      useCategoryShipping: true, shippingWeight: '', shippingTotalWeight: '', shippingLength: '', shippingBreadth: '', shippingHeight: '',
+      productWeight: '', productLength: '', productBreadth: '', productHeight: '', productDimensions: '', productSize: '',
       category: '', subCategory: '', tags: [], chakra: '', purposeTags: [], shape: '', color: '', rudrakshaFaces: '', beadSize: '', noOfSticks: '', rashiIds: [], purposeIds: [], badge: '', isFeatured: false, isActive: true, hasFreeGift: false,
     },
   })
@@ -422,6 +436,7 @@ export default function ProductFormPage() {
 
   const watchName       = watch('name')
   const watchSlug       = watch('slug')
+  const watchSubCategory = watch('subCategory')
   const watchBadge      = watch('badge')
   const watchTags       = watch('tags')
   const watchRashiIds   = watch('rashiIds')
@@ -511,13 +526,10 @@ export default function ProductFormPage() {
     }
   }, [existingPurposeMappings, setValue])
 
-  // The category dropdown's list already carries `shipping` — no extra fetch needed.
+  // The category and subcategory lists carry shipping defaults.
   // Fall back to the edited product's own populated category (covers the case where
   // its category is inactive and therefore missing from the public categories list).
   const productCategory = product && typeof product.category === 'object' ? product.category : undefined
-  const selectedCategoryShipping =
-    categories?.find(c => c._id === watchCategory)?.shipping ??
-    (productCategory?._id === watchCategory ? productCategory.shipping : undefined)
   const selectedCategory =
     categories?.find(c => c._id === watchCategory) ??
     (productCategory?._id === watchCategory ? productCategory : undefined)
@@ -527,6 +539,11 @@ export default function ProductFormPage() {
     enabled: !!selectedCategory?.slug,
     staleTime: 5 * 60_000,
   })
+  const selectedSubCategory = subcategories.find(item => item._id === watchSubCategory)
+  const selectedShipping = {
+    ...selectedCategory?.shipping,
+    ...selectedSubCategory?.shipping,
+  }
   const isBraceletCategory = Boolean(
     selectedCategory && /bracelet/i.test(`${selectedCategory.name} ${selectedCategory.slug}`),
   )
@@ -544,15 +561,21 @@ export default function ProductFormPage() {
     }
   }, [watchCategory, subcategories, subcategoriesFetched, setValue, watch])
 
-  // Auto-fill shipping fields from the selected category whenever the category
-  // changes or "Use Category Shipping" is (re-)enabled.
+  // Subcategory values override parent category defaults field by field.
   useEffect(() => {
-    if (!watchUseCategoryShipping || !selectedCategoryShipping) return
-    setValue('shippingWeight', selectedCategoryShipping.weight != null ? String(selectedCategoryShipping.weight) : '')
-    setValue('shippingLength', selectedCategoryShipping.length != null ? String(selectedCategoryShipping.length) : '')
-    setValue('shippingBreadth', selectedCategoryShipping.breadth != null ? String(selectedCategoryShipping.breadth) : '')
-    setValue('shippingHeight', selectedCategoryShipping.height != null ? String(selectedCategoryShipping.height) : '')
-  }, [watchUseCategoryShipping, selectedCategoryShipping, setValue])
+    if (!watchUseCategoryShipping) return
+    setValue('shippingWeight', selectedShipping.weight ?? '')
+    setValue('shippingLength', selectedShipping.length ?? '')
+    setValue('shippingBreadth', selectedShipping.breadth ?? '')
+    setValue('shippingHeight', selectedShipping.height ?? '')
+  }, [
+    watchUseCategoryShipping,
+    selectedShipping.weight,
+    selectedShipping.length,
+    selectedShipping.breadth,
+    selectedShipping.height,
+    setValue,
+  ])
 
   // Pre-fill form when product loads
   useEffect(() => {
@@ -573,9 +596,16 @@ export default function ProductFormPage() {
       lowStockThreshold:      product.lowStockThreshold,
       useCategoryShipping:    product.useCategoryShipping ?? true,
       shippingWeight:         product.shipping?.weight != null ? String(product.shipping.weight) : '',
+      shippingTotalWeight:    product.shipping?.totalWeight ?? '',
       shippingLength:         product.shipping?.length != null ? String(product.shipping.length) : '',
       shippingBreadth:        product.shipping?.breadth != null ? String(product.shipping.breadth) : '',
       shippingHeight:         product.shipping?.height != null ? String(product.shipping.height) : '',
+      productWeight:          product.productDetails?.weight ?? '',
+      productLength:          product.productDetails?.length ?? '',
+      productBreadth:         product.productDetails?.breadth ?? '',
+      productHeight:          product.productDetails?.height ?? '',
+      productDimensions:      product.productDetails?.dimensions ?? '',
+      productSize:            product.productDetails?.size ?? '',
       category:               typeof product.category === 'object'
                                 ? product.category._id
                                 : product.category,
@@ -609,7 +639,7 @@ export default function ProductFormPage() {
       slug:             data.slug,
       sku:              data.sku.toUpperCase(),
       description:      data.description,
-      price:            data.price,
+      price:            data.price ?? null,
       stock:            data.stock,
       lowStockThreshold: data.lowStockThreshold,
       category:         data.category,
@@ -622,6 +652,14 @@ export default function ProductFormPage() {
       isActive:         data.isActive,
       hasFreeGift:      data.hasFreeGift,
       useCategoryShipping: data.useCategoryShipping,
+      productDetails: {
+        ...(data.productWeight.trim() && { weight: data.productWeight.trim() }),
+        ...(data.productLength.trim() && { length: data.productLength.trim() }),
+        ...(data.productBreadth.trim() && { breadth: data.productBreadth.trim() }),
+        ...(data.productHeight.trim() && { height: data.productHeight.trim() }),
+        ...(data.productDimensions.trim() && { dimensions: data.productDimensions.trim() }),
+        ...(data.productSize.trim() && { size: data.productSize.trim() }),
+      },
       ...(data.shortDescription       && { shortDescription: data.shortDescription }),
       ...(data.careInstructions       && { careInstructions: data.careInstructions }),
       ...(data.howToUse               && { howToUse: data.howToUse }),
@@ -635,14 +673,15 @@ export default function ProductFormPage() {
       ...(data.badge                  && { badge: data.badge }),
       ...(data.comparePrice           && { comparePrice: +data.comparePrice }),
       ...(data.costPrice              && { costPrice: +data.costPrice }),
-      ...(!data.useCategoryShipping && {
-        shipping: {
+      shipping: {
+        ...(data.useCategoryShipping ? {} : {
           ...(data.shippingWeight   && { weight: data.shippingWeight }),
           ...(data.shippingLength   && { length: data.shippingLength }),
           ...(data.shippingBreadth  && { breadth: data.shippingBreadth }),
           ...(data.shippingHeight   && { height: data.shippingHeight }),
-        },
-      }),
+        }),
+        ...(data.shippingTotalWeight.trim() && { totalWeight: data.shippingTotalWeight.trim() }),
+      },
     }
 
     try {
@@ -858,20 +897,26 @@ export default function ProductFormPage() {
               <label style={LABEL}>Care Instructions</label>
               <textarea
                 {...register('careInstructions')}
-                placeholder="How to care for this crystal…"
+                placeholder="Enter each care instruction on a separate line…"
                 className="admin-input"
                 style={{ ...TEXTAREA, minHeight: 80 }}
               />
+              <span style={{ display: 'block', marginTop: 6, fontFamily: FONT, fontSize: 11, color: '#9E9590' }}>
+                Enter one instruction per line; each line appears as a bullet on the product page.
+              </span>
             </div>
 
             <div style={FIELD}>
               <label style={LABEL}>How to Use</label>
               <textarea
                 {...register('howToUse')}
-                placeholder="Ritual or usage guidance for this product…"
+                placeholder="Enter each usage step on a separate line…"
                 className="admin-input"
                 style={{ ...TEXTAREA, minHeight: 80 }}
               />
+              <span style={{ display: 'block', marginTop: 6, fontFamily: FONT, fontSize: 11, color: '#9E9590' }}>
+                Enter one step per line; each line appears as a bullet on the product page.
+              </span>
             </div>
 
             <div style={FIELD}>
@@ -892,13 +937,13 @@ export default function ProductFormPage() {
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 16, marginBottom: 16 }}>
             <div style={FIELD}>
-              <label style={LABEL}>Price (₹) <span style={{ color: '#A85050' }}>*</span></label>
+              <label style={LABEL}>Price (₹)</label>
               <input
                 {...register('price')}
                 type="number"
                 min="0"
                 step="0.01"
-                placeholder="0.00"
+                placeholder="Leave blank to accept inquiries"
                 className="admin-input"
                 style={INPUT}
               />
@@ -972,6 +1017,40 @@ export default function ProductFormPage() {
           </div>
         </div>
 
+        {/* ── Section 3a: Product details ──────────────────────────────────── */}
+        <div style={SECTION}>
+          <p style={SECTION_TITLE}>Product Details</p>
+          <p style={{ fontFamily: FONT, fontSize: 11, color: '#9E9590', marginTop: -12, marginBottom: 16 }}>
+            Optional item measurements shown to customers. Include units, such as 120 g or 8 cm.
+          </p>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 16 }}>
+            {([
+              ['productWeight', 'Weight'],
+              ['productLength', 'Length'],
+              ['productBreadth', 'Breadth'],
+              ['productHeight', 'Height'],
+              ['productDimensions', 'Dimensions'],
+              ['productSize', 'Size'],
+            ] as const).map(([field, label]) => (
+              <div style={FIELD} key={field}>
+                <label style={LABEL}>{label}</label>
+                <input
+                  {...register(field)}
+                  type="text"
+                  placeholder={
+                    label === 'Weight' ? 'e.g. 120 g'
+                      : label === 'Dimensions' ? 'e.g. 8 x 4 x 2 cm'
+                      : label === 'Size' ? 'e.g. M / L or 7 inch'
+                      : 'Optional'
+                  }
+                  className="admin-input"
+                  style={INPUT}
+                />
+              </div>
+            ))}
+          </div>
+        </div>
+
         {/* ── Section 3b: Shipping Details ─────────────────────────────────────── */}
         <div style={SECTION}>
           <p style={SECTION_TITLE}>Shipping Details</p>
@@ -988,10 +1067,10 @@ export default function ProductFormPage() {
           >
             <div>
               <div style={{ fontFamily: FONT, fontSize: 13, fontWeight: 500, color: '#1C1A17' }}>
-                Use Category Shipping
+                Use Category &amp; Sub-Category Shipping
               </div>
               <div style={{ fontFamily: FONT, fontSize: 11, color: '#9E9590', marginTop: 2 }}>
-                Inherit weight and dimensions from the selected category
+                Sub-category defaults override the parent category where provided
               </div>
             </div>
             <Toggle
@@ -1013,7 +1092,7 @@ export default function ProductFormPage() {
                   {...register(field)}
                   type="text"
                   disabled={watchUseCategoryShipping}
-                  placeholder={watchUseCategoryShipping ? '' : 'Optional'}
+                  placeholder={watchUseCategoryShipping ? '' : field === 'shippingWeight' ? 'e.g. 120 g or 0.12 kg' : 'Optional'}
                   className="admin-input"
                   style={{
                     ...INPUT,
@@ -1024,6 +1103,20 @@ export default function ProductFormPage() {
                 />
               </div>
             ))}
+          </div>
+          <div style={{ ...FIELD, marginTop: 18, maxWidth: 360 }}>
+            <label style={LABEL}>Total Shipping Weight</label>
+            <input
+              {...register('shippingTotalWeight')}
+              type="text"
+              placeholder="For example, 250 g or 1.2 kg"
+              className="admin-input"
+              style={INPUT}
+            />
+            <span style={{ display: 'block', marginTop: 6, fontFamily: FONT, fontSize: 11, color: '#9E9590' }}>
+              Per item: include the product, gift, and packaging. Supported units: g, kg, mg, lb, oz.
+            </span>
+            {errors.shippingTotalWeight && <span style={ERR}>{errors.shippingTotalWeight.message}</span>}
           </div>
         </div>
 
@@ -1446,7 +1539,7 @@ export default function ProductFormPage() {
                 controls
                 muted
                 preload="metadata"
-                style={{ width: '100%', aspectRatio: '16 / 9', objectFit: 'cover', display: 'block', borderRadius: 4, background: '#1C1A17' }}
+                style={{ width: '100%', aspectRatio: '16 / 9', objectFit: 'contain', display: 'block', borderRadius: 4, background: '#1C1A17' }}
               />
               <button
                 type="button"

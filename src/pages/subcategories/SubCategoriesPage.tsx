@@ -92,6 +92,10 @@ function SubCategoryDrawer({
   const [parentCategory, setParentCategory] = useState('')
   const [sortOrder, setSortOrder] = useState(0)
   const [isActive, setIsActive] = useState(true)
+  const [shippingWeight, setShippingWeight] = useState('')
+  const [shippingLength, setShippingLength] = useState('')
+  const [shippingBreadth, setShippingBreadth] = useState('')
+  const [shippingHeight, setShippingHeight] = useState('')
 
   useEffect(() => {
     if (!open) return
@@ -102,6 +106,10 @@ function SubCategoryDrawer({
       setParentCategory(typeof editing.parentCategory === 'string' ? editing.parentCategory : editing.parentCategory._id)
       setSortOrder(editing.sortOrder)
       setIsActive(editing.isActive)
+      setShippingWeight(editing.shipping?.weight ?? '')
+      setShippingLength(editing.shipping?.length ?? '')
+      setShippingBreadth(editing.shipping?.breadth ?? '')
+      setShippingHeight(editing.shipping?.height ?? '')
     } else {
       setName('')
       setSlug('')
@@ -109,6 +117,10 @@ function SubCategoryDrawer({
       setParentCategory('')
       setSortOrder(0)
       setIsActive(true)
+      setShippingWeight('')
+      setShippingLength('')
+      setShippingBreadth('')
+      setShippingHeight('')
     }
   }, [open, editing])
 
@@ -118,7 +130,19 @@ function SubCategoryDrawer({
 
   const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault()
-    onSave({ name: name.trim(), slug: slug.trim(), parentCategory, sortOrder, isActive }, editing?._id)
+    onSave({
+      name: name.trim(),
+      slug: slug.trim(),
+      parentCategory,
+      sortOrder,
+      isActive,
+      shipping: {
+        weight: shippingWeight.trim(),
+        length: shippingLength.trim(),
+        breadth: shippingBreadth.trim(),
+        height: shippingHeight.trim(),
+      },
+    }, editing?._id)
   }
 
   return (
@@ -152,6 +176,33 @@ function SubCategoryDrawer({
           <div>
             <label style={LABEL}>Sort Order</label>
             <input type="number" min={0} value={sortOrder} onChange={e => setSortOrder(Number(e.target.value))} style={{ ...INPUT, width: 100 }} />
+          </div>
+          <div>
+            <label style={LABEL}>Shipping Details</label>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+              {([
+                ['Weight', shippingWeight, setShippingWeight, 'Optional (e.g. 120 g)'],
+                ['Length', shippingLength, setShippingLength, 'Optional'],
+                ['Breadth', shippingBreadth, setShippingBreadth, 'Optional'],
+                ['Height', shippingHeight, setShippingHeight, 'Optional'],
+              ] as const).map(([label, value, setter, placeholder]) => (
+                <div key={label}>
+                  <span style={{ fontFamily: FONT, fontSize: 10, color: '#9E9590', marginBottom: 4, display: 'block' }}>
+                    {label}
+                  </span>
+                  <input
+                    type="text"
+                    value={value}
+                    onChange={event => setter(event.target.value)}
+                    placeholder={placeholder}
+                    style={INPUT}
+                  />
+                </div>
+              ))}
+            </div>
+            <span style={{ fontFamily: FONT, fontSize: 10, color: '#9E9590', marginTop: 6, display: 'block' }}>
+              Optional product shipping defaults. Include a weight unit (for example, 120 g or 0.12 kg); dimensions are in centimeters.
+            </span>
           </div>
           <div>
             <label style={LABEL}>Status</label>

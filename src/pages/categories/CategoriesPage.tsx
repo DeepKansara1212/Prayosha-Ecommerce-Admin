@@ -201,9 +201,9 @@ function CategoryDrawer({ open, editing, onClose, onSave, isPending }: DrawerPro
     fd.append('sortOrder', String(sortOrder))
     fd.append('isActive', String(isActive))
     fd.append('shippingWeight', shippingWeight)
-    if (shippingLength) fd.append('shippingLength', shippingLength)
-    if (shippingBreadth) fd.append('shippingBreadth', shippingBreadth)
-    if (shippingHeight) fd.append('shippingHeight', shippingHeight)
+    fd.append('shippingLength', shippingLength)
+    fd.append('shippingBreadth', shippingBreadth)
+    fd.append('shippingHeight', shippingHeight)
     if (imageFile) fd.append('image', imageFile)
     onSave(fd, editing?._id)
   }
@@ -393,14 +393,13 @@ function CategoryDrawer({ open, editing, onClose, onSave, isPending }: DrawerPro
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
               <div>
                 <span style={{ fontFamily: FONT, fontSize: 10, color: '#9E9590', marginBottom: 4, display: 'block' }}>
-                  Weight *
+                  Weight
                 </span>
                 <input
                   type="text"
-                  required
                   value={shippingWeight}
                   onChange={e => setShippingWeight(e.target.value)}
-                  placeholder="e.g. 120"
+                  placeholder="Optional (e.g. 120 g)"
                   style={INPUT_BASE}
                 />
               </div>
@@ -442,7 +441,7 @@ function CategoryDrawer({ open, editing, onClose, onSave, isPending }: DrawerPro
               </div>
             </div>
             <span style={{ fontFamily: FONT, fontSize: 10, color: '#9E9590', marginTop: 6, display: 'block' }}>
-              Products in this category inherit these values unless overridden individually.
+              Optional defaults for shipping. Include a weight unit (for example, 120 g or 0.12 kg).
             </span>
           </div>
 

@@ -4,9 +4,19 @@ import client from './client'
 
 export interface ProductShipping {
   weight?: string
+  totalWeight?: string
   length?: string
   breadth?: string
   height?: string
+}
+
+export interface ProductDetails {
+  weight?: string
+  length?: string
+  breadth?: string
+  height?: string
+  dimensions?: string
+  size?: string
 }
 
 export interface ProductCategory {
@@ -29,7 +39,7 @@ export interface Product {
   sku: string
   description: string
   shortDescription?: string
-  price: number
+  price?: number
   comparePrice?: number
   images: string[]
   video?: string
@@ -48,6 +58,9 @@ export interface Product {
   lowStockThreshold: number
   useCategoryShipping: boolean
   shipping?: ProductShipping
+  productDetails?: ProductDetails
+  dimensions?: string
+  size?: string
   careInstructions?: string
   howToUse?: string
   metaphysicalProperties?: string
@@ -87,7 +100,7 @@ export type ProductPayload = {
   sku: string
   description: string
   shortDescription?: string
-  price: number
+  price?: number | null
   comparePrice?: number
   costPrice?: number
   video?: string
@@ -106,6 +119,7 @@ export type ProductPayload = {
   lowStockThreshold?: number
   useCategoryShipping?: boolean
   shipping?: ProductShipping
+  productDetails?: ProductDetails
   careInstructions?: string
   howToUse?: string
   metaphysicalProperties?: string

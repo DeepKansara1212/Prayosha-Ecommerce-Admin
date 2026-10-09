@@ -6,11 +6,19 @@ export interface SubCategoryParent {
   slug: string
 }
 
+export interface SubCategoryShipping {
+  weight?: string
+  length?: string
+  breadth?: string
+  height?: string
+}
+
 export interface SubCategory {
   _id: string
   name: string
   slug: string
   parentCategory: string | SubCategoryParent
+  shipping?: SubCategoryShipping
   isActive: boolean
   sortOrder: number
   createdAt: string
@@ -21,6 +29,7 @@ export interface SubCategoryPayload {
   name: string
   slug?: string
   parentCategory: string
+  shipping?: SubCategoryShipping
   isActive?: boolean
   sortOrder?: number
 }

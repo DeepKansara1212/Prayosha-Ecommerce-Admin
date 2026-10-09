@@ -511,7 +511,7 @@ export default function ProductsPage() {
                   {/* Price */}
                   <td style={TD}>
                     <div style={{ fontFamily: FONT, fontSize: 13, fontWeight: 500, color: '#C49A3C' }}>
-                      {fmt(product.price)}
+                      {product.price === undefined ? 'Price on request' : fmt(product.price)}
                     </div>
                     {product.comparePrice && (
                       <div style={{ fontFamily: FONT, fontSize: 11, color: '#9E9590', textDecoration: 'line-through' }}>
