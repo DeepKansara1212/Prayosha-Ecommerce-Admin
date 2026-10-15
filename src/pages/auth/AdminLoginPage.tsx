@@ -24,7 +24,7 @@ const fieldStyle: React.CSSProperties = {
   background: '#F5F0E8',
   border: '1px solid #E2DAC8',
   borderRadius: 2,
-  fontFamily: "'Jost', sans-serif",
+  fontFamily: "var(--font-body)",
   fontSize: 14,
   color: '#1C1A17',
   outline: 'none',
@@ -33,19 +33,19 @@ const fieldStyle: React.CSSProperties = {
 
 const labelStyle: React.CSSProperties = {
   display: 'block',
-  fontFamily: "'Jost', sans-serif",
-  fontSize: 11,
+  fontFamily: "var(--font-body)",
+  fontSize: 13,
   textTransform: 'uppercase',
-  letterSpacing: '0.08em',
+  letterSpacing: '0.05em',
   color: '#6B6057',
   marginBottom: 6,
 }
 
 const errorStyle: React.CSSProperties = {
   color: '#C0392B',
-  fontSize: 12,
+  fontSize: 13,
   marginTop: 4,
-  fontFamily: "'Jost', sans-serif",
+  fontFamily: "var(--font-body)",
 }
 
 // ── Component ─────────────────────────────────────────────────────────────────
@@ -102,10 +102,10 @@ export default function AdminLoginPage() {
           />
           <div
             style={{
-              fontFamily: "'Jost', sans-serif",
-              fontSize: 10,
+              fontFamily: "var(--font-body)",
+              fontSize: 13,
               textTransform: 'uppercase',
-              letterSpacing: '0.12em',
+              letterSpacing: '0.05em',
               color: '#9E9590',
               marginTop: 6,
             }}
@@ -149,7 +149,7 @@ function ErrorBanner({ message }: { message: string }) {
         borderRadius: 2,
         padding: '10px 14px',
         marginBottom: 16,
-        fontFamily: "'Jost', sans-serif",
+        fontFamily: "var(--font-body)",
         fontSize: 13,
         color: '#C0392B',
       }}
@@ -166,10 +166,10 @@ function submitButtonStyle(disabled: boolean): React.CSSProperties {
     background: '#C4A35A',
     border: 'none',
     borderRadius: 2,
-    fontFamily: "'Jost', sans-serif",
-    fontSize: 12,
+    fontFamily: "var(--font-body)",
+    fontSize: 13,
     textTransform: 'uppercase',
-    letterSpacing: '0.12em',
+    letterSpacing: '0.05em',
     color: '#1C1A17',
     cursor: disabled ? 'not-allowed' : 'pointer',
     opacity: disabled ? 0.7 : 1,

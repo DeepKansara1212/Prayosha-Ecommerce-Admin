@@ -18,6 +18,7 @@ import { getCategories } from '../../api/categories.api'
 import { getSubCategories } from '../../api/subcategories.api'
 import { getRashis } from '../../api/rashis.api'
 import { getPurposes } from '../../api/purposes.api'
+import { getMeanings } from '../../api/meanings.api'
 import { getRashiProductMappings } from '../../api/rashiProductMappings.api'
 import { getPurposeProductMappings } from '../../api/purposeProductMappings.api'
 
@@ -60,6 +61,7 @@ const schema = z.object({
   tags:                   z.array(z.string()),
   chakra:                 z.string(),
   purposeTags:            z.array(z.string()),
+  meaningTags:            z.array(z.string()),
   shape:                  z.string().max(100, 'Max 100 characters'),
   color:                  z.string().max(100, 'Max 100 characters'),
   rudrakshaFaces:         z.string().max(50, 'Max 50 characters'),
@@ -69,7 +71,6 @@ const schema = z.object({
     z.coerce.number().int().min(1, 'Must be at least 1').optional(),
   ),
   rashiIds:               z.array(z.string()),
-  purposeIds:             z.array(z.string()),
   badge:                  z.string(),
   isFeatured:             z.boolean(),
   isActive:               z.boolean(),
@@ -80,7 +81,7 @@ type FormValues = z.infer<typeof schema>
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
-const FONT = "'Jost', sans-serif"
+const FONT = "var(--font-body)"
 
 const BADGE_OPTIONS = ['', 'BESTSELLER', 'NEW', 'LIMITED', 'RARE', 'GIFT SET'] as const
 
@@ -114,10 +115,10 @@ const SECTION: React.CSSProperties = {
 
 const SECTION_TITLE: React.CSSProperties = {
   fontFamily: FONT,
-  fontSize: 10,
+  fontSize: 13,
   fontWeight: 600,
   textTransform: 'uppercase',
-  letterSpacing: '0.1em',
+  letterSpacing: '0.05em',
   color: '#9E9590',
   marginBottom: 16,
   paddingBottom: 10,
@@ -127,7 +128,7 @@ const SECTION_TITLE: React.CSSProperties = {
 const LABEL: React.CSSProperties = {
   display: 'block',
   fontFamily: FONT,
-  fontSize: 12,
+  fontSize: 13,
   fontWeight: 500,
   color: '#6B6057',
   marginBottom: 5,
@@ -155,7 +156,7 @@ const TEXTAREA: React.CSSProperties = {
 
 const ERR: React.CSSProperties = {
   fontFamily: FONT,
-  fontSize: 11,
+  fontSize: 13,
   color: '#A85050',
   marginTop: 4,
   display: 'block',
@@ -253,7 +254,7 @@ function MultiSelectChips({
                 border: '1px solid #E2DAC8',
                 borderRadius: 2,
                 fontFamily: FONT,
-                fontSize: 11,
+                fontSize: 13,
                 color: '#1C1A17',
               }}
             >
@@ -421,7 +422,7 @@ export default function ProductFormPage() {
       price: '', comparePrice: '', costPrice: '', stock: 0, lowStockThreshold: 5,
       useCategoryShipping: true, shippingWeight: '', shippingTotalWeight: '', shippingLength: '', shippingBreadth: '', shippingHeight: '',
       productWeight: '', productLength: '', productBreadth: '', productHeight: '', productDimensions: '', productSize: '',
-      category: '', subCategory: '', tags: [], chakra: '', purposeTags: [], shape: '', color: '', rudrakshaFaces: '', beadSize: '', noOfSticks: '', rashiIds: [], purposeIds: [], badge: '', isFeatured: false, isActive: true, hasFreeGift: false,
+      category: '', subCategory: '', tags: [], chakra: '', purposeTags: [], meaningTags: [], shape: '', color: '', rudrakshaFaces: '', beadSize: '', noOfSticks: '', rashiIds: [], badge: '', isFeatured: false, isActive: true, hasFreeGift: false,
     },
   })
 
@@ -440,7 +441,8 @@ export default function ProductFormPage() {
   const watchBadge      = watch('badge')
   const watchTags       = watch('tags')
   const watchRashiIds   = watch('rashiIds')
-  const watchPurposeIds = watch('purposeIds')
+  const watchPurposeTags = watch('purposeTags')
+  const watchMeaningTags = watch('meaningTags')
   const watchFeatured   = watch('isFeatured')
   const watchActive     = watch('isActive')
   const watchHasFreeGift = watch('hasFreeGift')
@@ -499,6 +501,12 @@ export default function ProductFormPage() {
     staleTime: 5 * 60_000,
   })
 
+  const { data: meanings } = useQuery({
+    queryKey: ['admin-meanings'],
+    queryFn: getMeanings,
+    staleTime: 5 * 60_000,
+  })
+
   // Rashi/Purpose selections live in separate mapping collections, not on the
   // product itself — fetch this product's current mappings separately so the
   // form can pre-populate them when editing.
@@ -522,9 +530,15 @@ export default function ProductFormPage() {
 
   useEffect(() => {
     if (existingPurposeMappings) {
-      setValue('purposeIds', existingPurposeMappings.map(m => m.purpose._id))
+      setValue(
+        'purposeTags',
+        [...new Set([
+          ...(product?.purposeTags ?? []),
+          ...existingPurposeMappings.map(mapping => mapping.purpose._id),
+        ])],
+      )
     }
-  }, [existingPurposeMappings, setValue])
+  }, [existingPurposeMappings, product, setValue])
 
   // The category and subcategory lists carry shipping defaults.
   // Fall back to the edited product's own populated category (covers the case where
@@ -615,13 +629,13 @@ export default function ProductFormPage() {
       tags:                   product.tags ?? [],
       chakra:                 product.chakra ?? '',
       purposeTags:            product.purposeTags ?? [],
+      meaningTags:            product.meaningTags ?? [],
       shape:                  product.shape ?? '',
       color:                  product.color ?? '',
       rudrakshaFaces:         product.rudrakshaFaces ?? '',
       beadSize:               product.beadSize ?? '',
       noOfSticks:             product.noOfSticks ?? '',
       rashiIds:               [],
-      purposeIds:             [],
       badge:                  product.badge ?? '',
       isFeatured:             product.isFeatured,
       isActive:               product.isActive,
@@ -646,8 +660,9 @@ export default function ProductFormPage() {
       subCategory: data.subCategory || null,
       tags:             data.tags,
       purposeTags:      data.purposeTags,
+      meaningTags:      data.meaningTags,
       rashiIds:         data.rashiIds,
-      purposeIds:       data.purposeIds,
+      purposeIds:       data.purposeTags,
       isFeatured:       data.isFeatured,
       isActive:         data.isActive,
       hasFreeGift:      data.hasFreeGift,
@@ -886,7 +901,7 @@ export default function ProductFormPage() {
               className="admin-input"
               style={{ ...TEXTAREA, minHeight: 130 }}
             />
-            <span style={{ display: 'block', marginTop: 6, fontFamily: FONT, fontSize: 11, color: '#9E9590' }}>
+            <span style={{ display: 'block', marginTop: 6, fontFamily: FONT, fontSize: 13, color: '#9E9590' }}>
               Enter one point per line — each line will show as a bullet on the site.
             </span>
             {errors.description && <span style={ERR}>{errors.description.message}</span>}
@@ -901,7 +916,7 @@ export default function ProductFormPage() {
                 className="admin-input"
                 style={{ ...TEXTAREA, minHeight: 80 }}
               />
-              <span style={{ display: 'block', marginTop: 6, fontFamily: FONT, fontSize: 11, color: '#9E9590' }}>
+              <span style={{ display: 'block', marginTop: 6, fontFamily: FONT, fontSize: 13, color: '#9E9590' }}>
                 Enter one instruction per line; each line appears as a bullet on the product page.
               </span>
             </div>
@@ -914,7 +929,7 @@ export default function ProductFormPage() {
                 className="admin-input"
                 style={{ ...TEXTAREA, minHeight: 80 }}
               />
-              <span style={{ display: 'block', marginTop: 6, fontFamily: FONT, fontSize: 11, color: '#9E9590' }}>
+              <span style={{ display: 'block', marginTop: 6, fontFamily: FONT, fontSize: 13, color: '#9E9590' }}>
                 Enter one step per line; each line appears as a bullet on the product page.
               </span>
             </div>
@@ -970,7 +985,7 @@ export default function ProductFormPage() {
                   style={{
                     display: 'block',
                     fontWeight: 400,
-                    fontSize: 10,
+                    fontSize: 13,
                     color: '#9E9590',
                     marginTop: 1,
                   }}
@@ -1020,7 +1035,7 @@ export default function ProductFormPage() {
         {/* ── Section 3a: Product details ──────────────────────────────────── */}
         <div style={SECTION}>
           <p style={SECTION_TITLE}>Product Details</p>
-          <p style={{ fontFamily: FONT, fontSize: 11, color: '#9E9590', marginTop: -12, marginBottom: 16 }}>
+          <p style={{ fontFamily: FONT, fontSize: 13, color: '#9E9590', marginTop: -12, marginBottom: 16 }}>
             Optional item measurements shown to customers. Include units, such as 120 g or 8 cm.
           </p>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 16 }}>
@@ -1069,7 +1084,7 @@ export default function ProductFormPage() {
               <div style={{ fontFamily: FONT, fontSize: 13, fontWeight: 500, color: '#1C1A17' }}>
                 Use Category &amp; Sub-Category Shipping
               </div>
-              <div style={{ fontFamily: FONT, fontSize: 11, color: '#9E9590', marginTop: 2 }}>
+              <div style={{ fontFamily: FONT, fontSize: 13, color: '#9E9590', marginTop: 2 }}>
                 Sub-category defaults override the parent category where provided
               </div>
             </div>
@@ -1113,7 +1128,7 @@ export default function ProductFormPage() {
               className="admin-input"
               style={INPUT}
             />
-            <span style={{ display: 'block', marginTop: 6, fontFamily: FONT, fontSize: 11, color: '#9E9590' }}>
+            <span style={{ display: 'block', marginTop: 6, fontFamily: FONT, fontSize: 13, color: '#9E9590' }}>
               Per item: include the product, gift, and packaging. Supported units: g, kg, mg, lb, oz.
             </span>
             {errors.shippingTotalWeight && <span style={ERR}>{errors.shippingTotalWeight.message}</span>}
@@ -1228,13 +1243,28 @@ export default function ProductFormPage() {
 
             {/* Purpose */}
             <div style={FIELD}>
-              <label style={LABEL}>Purpose</label>
+              <label style={LABEL}>Purpose Collections</label>
               <MultiSelectChips
                 options={(purposes ?? []).map(p => ({ id: p._id, label: p.name }))}
-                selected={watchPurposeIds}
-                onChange={ids => setValue('purposeIds', ids)}
+                selected={watchPurposeTags}
+                onChange={ids => setValue('purposeTags', ids)}
                 placeholder="Add a Purpose…"
               />
+              <span style={{ display: 'block', marginTop: 6, fontFamily: FONT, fontSize: 13, color: '#9E9590' }}>
+                Products appear in each selected purpose collection.
+              </span>
+            </div>
+            <div style={FIELD}>
+              <label style={LABEL}>Meanings</label>
+              <MultiSelectChips
+                options={(meanings ?? []).map(meaning => ({ id: meaning._id, label: meaning.name }))}
+                selected={watchMeaningTags}
+                onChange={ids => setValue('meaningTags', ids)}
+                placeholder="Add a Meaning…"
+              />
+              <span style={{ display: 'block', marginTop: 6, fontFamily: FONT, fontSize: 13, color: '#9E9590' }}>
+                Shoppers can filter products by each selected meaning.
+              </span>
             </div>
 
             <div style={FIELD}>
@@ -1283,7 +1313,7 @@ export default function ProductFormPage() {
                       border: '1px solid #E2DAC8',
                       borderRadius: 2,
                       fontFamily: FONT,
-                      fontSize: 11,
+                      fontSize: 13,
                       color: '#1C1A17',
                     }}
                   >
@@ -1333,7 +1363,7 @@ export default function ProductFormPage() {
                     background: BADGE_BG[watchBadge] ?? '#F3F4F6',
                     color: BADGE_COLOR[watchBadge] ?? '#6B7280',
                     fontFamily: FONT,
-                    fontSize: 11,
+                    fontSize: 13,
                     fontWeight: 600,
                     letterSpacing: '0.06em',
                     textTransform: 'uppercase',
@@ -1378,7 +1408,7 @@ export default function ProductFormPage() {
               <p style={{ fontFamily: FONT, fontSize: 13, color: '#6B6057', marginBottom: 4 }}>
                 Drop images here or click to browse
               </p>
-              <p style={{ fontFamily: FONT, fontSize: 11, color: '#9E9590' }}>
+              <p style={{ fontFamily: FONT, fontSize: 13, color: '#9E9590' }}>
                 JPG, PNG, WebP · max {6 - totalImages} more
               </p>
               <input
@@ -1498,7 +1528,7 @@ export default function ProductFormPage() {
                         borderRadius: 2,
                         padding: '1px 5px',
                         fontFamily: FONT,
-                        fontSize: 9,
+                        fontSize: 13,
                         color: '#fff',
                         letterSpacing: '0.06em',
                       }}
@@ -1515,7 +1545,7 @@ export default function ProductFormPage() {
                         right: 0,
                         textAlign: 'center',
                         fontFamily: FONT,
-                        fontSize: 9,
+                        fontSize: 13,
                         color: '#7B5EA7',
                         background: 'rgba(255,255,255,0.8)',
                       }}
@@ -1549,14 +1579,14 @@ export default function ProductFormPage() {
               >
                 <X size={12} />
               </button>
-              {!video.isExisting && <p style={{ fontFamily: FONT, fontSize: 11, color: '#7B5EA7', marginTop: 8 }}>Pending upload</p>}
+              {!video.isExisting && <p style={{ fontFamily: FONT, fontSize: 13, color: '#7B5EA7', marginTop: 8 }}>Pending upload</p>}
             </div>
           ) : (
             <label style={{ display: 'block', maxWidth: 420, cursor: 'pointer' }}>
               <div style={{ background: '#EDE8DC', border: '2px dashed #C4B89A', borderRadius: 4, padding: '28px 20px', textAlign: 'center' }}>
                 <Upload size={22} color="#9E9590" style={{ marginBottom: 8 }} />
                 <p style={{ fontFamily: FONT, fontSize: 13, color: '#6B6057', marginBottom: 4 }}>Click to upload a product video</p>
-                <p style={{ fontFamily: FONT, fontSize: 11, color: '#9E9590' }}>MP4, WebM, MOV · max 100 MB</p>
+                <p style={{ fontFamily: FONT, fontSize: 13, color: '#9E9590' }}>MP4, WebM, MOV · max 100 MB</p>
               </div>
               <input
                 type="file"
@@ -1586,7 +1616,7 @@ export default function ProductFormPage() {
                 <div style={{ fontFamily: FONT, fontSize: 13, fontWeight: 500, color: '#1C1A17' }}>
                   Featured
                 </div>
-                <div style={{ fontFamily: FONT, fontSize: 11, color: '#9E9590', marginTop: 2 }}>
+                <div style={{ fontFamily: FONT, fontSize: 13, color: '#9E9590', marginTop: 2 }}>
                   Show in featured products section on the storefront
                 </div>
               </div>
@@ -1611,7 +1641,7 @@ export default function ProductFormPage() {
                 <div style={{ fontFamily: FONT, fontSize: 13, fontWeight: 500, color: '#1C1A17' }}>
                   Active
                 </div>
-                <div style={{ fontFamily: FONT, fontSize: 11, color: '#9E9590', marginTop: 2 }}>
+                <div style={{ fontFamily: FONT, fontSize: 13, color: '#9E9590', marginTop: 2 }}>
                   Inactive products are hidden from the storefront
                 </div>
               </div>
@@ -1636,7 +1666,7 @@ export default function ProductFormPage() {
                 <div style={{ fontFamily: FONT, fontSize: 13, fontWeight: 500, color: '#1C1A17' }}>
                   Free Gift
                 </div>
-                <div style={{ fontFamily: FONT, fontSize: 11, color: '#9E9590', marginTop: 2 }}>
+                <div style={{ fontFamily: FONT, fontSize: 13, color: '#9E9590', marginTop: 2 }}>
                   Orders containing this product will include a free gift
                 </div>
               </div>
@@ -1674,7 +1704,7 @@ export default function ProductFormPage() {
               border: '1px solid #E2DAC8',
               borderRadius: 4,
               fontFamily: FONT,
-              fontSize: 12,
+              fontSize: 13,
               color: '#6B6057',
               cursor: 'pointer',
             }}
@@ -1690,7 +1720,7 @@ export default function ProductFormPage() {
               border: 'none',
               borderRadius: 4,
               fontFamily: FONT,
-              fontSize: 12,
+              fontSize: 13,
               fontWeight: 500,
               color: '#fff',
               cursor: isSubmitting ? 'not-allowed' : 'pointer',

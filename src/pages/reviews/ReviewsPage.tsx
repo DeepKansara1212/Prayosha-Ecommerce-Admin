@@ -10,7 +10,7 @@ import {
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
-const FONT = "'Jost', sans-serif"
+const FONT = "var(--font-body)"
 
 type Tab = 'pending' | 'approved'
 
@@ -143,7 +143,7 @@ function ReviewCard({
               alignItems: 'center',
               justifyContent: 'center',
               color: '#C4B89A',
-              fontSize: 9,
+              fontSize: 13,
               fontFamily: FONT,
               textAlign: 'center',
             }}
@@ -159,7 +159,7 @@ function ReviewCard({
         <div
           style={{
             fontFamily: FONT,
-            fontSize: 11,
+            fontSize: 13,
             fontWeight: 600,
             textTransform: 'uppercase',
             letterSpacing: '0.06em',
@@ -172,10 +172,10 @@ function ReviewCard({
 
         {/* Reviewer meta row */}
         <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 8, marginBottom: 6 }}>
-          <span style={{ fontFamily: FONT, fontSize: 12, fontWeight: 500, color: '#1C1A17' }}>
+          <span style={{ fontFamily: FONT, fontSize: 13, fontWeight: 500, color: '#1C1A17' }}>
             {review.user?.name ?? 'Unknown'}
           </span>
-          <span style={{ fontFamily: FONT, fontSize: 11, color: '#9E9590' }}>
+          <span style={{ fontFamily: FONT, fontSize: 13, color: '#9E9590' }}>
             {fmtDate(review.createdAt)}
           </span>
           {review.isVerifiedPurchase && (
@@ -189,7 +189,7 @@ function ReviewCard({
                 color: '#5A8A6A',
                 borderRadius: 12,
                 fontFamily: FONT,
-                fontSize: 10,
+                fontSize: 13,
                 fontWeight: 500,
               }}
             >
@@ -208,7 +208,7 @@ function ReviewCard({
         <div
           style={{
             fontFamily: FONT,
-            fontSize: 12,
+            fontSize: 13,
             fontWeight: 600,
             color: '#1C1A17',
             marginBottom: 4,
@@ -219,7 +219,7 @@ function ReviewCard({
         <div
           style={{
             fontFamily: FONT,
-            fontSize: 12,
+            fontSize: 13,
             color: '#6B6057',
             lineHeight: 1.6,
             display: '-webkit-box',
@@ -246,7 +246,7 @@ function ReviewCard({
                 border: '1px solid #5A8A6A',
                 borderRadius: 4,
                 fontFamily: FONT,
-                fontSize: 11,
+                fontSize: 13,
                 fontWeight: 500,
                 color: '#5A8A6A',
                 cursor: approving ? 'not-allowed' : 'pointer',
@@ -276,7 +276,7 @@ function ReviewCard({
               border: '1px solid #A85050',
               borderRadius: 4,
               fontFamily: FONT,
-              fontSize: 11,
+              fontSize: 13,
               fontWeight: 500,
               color: '#A85050',
               cursor: deleting ? 'not-allowed' : 'pointer',
@@ -536,7 +536,7 @@ export default function ReviewsPage() {
                 background: activeTab === tab.key ? '#7B5EA7' : '#E2DAC8',
                 color: activeTab === tab.key ? '#fff' : '#6B6057',
                 fontFamily: FONT,
-                fontSize: 10,
+                fontSize: 13,
                 fontWeight: 600,
               }}
             >
@@ -564,7 +564,7 @@ export default function ReviewsPage() {
               onChange={toggleSelectAll}
               style={{ cursor: 'pointer', accentColor: '#7B5EA7', width: 14, height: 14 }}
             />
-            <span style={{ fontFamily: FONT, fontSize: 11, color: '#6B6057' }}>Select all</span>
+            <span style={{ fontFamily: FONT, fontSize: 13, color: '#6B6057' }}>Select all</span>
           </label>
         )}
       </div>
@@ -627,7 +627,7 @@ export default function ReviewsPage() {
             padding: '10px 0',
           }}
         >
-          <span style={{ fontFamily: FONT, fontSize: 12, color: '#9E9590' }}>
+          <span style={{ fontFamily: FONT, fontSize: 13, color: '#9E9590' }}>
             {currentPagination.total} review{currentPagination.total !== 1 ? 's' : ''} · page {currentPage} of {currentPagination.totalPages}
           </span>
           <div style={{ display: 'flex', gap: 6 }}>
@@ -643,7 +643,7 @@ export default function ReviewsPage() {
                 border: '1px solid #E2DAC8',
                 borderRadius: 4,
                 fontFamily: FONT,
-                fontSize: 12,
+                fontSize: 13,
                 color: currentPagination.hasPrev ? '#1C1A17' : '#C4B89A',
                 cursor: currentPagination.hasPrev ? 'pointer' : 'not-allowed',
               }}
@@ -662,7 +662,7 @@ export default function ReviewsPage() {
                 border: '1px solid #E2DAC8',
                 borderRadius: 4,
                 fontFamily: FONT,
-                fontSize: 12,
+                fontSize: 13,
                 color: currentPagination.hasNext ? '#1C1A17' : '#C4B89A',
                 cursor: currentPagination.hasNext ? 'pointer' : 'not-allowed',
               }}
@@ -709,7 +709,7 @@ export default function ReviewsPage() {
                 border: 'none',
                 borderRadius: 4,
                 fontFamily: FONT,
-                fontSize: 12,
+                fontSize: 13,
                 fontWeight: 500,
                 color: '#fff',
                 cursor: bulkPending ? 'not-allowed' : 'pointer',
@@ -734,7 +734,7 @@ export default function ReviewsPage() {
               border: 'none',
               borderRadius: 4,
               fontFamily: FONT,
-              fontSize: 12,
+              fontSize: 13,
               fontWeight: 500,
               color: '#fff',
               cursor: bulkPending ? 'not-allowed' : 'pointer',
@@ -753,7 +753,7 @@ export default function ReviewsPage() {
               background: 'none',
               border: 'none',
               fontFamily: FONT,
-              fontSize: 12,
+              fontSize: 13,
               color: '#9E9590',
               cursor: bulkPending ? 'default' : 'pointer',
               textDecoration: 'underline',
@@ -814,7 +814,7 @@ export default function ReviewsPage() {
                   border: '1px solid #E2DAC8',
                   borderRadius: 4,
                   fontFamily: FONT,
-                  fontSize: 12,
+                  fontSize: 13,
                   color: '#6B6057',
                   cursor: 'pointer',
                 }}
@@ -829,7 +829,7 @@ export default function ReviewsPage() {
                   border: 'none',
                   borderRadius: 4,
                   fontFamily: FONT,
-                  fontSize: 12,
+                  fontSize: 13,
                   fontWeight: 500,
                   color: '#fff',
                   cursor: 'pointer',

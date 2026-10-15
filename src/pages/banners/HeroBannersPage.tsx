@@ -14,7 +14,7 @@ import { useToast } from '../../store/toastStore'
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
-const FONT = "'Jost', sans-serif"
+const FONT = "var(--font-body)"
 
 // ── Shared styles ─────────────────────────────────────────────────────────────
 
@@ -24,7 +24,7 @@ const INPUT_BASE: React.CSSProperties = {
   border: '1px solid #E2DAC8',
   borderRadius: 4,
   fontFamily: FONT,
-  fontSize: 12,
+  fontSize: 13,
   color: '#1C1A17',
   outline: 'none',
   width: '100%',
@@ -33,11 +33,11 @@ const INPUT_BASE: React.CSSProperties = {
 
 const LABEL: React.CSSProperties = {
   fontFamily: FONT,
-  fontSize: 11,
+  fontSize: 13,
   fontWeight: 600,
   color: '#6B6057',
   textTransform: 'uppercase' as const,
-  letterSpacing: '0.07em',
+  letterSpacing: '0.05em',
   display: 'block',
   marginBottom: 6,
 }
@@ -79,7 +79,7 @@ function DeleteButton({ onConfirm, disabled }: { onConfirm: () => void; disabled
         background: confirming ? '#FEF2F2' : 'transparent',
         color: confirming ? '#A85050' : '#9E9590',
         fontFamily: FONT,
-        fontSize: 11,
+        fontSize: 13,
         fontWeight: confirming ? 500 : 400,
         cursor: disabled ? 'not-allowed' : 'pointer',
         transition: 'all 0.15s',
@@ -106,7 +106,7 @@ function StatusBadge({ active }: { active: boolean }) {
         background: active ? '#ECFDF5' : '#F3F4F6',
         color: active ? '#5A8A6A' : '#9E9590',
         fontFamily: FONT,
-        fontSize: 11,
+        fontSize: 13,
         fontWeight: 500,
       }}
     >
@@ -279,7 +279,7 @@ function BannerDrawer({ open, editing, onClose, onSave, isPending }: DrawerProps
                       justifyContent: 'center',
                       transition: 'background 0.15s',
                       fontFamily: FONT,
-                      fontSize: 12,
+                      fontSize: 13,
                       color: 'transparent',
                     }}
                     onMouseEnter={e => {
@@ -310,10 +310,10 @@ function BannerDrawer({ open, editing, onClose, onSave, isPending }: DrawerProps
                 >
                   <UploadCloud size={28} strokeWidth={1.2} />
                   <div>
-                    <p style={{ fontFamily: FONT, fontSize: 12, color: '#9E9590', margin: 0, textAlign: 'center' }}>
+                    <p style={{ fontFamily: FONT, fontSize: 13, color: '#9E9590', margin: 0, textAlign: 'center' }}>
                       Click to upload image
                     </p>
-                    <p style={{ fontFamily: FONT, fontSize: 10, color: '#C4B89A', margin: '4px 0 0', textAlign: 'center' }}>
+                    <p style={{ fontFamily: FONT, fontSize: 13, color: '#C4B89A', margin: '4px 0 0', textAlign: 'center' }}>
                       JPG, PNG, WebP — max 5 MB
                     </p>
                   </div>
@@ -336,7 +336,7 @@ function BannerDrawer({ open, editing, onClose, onSave, isPending }: DrawerProps
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
                 <span style={LABEL}>Live Preview</span>
                 <div style={{ flex: 1, height: 1, background: '#E2DAC8' }} />
-                <span style={{ fontFamily: FONT, fontSize: 10, color: '#C4B89A', letterSpacing: '0.04em' }}>
+                <span style={{ fontFamily: FONT, fontSize: 13, color: '#C4B89A', letterSpacing: '0.04em' }}>
                   approximate
                 </span>
               </div>
@@ -451,7 +451,7 @@ function BannerDrawer({ open, editing, onClose, onSave, isPending }: DrawerProps
                 </div>
               </div>
 
-              <p style={{ fontFamily: FONT, fontSize: 10, color: '#9E9590', margin: '6px 0 0' }}>
+              <p style={{ fontFamily: FONT, fontSize: 13, color: '#9E9590', margin: '6px 0 0' }}>
                 This is how the slide will appear in the homepage carousel.
               </p>
             </div>
@@ -468,7 +468,7 @@ function BannerDrawer({ open, editing, onClose, onSave, isPending }: DrawerProps
                 onChange={e => setOrder(e.target.value)}
                 style={{ ...INPUT_BASE, width: '100%' }}
               />
-              <span style={{ fontFamily: FONT, fontSize: 10, color: '#9E9590', marginTop: 4, display: 'block' }}>Lower = shown first</span>
+              <span style={{ fontFamily: FONT, fontSize: 13, color: '#9E9590', marginTop: 4, display: 'block' }}>Lower = shown first</span>
             </div>
             <div>
               <label style={LABEL}>Visibility</label>
@@ -486,7 +486,7 @@ function BannerDrawer({ open, editing, onClose, onSave, isPending }: DrawerProps
                   background: isActive ? '#ECFDF5' : 'transparent',
                   color: isActive ? '#5A8A6A' : '#9E9590',
                   fontFamily: FONT,
-                  fontSize: 12,
+                  fontSize: 13,
                   cursor: 'pointer',
                   transition: 'all 0.15s',
                   width: '100%',
@@ -625,7 +625,7 @@ export default function HeroBannersPage() {
           <h1 style={{ fontFamily: FONT, fontSize: 22, fontWeight: 500, color: '#1C1A17', margin: 0 }}>
             Hero Banners
           </h1>
-          <p style={{ fontFamily: FONT, fontSize: 12, color: '#9E9590', margin: '4px 0 0' }}>
+          <p style={{ fontFamily: FONT, fontSize: 13, color: '#9E9590', margin: '4px 0 0' }}>
             {banners.length > 0
               ? `${banners.filter(b => b.isActive).length} live · ${banners.length} total`
               : 'Manage the homepage carousel'}
@@ -703,7 +703,7 @@ export default function HeroBannersPage() {
           <p style={{ fontFamily: FONT, fontSize: 14, color: '#6B6057', margin: '0 0 6px' }}>
             No banners yet
           </p>
-          <p style={{ fontFamily: FONT, fontSize: 12, color: '#9E9590', margin: 0 }}>
+          <p style={{ fontFamily: FONT, fontSize: 13, color: '#9E9590', margin: 0 }}>
             Click "+ New Banner" to add the first homepage slide.
           </p>
         </div>
@@ -751,7 +751,7 @@ export default function HeroBannersPage() {
                     padding: '2px 8px',
                     borderRadius: 10,
                     fontFamily: FONT,
-                    fontSize: 10,
+                    fontSize: 13,
                     color: '#F5F0E8',
                     letterSpacing: '0.05em',
                   }}

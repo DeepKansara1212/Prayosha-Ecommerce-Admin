@@ -11,8 +11,8 @@ import { getAdminSettings, updateAdminSettings, type AdminSettings } from '../..
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
-const FONT  = "'Jost', sans-serif"
-const SERIF = "'Cormorant Garamond', serif"
+const FONT  = "var(--font-body)"
+const SERIF = "var(--font-heading)"
 
 const INPUT_BASE: React.CSSProperties = {
   padding: '9px 12px',
@@ -30,11 +30,11 @@ const INPUT_BASE: React.CSSProperties = {
 
 const LABEL: React.CSSProperties = {
   fontFamily: FONT,
-  fontSize: 11,
+  fontSize: 13,
   fontWeight: 600,
   color: '#6B6057',
   textTransform: 'uppercase',
-  letterSpacing: '0.07em',
+  letterSpacing: '0.05em',
   display: 'block',
   marginBottom: 6,
 }
@@ -55,7 +55,7 @@ const CARD_BODY: React.CSSProperties = { padding: 24 }
 
 const FIELD_ERROR: React.CSSProperties = {
   fontFamily: FONT,
-  fontSize: 12,
+  fontSize: 13,
   color: '#A85050',
   marginTop: 4,
 }
@@ -192,7 +192,7 @@ function ProfileSection() {
         <div style={{ fontFamily: FONT, fontSize: 13, fontWeight: 600, color: '#1C1A17' }}>
           Profile
         </div>
-        <div style={{ fontFamily: FONT, fontSize: 11, color: '#9E9590', marginTop: 2 }}>
+        <div style={{ fontFamily: FONT, fontSize: 13, color: '#9E9590', marginTop: 2 }}>
           Update your admin display name
         </div>
       </div>
@@ -234,7 +234,7 @@ function ProfileSection() {
             <div style={{ fontFamily: FONT, fontSize: 14, fontWeight: 500, color: '#1C1A17' }}>
               {admin?.name}
             </div>
-            <div style={{ fontFamily: FONT, fontSize: 12, color: '#9E9590', marginTop: 2 }}>
+            <div style={{ fontFamily: FONT, fontSize: 13, color: '#9E9590', marginTop: 2 }}>
               {admin?.email}
             </div>
             <div
@@ -246,7 +246,7 @@ function ProfileSection() {
                 background: '#F0EAF7',
                 color: '#7B5EA7',
                 fontFamily: FONT,
-                fontSize: 10,
+                fontSize: 13,
                 fontWeight: 600,
                 textTransform: 'uppercase',
                 letterSpacing: '0.06em',
@@ -305,7 +305,7 @@ function PasswordSection() {
         <div style={{ fontFamily: FONT, fontSize: 13, fontWeight: 600, color: '#1C1A17' }}>
           Change Password
         </div>
-        <div style={{ fontFamily: FONT, fontSize: 11, color: '#9E9590', marginTop: 2 }}>
+        <div style={{ fontFamily: FONT, fontSize: 13, color: '#9E9590', marginTop: 2 }}>
           Choose a strong password with at least 6 characters
         </div>
       </div>
@@ -365,7 +365,7 @@ function StoreInfoSection() {
         <div style={{ fontFamily: FONT, fontSize: 13, fontWeight: 600, color: '#1C1A17' }}>
           Store Information
         </div>
-        <div style={{ fontFamily: FONT, fontSize: 11, color: '#9E9590', marginTop: 2 }}>
+        <div style={{ fontFamily: FONT, fontSize: 13, color: '#9E9590', marginTop: 2 }}>
           Read-only overview of your store configuration
         </div>
       </div>
@@ -391,11 +391,11 @@ function StoreInfoSection() {
               <div
                 style={{
                   fontFamily: FONT,
-                  fontSize: 10,
+                  fontSize: 13,
                   fontWeight: 600,
                   color: '#9E9590',
                   textTransform: 'uppercase',
-                  letterSpacing: '0.07em',
+                  letterSpacing: '0.05em',
                   marginBottom: 4,
                 }}
               >
@@ -479,7 +479,7 @@ function FreeGiftSection() {
         <div style={{ fontFamily: FONT, fontSize: 13, fontWeight: 600, color: '#1C1A17' }}>
           Free Gift Settings
         </div>
-        <div style={{ fontFamily: FONT, fontSize: 11, color: '#9E9590', marginTop: 2 }}>
+        <div style={{ fontFamily: FONT, fontSize: 13, color: '#9E9590', marginTop: 2 }}>
           Control whether customers receive a free gift with their order
         </div>
       </div>
@@ -498,7 +498,7 @@ function FreeGiftSection() {
                 <div style={{ fontFamily: FONT, fontSize: 13, fontWeight: 500, color: '#1C1A17' }}>
                   Enable Free Gift on all orders
                 </div>
-                <div style={{ fontFamily: FONT, fontSize: 12, color: '#9E9590', marginTop: 2 }}>
+                <div style={{ fontFamily: FONT, fontSize: 13, color: '#9E9590', marginTop: 2 }}>
                   When enabled, every order will be marked with a free gift regardless of the products purchased
                 </div>
               </div>
@@ -583,7 +583,7 @@ function WhatsAppSection() {
         <div style={{ fontFamily: FONT, fontSize: 13, fontWeight: 600, color: '#1C1A17' }}>
           WhatsApp Support
         </div>
-        <div style={{ fontFamily: FONT, fontSize: 11, color: '#9E9590', marginTop: 2 }}>
+        <div style={{ fontFamily: FONT, fontSize: 13, color: '#9E9590', marginTop: 2 }}>
           Configure the WhatsApp number for 24/7 customer support
         </div>
       </div>
@@ -625,7 +625,7 @@ function WhatsAppSection() {
               {errors.whatsappNumber && (
                 <p style={FIELD_ERROR}>{errors.whatsappNumber.message}</p>
               )}
-              <p style={{ fontFamily: FONT, fontSize: 12, color: '#9E9590', marginTop: 4 }}>
+              <p style={{ fontFamily: FONT, fontSize: 13, color: '#9E9590', marginTop: 4 }}>
                 International format without +, e.g. 919876543210
               </p>
             </div>
@@ -648,7 +648,7 @@ function WhatsAppSection() {
               {errors.whatsappDefaultMessage && (
                 <p style={FIELD_ERROR}>{errors.whatsappDefaultMessage.message}</p>
               )}
-              <p style={{ fontFamily: FONT, fontSize: 12, color: '#9E9590', marginTop: 4 }}>
+              <p style={{ fontFamily: FONT, fontSize: 13, color: '#9E9590', marginTop: 4 }}>
                 Leave blank to use auto-generated messages based on the current page
               </p>
             </div>

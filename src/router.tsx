@@ -7,6 +7,7 @@ const AdminLoginPage = lazy(() => import("./pages/auth/AdminLoginPage"));
 const DashboardPage = lazy(() => import("./pages/dashboard/DashboardPage"));
 const ProductsPage = lazy(() => import("./pages/products/ProductsPage"));
 const ProductFormPage = lazy(() => import("./pages/products/ProductFormPage"));
+const MeaningsPage = lazy(() => import("./pages/products/MeaningsPage"));
 const CategoriesPage = lazy(() => import("./pages/categories/CategoriesPage"));
 const SubCategoriesPage = lazy(() => import("./pages/subcategories/SubCategoriesPage"));
 const OrdersPage = lazy(() => import("./pages/orders/OrdersPage"));
@@ -30,9 +31,9 @@ function LoadingAdminRoute() {
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      fontFamily: 'Jost, sans-serif',
-      fontSize: 12,
-      letterSpacing: '0.15em',
+      fontFamily: 'var(--font-body)',
+      fontSize: 13,
+      letterSpacing: '0.05em',
       textTransform: 'uppercase',
       color: '#6B6057',
     }}>
@@ -69,6 +70,7 @@ export default function AppRouter() {
           <Route element={<AdminLayout />}>
             <Route path="/admin/dashboard" element={<DashboardPage />} />
             <Route path="/admin/products" element={<ProductsPage />} />
+            <Route path="/admin/meanings" element={<MeaningsPage />} />
             <Route path="/admin/products/new" element={<ProductFormPage />} />
             <Route
               path="/admin/products/:id/edit"

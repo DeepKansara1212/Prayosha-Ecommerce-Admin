@@ -5,11 +5,11 @@ import { getCalculatorLeads, type CalculatorLead } from '../../api/calculatorLea
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
-const FONT = "'Jost', sans-serif"
+const FONT = "var(--font-body)"
 
 const TH: React.CSSProperties = {
-  padding: '10px 12px', fontFamily: FONT, fontSize: 10, fontWeight: 600,
-  textTransform: 'uppercase', letterSpacing: '0.08em', color: '#9E9590',
+  padding: '10px 12px', fontFamily: FONT, fontSize: 13, fontWeight: 600,
+  textTransform: 'uppercase', letterSpacing: '0.05em', color: '#9E9590',
   textAlign: 'left', borderBottom: '1px solid #E2DAC8', background: '#EDE8DC', whiteSpace: 'nowrap',
 }
 
@@ -17,7 +17,7 @@ const TD: React.CSSProperties = { padding: '10px 12px', borderBottom: '1px solid
 
 const INPUT_BASE: React.CSSProperties = {
   padding: '7px 10px', background: '#F5F0E8', border: '1px solid #E2DAC8', borderRadius: 4,
-  fontFamily: FONT, fontSize: 12, color: '#1C1A17', outline: 'none',
+  fontFamily: FONT, fontSize: 13, color: '#1C1A17', outline: 'none',
 }
 
 const fmtDate = (iso: string) =>
@@ -54,7 +54,7 @@ export default function CalculatorLeadsPage() {
       <h1 style={{ fontFamily: FONT, fontSize: 22, fontWeight: 500, color: '#1C1A17', marginBottom: 8 }}>
         Calculator Leads
       </h1>
-      <p style={{ fontFamily: FONT, fontSize: 12, color: '#9E9590', marginTop: 0, marginBottom: 20 }}>
+      <p style={{ fontFamily: FONT, fontSize: 13, color: '#9E9590', marginTop: 0, marginBottom: 20 }}>
         Everyone who submitted the Bracelet or Rudraksha calculator, for follow-up.
       </p>
 
@@ -70,7 +70,7 @@ export default function CalculatorLeadsPage() {
           />
         </div>
         {pagination && (
-          <span style={{ fontFamily: FONT, fontSize: 12, color: '#9E9590', marginLeft: 'auto' }}>
+          <span style={{ fontFamily: FONT, fontSize: 13, color: '#9E9590', marginLeft: 'auto' }}>
             {pagination.total} lead{pagination.total !== 1 ? 's' : ''}
           </span>
         )}
@@ -107,22 +107,22 @@ export default function CalculatorLeadsPage() {
                   <td style={TD}>
                     <span style={{ fontFamily: FONT, fontSize: 13, fontWeight: 500, color: '#1C1A17' }}>{lead.name}</span>
                   </td>
-                  <td style={TD}><span style={{ fontFamily: FONT, fontSize: 12, color: '#6B6057' }}>{lead.mobile}</span></td>
+                  <td style={TD}><span style={{ fontFamily: FONT, fontSize: 13, color: '#6B6057' }}>{lead.mobile}</span></td>
                   <td style={TD}>
                     <span
                       style={{
                         display: 'inline-block', padding: '3px 10px', borderRadius: 12,
                         background: lead.calculatorType === 'bracelet' ? '#F0EAF7' : '#FDF3E7',
                         color: lead.calculatorType === 'bracelet' ? '#7B5EA7' : '#C49A3C',
-                        fontFamily: FONT, fontSize: 11, fontWeight: 500,
+                        fontFamily: FONT, fontSize: 13, fontWeight: 500,
                       }}
                     >
                       {lead.calculatorType === 'bracelet' ? 'Bracelet' : 'Rudraksha'}
                     </span>
                   </td>
-                  <td style={TD}><span style={{ fontFamily: FONT, fontSize: 12, color: '#6B6057' }}>{lead.purpose?.name ?? '—'}</span></td>
-                  <td style={TD}><span style={{ fontFamily: FONT, fontSize: 12, color: '#6B6057' }}>{lead.birthLocation?.displayName ?? '—'}</span></td>
-                  <td style={TD}><span style={{ fontFamily: FONT, fontSize: 12, color: '#6B6057', whiteSpace: 'nowrap' }}>{fmtDate(lead.createdAt)}</span></td>
+                  <td style={TD}><span style={{ fontFamily: FONT, fontSize: 13, color: '#6B6057' }}>{lead.purpose?.name ?? '—'}</span></td>
+                  <td style={TD}><span style={{ fontFamily: FONT, fontSize: 13, color: '#6B6057' }}>{lead.birthLocation?.displayName ?? '—'}</span></td>
+                  <td style={TD}><span style={{ fontFamily: FONT, fontSize: 13, color: '#6B6057', whiteSpace: 'nowrap' }}>{fmtDate(lead.createdAt)}</span></td>
                 </tr>
               ))}
             </tbody>
@@ -132,21 +132,21 @@ export default function CalculatorLeadsPage() {
 
       {pagination && pagination.totalPages > 1 && (
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 16, padding: '10px 0' }}>
-          <span style={{ fontFamily: FONT, fontSize: 12, color: '#9E9590' }}>
+          <span style={{ fontFamily: FONT, fontSize: 13, color: '#9E9590' }}>
             {pagination.total} lead{pagination.total !== 1 ? 's' : ''} · page {pagination.page} of {pagination.totalPages}
           </span>
           <div style={{ display: 'flex', gap: 6 }}>
             <button
               onClick={() => setPage(p => Math.max(1, p - 1))}
               disabled={!pagination.hasPrev}
-              style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '6px 12px', background: '#EDE8DC', border: '1px solid #E2DAC8', borderRadius: 4, fontFamily: FONT, fontSize: 12, color: pagination.hasPrev ? '#1C1A17' : '#C4B89A', cursor: pagination.hasPrev ? 'pointer' : 'not-allowed' }}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '6px 12px', background: '#EDE8DC', border: '1px solid #E2DAC8', borderRadius: 4, fontFamily: FONT, fontSize: 13, color: pagination.hasPrev ? '#1C1A17' : '#C4B89A', cursor: pagination.hasPrev ? 'pointer' : 'not-allowed' }}
             >
               <ChevronLeft size={13} /> Prev
             </button>
             <button
               onClick={() => setPage(p => p + 1)}
               disabled={!pagination.hasNext}
-              style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '6px 12px', background: '#EDE8DC', border: '1px solid #E2DAC8', borderRadius: 4, fontFamily: FONT, fontSize: 12, color: pagination.hasNext ? '#1C1A17' : '#C4B89A', cursor: pagination.hasNext ? 'pointer' : 'not-allowed' }}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '6px 12px', background: '#EDE8DC', border: '1px solid #E2DAC8', borderRadius: 4, fontFamily: FONT, fontSize: 13, color: pagination.hasNext ? '#1C1A17' : '#C4B89A', cursor: pagination.hasNext ? 'pointer' : 'not-allowed' }}
             >
               Next <ChevronRight size={13} />
             </button>

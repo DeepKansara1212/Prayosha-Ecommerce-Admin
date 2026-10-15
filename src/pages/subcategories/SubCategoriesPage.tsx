@@ -12,20 +12,20 @@ import {
 } from '../../api/subcategories.api'
 import { useToast } from '../../store/toastStore'
 
-const FONT = "'Jost', sans-serif"
+const FONT = "var(--font-body)"
 const TH: React.CSSProperties = {
-  padding: '10px 12px', fontFamily: FONT, fontSize: 10, fontWeight: 600,
-  textTransform: 'uppercase', letterSpacing: '0.08em', color: '#9E9590',
+  padding: '10px 12px', fontFamily: FONT, fontSize: 13, fontWeight: 600,
+  textTransform: 'uppercase', letterSpacing: '0.05em', color: '#9E9590',
   textAlign: 'left', borderBottom: '1px solid #E2DAC8', background: '#EDE8DC', whiteSpace: 'nowrap',
 }
 const TD: React.CSSProperties = { padding: '10px 12px', borderBottom: '1px solid #E2DAC8', verticalAlign: 'middle' }
 const INPUT: React.CSSProperties = {
   padding: '8px 10px', background: '#F5F0E8', border: '1px solid #E2DAC8', borderRadius: 4,
-  fontFamily: FONT, fontSize: 12, color: '#1C1A17', outline: 'none', width: '100%', boxSizing: 'border-box',
+  fontFamily: FONT, fontSize: 13, color: '#1C1A17', outline: 'none', width: '100%', boxSizing: 'border-box',
 }
 const LABEL: React.CSSProperties = {
-  fontFamily: FONT, fontSize: 11, fontWeight: 600, color: '#6B6057', textTransform: 'uppercase',
-  letterSpacing: '0.07em', display: 'block', marginBottom: 6,
+  fontFamily: FONT, fontSize: 13, fontWeight: 600, color: '#6B6057', textTransform: 'uppercase',
+  letterSpacing: '0.05em', display: 'block', marginBottom: 6,
 }
 
 function toSlug(value: string): string {
@@ -40,7 +40,7 @@ function StatusToggle({ value, onChange }: { value: boolean; onChange: (value: b
       style={{
         display: 'inline-flex', alignItems: 'center', gap: 6, padding: '3px 10px', borderRadius: 12,
         border: 'none', cursor: 'pointer', background: value ? '#ECFDF5' : '#F3F4F6',
-        color: value ? '#5A8A6A' : '#9E9590', fontFamily: FONT, fontSize: 11, fontWeight: 500,
+        color: value ? '#5A8A6A' : '#9E9590', fontFamily: FONT, fontSize: 13, fontWeight: 500,
       }}
     >
       <span style={{ width: 7, height: 7, borderRadius: '50%', background: value ? '#5A8A6A' : '#9E9590' }} />
@@ -68,7 +68,7 @@ function DeleteButton({ onConfirm, disabled }: { onConfirm: () => void; disabled
         width: confirming ? 'auto' : 30, height: 30, padding: confirming ? '0 10px' : 0,
         borderRadius: 4, border: '1px solid', borderColor: confirming ? '#A85050' : '#E2DAC8',
         background: confirming ? '#FEF2F2' : 'transparent', color: confirming ? '#A85050' : '#9E9590',
-        fontFamily: FONT, fontSize: 11, cursor: disabled ? 'not-allowed' : 'pointer', whiteSpace: 'nowrap',
+        fontFamily: FONT, fontSize: 13, cursor: disabled ? 'not-allowed' : 'pointer', whiteSpace: 'nowrap',
       }}
     >
       {confirming ? 'Confirm?' : <Trash2 size={13} />}
@@ -206,8 +206,8 @@ function SubCategoryDrawer({
               ) : (
                 <div style={{ textAlign: 'center', color: '#9E9590' }}>
                   <ImageOff size={28} style={{ marginBottom: 6, opacity: 0.5 }} />
-                  <div style={{ fontFamily: FONT, fontSize: 11 }}>Click to upload image</div>
-                  <div style={{ fontFamily: FONT, fontSize: 10, marginTop: 2 }}>JPG, PNG, WebP · max 5MB</div>
+                  <div style={{ fontFamily: FONT, fontSize: 13 }}>Click to upload image</div>
+                  <div style={{ fontFamily: FONT, fontSize: 13, marginTop: 2 }}>JPG, PNG, WebP · max 5MB</div>
                 </div>
               )}
             </div>
@@ -222,7 +222,7 @@ function SubCategoryDrawer({
               <button
                 type="button"
                 onClick={() => { setImagePreview(null); setImageFile(null) }}
-                style={{ marginTop: 6, background: 'none', border: 'none', cursor: 'pointer', fontFamily: FONT, fontSize: 11, color: '#A85050', padding: 0 }}
+                style={{ marginTop: 6, background: 'none', border: 'none', cursor: 'pointer', fontFamily: FONT, fontSize: 13, color: '#A85050', padding: 0 }}
               >
                 Remove image
               </button>
@@ -257,7 +257,7 @@ function SubCategoryDrawer({
                 ['Height', shippingHeight, setShippingHeight, 'Optional'],
               ] as const).map(([label, value, setter, placeholder]) => (
                 <div key={label}>
-                  <span style={{ fontFamily: FONT, fontSize: 10, color: '#9E9590', marginBottom: 4, display: 'block' }}>
+                  <span style={{ fontFamily: FONT, fontSize: 13, color: '#9E9590', marginBottom: 4, display: 'block' }}>
                     {label}
                   </span>
                   <input
@@ -270,7 +270,7 @@ function SubCategoryDrawer({
                 </div>
               ))}
             </div>
-            <span style={{ fontFamily: FONT, fontSize: 10, color: '#9E9590', marginTop: 6, display: 'block' }}>
+            <span style={{ fontFamily: FONT, fontSize: 13, color: '#9E9590', marginTop: 6, display: 'block' }}>
               Optional product shipping defaults. Include a weight unit (for example, 120 g or 0.12 kg); dimensions are in centimeters.
             </span>
           </div>
@@ -334,10 +334,10 @@ export default function SubCategoriesPage() {
           : <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead><tr><th style={TH}>Name</th><th style={TH}>Parent Category</th><th style={{ ...TH, width: 70, textAlign: 'center' }}>Sort</th><th style={TH}>Status</th><th style={{ ...TH, textAlign: 'right' }}>Actions</th></tr></thead>
             <tbody>{rows.map(subcategory => <tr key={subcategory._id}>
-              <td style={TD}><div style={{ fontFamily: FONT, fontSize: 13, fontWeight: 500, color: '#1C1A17' }}>{subcategory.name}</div><div style={{ fontFamily: FONT, fontSize: 11, color: '#9E9590', marginTop: 2 }}>/{subcategory.slug}</div></td>
-              <td style={TD}><span style={{ fontFamily: FONT, fontSize: 12, color: '#6B6057' }}>{categoryName(subcategory.parentCategory)}</span></td>
-              <td style={{ ...TD, textAlign: 'center' }}><span style={{ fontFamily: FONT, fontSize: 12, color: '#6B6057' }}>{subcategory.sortOrder}</span></td>
-              <td style={TD}><span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '3px 10px', borderRadius: 12, background: subcategory.isActive ? '#ECFDF5' : '#F3F4F6', color: subcategory.isActive ? '#5A8A6A' : '#9E9590', fontFamily: FONT, fontSize: 11, fontWeight: 500 }}><span style={{ width: 7, height: 7, borderRadius: '50%', background: subcategory.isActive ? '#5A8A6A' : '#9E9590' }} />{subcategory.isActive ? 'Active' : 'Inactive'}</span></td>
+              <td style={TD}><div style={{ fontFamily: FONT, fontSize: 13, fontWeight: 500, color: '#1C1A17' }}>{subcategory.name}</div><div style={{ fontFamily: FONT, fontSize: 13, color: '#9E9590', marginTop: 2 }}>/{subcategory.slug}</div></td>
+              <td style={TD}><span style={{ fontFamily: FONT, fontSize: 13, color: '#6B6057' }}>{categoryName(subcategory.parentCategory)}</span></td>
+              <td style={{ ...TD, textAlign: 'center' }}><span style={{ fontFamily: FONT, fontSize: 13, color: '#6B6057' }}>{subcategory.sortOrder}</span></td>
+              <td style={TD}><span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '3px 10px', borderRadius: 12, background: subcategory.isActive ? '#ECFDF5' : '#F3F4F6', color: subcategory.isActive ? '#5A8A6A' : '#9E9590', fontFamily: FONT, fontSize: 13, fontWeight: 500 }}><span style={{ width: 7, height: 7, borderRadius: '50%', background: subcategory.isActive ? '#5A8A6A' : '#9E9590' }} />{subcategory.isActive ? 'Active' : 'Inactive'}</span></td>
               <td style={{ ...TD, textAlign: 'right' }}><div style={{ display: 'inline-flex', gap: 6 }}><button type="button" onClick={() => { setEditing(subcategory); setDrawerOpen(true) }} title="Edit sub-category" style={{ width: 30, height: 30, border: '1px solid #E2DAC8', borderRadius: 4, background: 'transparent', color: '#9E9590', cursor: 'pointer' }}><Pencil size={13} /></button><DeleteButton disabled={deleteMutation.isPending} onConfirm={() => deleteMutation.mutate(subcategory._id)} /></div></td>
             </tr>)}</tbody>
           </table>}

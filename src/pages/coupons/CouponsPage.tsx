@@ -11,15 +11,15 @@ import {
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
-const FONT = "'Jost', sans-serif"
+const FONT = "var(--font-body)"
 
 const TH: React.CSSProperties = {
   padding: '10px 12px',
   fontFamily: FONT,
-  fontSize: 10,
+  fontSize: 13,
   fontWeight: 600,
   textTransform: 'uppercase',
-  letterSpacing: '0.08em',
+  letterSpacing: '0.05em',
   color: '#9E9590',
   textAlign: 'left',
   borderBottom: '1px solid #E2DAC8',
@@ -39,7 +39,7 @@ const INPUT_BASE: React.CSSProperties = {
   border: '1px solid #E2DAC8',
   borderRadius: 4,
   fontFamily: FONT,
-  fontSize: 12,
+  fontSize: 13,
   color: '#1C1A17',
   outline: 'none',
   width: '100%',
@@ -48,11 +48,11 @@ const INPUT_BASE: React.CSSProperties = {
 
 const LABEL_STYLE: React.CSSProperties = {
   fontFamily: FONT,
-  fontSize: 11,
+  fontSize: 13,
   fontWeight: 600,
   color: '#6B6057',
   textTransform: 'uppercase',
-  letterSpacing: '0.07em',
+  letterSpacing: '0.05em',
   display: 'block',
   marginBottom: 6,
 }
@@ -144,7 +144,7 @@ function ActiveToggle({
         background: isActive ? '#ECFDF5' : '#F3F4F6',
         color: isActive ? '#5A8A6A' : '#9E9590',
         fontFamily: FONT,
-        fontSize: 11,
+        fontSize: 13,
         fontWeight: 500,
         opacity: disabled ? 0.6 : 1,
         transition: 'background 0.15s',
@@ -337,7 +337,7 @@ function CreateCouponDrawer({
                   top: '50%',
                   transform: 'translateY(-50%)',
                   fontFamily: FONT,
-                  fontSize: 12,
+                  fontSize: 13,
                   color: '#9E9590',
                   pointerEvents: 'none',
                 }}
@@ -366,7 +366,7 @@ function CreateCouponDrawer({
                   top: '50%',
                   transform: 'translateY(-50%)',
                   fontFamily: FONT,
-                  fontSize: 12,
+                  fontSize: 13,
                   color: '#9E9590',
                   pointerEvents: 'none',
                 }}
@@ -573,7 +573,7 @@ export default function CouponsPage() {
                 border: 'none',
                 borderRadius: 4,
                 fontFamily: FONT,
-                fontSize: 12,
+                fontSize: 13,
                 fontWeight: 500,
                 color: '#fff',
                 cursor: 'pointer',
@@ -631,7 +631,7 @@ export default function CouponsPage() {
                           color:
                             coupon.discountType === 'flat' ? '#4A7A9B' : '#7B5EA7',
                           fontFamily: FONT,
-                          fontSize: 11,
+                          fontSize: 13,
                           fontWeight: 500,
                           opacity: expired ? 0.5 : 1,
                         }}
@@ -658,14 +658,14 @@ export default function CouponsPage() {
 
                     {/* Min Order */}
                     <td style={TD}>
-                      <span style={{ fontFamily: FONT, fontSize: 12, color: subColor }}>
+                      <span style={{ fontFamily: FONT, fontSize: 13, color: subColor }}>
                         ₹{coupon.minOrderValue.toLocaleString('en-IN')}
                       </span>
                     </td>
 
                     {/* Usage */}
                     <td style={TD}>
-                      <span style={{ fontFamily: FONT, fontSize: 12, color: subColor }}>
+                      <span style={{ fontFamily: FONT, fontSize: 13, color: subColor }}>
                         {coupon.usedCount} / {coupon.maxUsage}
                       </span>
                     </td>
@@ -675,7 +675,7 @@ export default function CouponsPage() {
                       <span
                         style={{
                           fontFamily: FONT,
-                          fontSize: 12,
+                          fontSize: 13,
                           color: expired ? '#A85050' : subColor,
                           whiteSpace: 'nowrap',
                         }}
@@ -685,7 +685,7 @@ export default function CouponsPage() {
                           <span
                             style={{
                               marginLeft: 6,
-                              fontSize: 10,
+                              fontSize: 13,
                               fontWeight: 600,
                               color: '#A85050',
                               textTransform: 'uppercase',

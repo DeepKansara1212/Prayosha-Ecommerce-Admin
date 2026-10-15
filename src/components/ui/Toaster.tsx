@@ -33,7 +33,7 @@ export default function Toaster() {
               background: isSuccess ? '#F0FDF4' : '#FEF2F2',
               border: `1px solid ${isSuccess ? '#BBF7D0' : '#FECACA'}`,
               color: isSuccess ? '#166534' : '#991B1B',
-              fontFamily: "'Jost', sans-serif",
+              fontFamily: "var(--font-body)",
               fontSize: 13,
               minWidth: 220,
               maxWidth: 340,

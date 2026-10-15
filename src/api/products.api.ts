@@ -48,6 +48,7 @@ export interface Product {
   tags: string[]
   chakra?: string
   purposeTags?: string[]
+  meaningTags?: string[]
   shape?: string
   color?: string
   rudrakshaFaces?: string
@@ -109,6 +110,7 @@ export type ProductPayload = {
   tags?: string[]
   chakra?: string
   purposeTags?: string[]
+  meaningTags?: string[]
   shape?: string
   color?: string
   rudrakshaFaces?: string

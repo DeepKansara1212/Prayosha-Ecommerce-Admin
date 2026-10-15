@@ -6,15 +6,15 @@ import { useToast } from '../../store/toastStore'
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
-const FONT = "'Jost', sans-serif"
+const FONT = "var(--font-body)"
 
 const TH: React.CSSProperties = {
   padding: '10px 12px',
   fontFamily: FONT,
-  fontSize: 10,
+  fontSize: 13,
   fontWeight: 600,
   textTransform: 'uppercase',
-  letterSpacing: '0.08em',
+  letterSpacing: '0.05em',
   color: '#9E9590',
   textAlign: 'left',
   borderBottom: '1px solid #E2DAC8',
@@ -34,7 +34,7 @@ const INPUT_BASE: React.CSSProperties = {
   border: '1px solid #E2DAC8',
   borderRadius: 4,
   fontFamily: FONT,
-  fontSize: 12,
+  fontSize: 13,
   color: '#1C1A17',
   outline: 'none',
   width: '100%',
@@ -43,11 +43,11 @@ const INPUT_BASE: React.CSSProperties = {
 
 const LABEL: React.CSSProperties = {
   fontFamily: FONT,
-  fontSize: 11,
+  fontSize: 13,
   fontWeight: 600,
   color: '#6B6057',
   textTransform: 'uppercase',
-  letterSpacing: '0.07em',
+  letterSpacing: '0.05em',
   display: 'block',
   marginBottom: 6,
 }
@@ -110,7 +110,7 @@ function RashiDrawer({
           <div>
             <label style={LABEL}>Code *</label>
             <input type="text" required value={code} onChange={e => setCode(e.target.value.toUpperCase())} style={INPUT_BASE} />
-            <span style={{ fontFamily: FONT, fontSize: 10, color: '#9E9590', marginTop: 4, display: 'block' }}>
+            <span style={{ fontFamily: FONT, fontSize: 13, color: '#9E9590', marginTop: 4, display: 'block' }}>
               Internal sidereal Rashi code — never shown to customers.
             </span>
           </div>
@@ -165,7 +165,7 @@ export default function RashisPage() {
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
         <h1 style={{ fontFamily: FONT, fontSize: 22, fontWeight: 500, color: '#1C1A17', margin: 0 }}>Rashis</h1>
       </div>
-      <p style={{ fontFamily: FONT, fontSize: 12, color: '#9E9590', marginTop: 0, marginBottom: 20 }}>
+      <p style={{ fontFamily: FONT, fontSize: 13, color: '#9E9590', marginTop: 0, marginBottom: 20 }}>
         Fixed reference data for the 12 Vedic Moon Rashis, seeded once. Names are editable; the set itself is not.
       </p>
 
@@ -191,10 +191,10 @@ export default function RashisPage() {
                     <span style={{ fontFamily: FONT, fontSize: 13, fontWeight: 500, color: '#1C1A17' }}>{rashi.name}</span>
                   </td>
                   <td style={TD}>
-                    <span style={{ fontFamily: FONT, fontSize: 12, color: '#6B6057' }}>{rashi.code}</span>
+                    <span style={{ fontFamily: FONT, fontSize: 13, color: '#6B6057' }}>{rashi.code}</span>
                   </td>
                   <td style={TD}>
-                    <span style={{ fontFamily: FONT, fontSize: 12, color: '#6B6057' }}>{rashi.mappedProductCount}</span>
+                    <span style={{ fontFamily: FONT, fontSize: 13, color: '#6B6057' }}>{rashi.mappedProductCount}</span>
                   </td>
                   <td style={{ ...TD, textAlign: 'right' as const }}>
                     <button

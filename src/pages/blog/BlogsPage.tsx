@@ -25,7 +25,7 @@ import { useToast } from "../../store/toastStore";
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
-const FONT = "'Jost', sans-serif";
+const FONT = "var(--font-body)";
 
 const CATEGORIES: BlogCategory[] = [
   "Crystal Guides",
@@ -40,10 +40,10 @@ const CATEGORIES: BlogCategory[] = [
 const TH: React.CSSProperties = {
   padding: "10px 12px",
   fontFamily: FONT,
-  fontSize: 10,
+  fontSize: 13,
   fontWeight: 600,
   textTransform: "uppercase",
-  letterSpacing: "0.08em",
+  letterSpacing: "0.05em",
   color: "#9E9590",
   textAlign: "left",
   borderBottom: "1px solid #E2DAC8",
@@ -63,7 +63,7 @@ const INPUT_BASE: React.CSSProperties = {
   border: "1px solid #E2DAC8",
   borderRadius: 4,
   fontFamily: FONT,
-  fontSize: 12,
+  fontSize: 13,
   color: "#1C1A17",
   outline: "none",
   width: "100%",
@@ -72,11 +72,11 @@ const INPUT_BASE: React.CSSProperties = {
 
 const LABEL: React.CSSProperties = {
   fontFamily: FONT,
-  fontSize: 11,
+  fontSize: 13,
   fontWeight: 600,
   color: "#6B6057",
   textTransform: "uppercase",
-  letterSpacing: "0.07em",
+  letterSpacing: "0.05em",
   display: "block",
   marginBottom: 6,
 };
@@ -143,7 +143,7 @@ function ActiveToggle({
         background: value ? "#ECFDF5" : "#F3F4F6",
         color: value ? "#5A8A6A" : "#9E9590",
         fontFamily: FONT,
-        fontSize: 11,
+        fontSize: 13,
         fontWeight: 500,
         transition: "background 0.15s",
       }}
@@ -223,7 +223,7 @@ function ImagesField({
           border: "1px solid #E2DAC8",
           borderRadius: 4,
           fontFamily: FONT,
-          fontSize: 12,
+          fontSize: 13,
           color: "#6B6057",
           cursor: uploading ? "not-allowed" : "pointer",
           marginBottom: 10,
@@ -289,7 +289,7 @@ function SectionRow({ section, index, onChange, onRemove }: SectionRowProps) {
                 border: "1px solid #E2DAC8",
               }}
             />
-            <span style={{ fontFamily: FONT, fontSize: 10, color: "#9E9590" }}>
+            <span style={{ fontFamily: FONT, fontSize: 13, color: "#9E9590" }}>
               Square article image
             </span>
           </>
@@ -586,7 +586,7 @@ function BlogDrawer({
             <span
               style={{
                 fontFamily: FONT,
-                fontSize: 10,
+                fontSize: 13,
                 color: "#9E9590",
                 marginTop: 4,
                 display: "block",
@@ -711,7 +711,7 @@ function BlogDrawer({
                 border: "1px solid #E2DAC8",
                 borderRadius: 4,
                 fontFamily: FONT,
-                fontSize: 11,
+                fontSize: 13,
                 color: "#6B6057",
                 cursor: "pointer",
                 transition: "border-color 0.15s",
@@ -803,7 +803,7 @@ function DeleteButton({
         background: confirming ? "#FEF2F2" : "transparent",
         color: confirming ? "#A85050" : "#9E9590",
         fontFamily: FONT,
-        fontSize: 11,
+        fontSize: 13,
         fontWeight: confirming ? 500 : 400,
         cursor: disabled ? "not-allowed" : "pointer",
         transition: "all 0.15s",
@@ -1056,7 +1056,7 @@ export default function BlogsPage() {
                     <div
                       style={{
                         fontFamily: FONT,
-                        fontSize: 11,
+                        fontSize: 13,
                         color: "#9E9590",
                         marginTop: 2,
                       }}
@@ -1070,7 +1070,7 @@ export default function BlogsPage() {
                     <span
                       style={{
                         fontFamily: FONT,
-                        fontSize: 11,
+                        fontSize: 13,
                         color: "#7B5EA7",
                         background: "rgba(123,94,167,0.08)",
                         padding: "2px 8px",
@@ -1094,7 +1094,7 @@ export default function BlogsPage() {
                         background: blog.isPublished ? "#ECFDF5" : "#F3F4F6",
                         color: blog.isPublished ? "#5A8A6A" : "#9E9590",
                         fontFamily: FONT,
-                        fontSize: 11,
+                        fontSize: 13,
                         fontWeight: 500,
                       }}
                     >
@@ -1116,7 +1116,7 @@ export default function BlogsPage() {
                       <span
                         style={{
                           fontFamily: FONT,
-                          fontSize: 11,
+                          fontSize: 13,
                           color: "#C49A3C",
                           fontWeight: 500,
                         }}
@@ -1127,7 +1127,7 @@ export default function BlogsPage() {
                       <span
                         style={{
                           fontFamily: FONT,
-                          fontSize: 11,
+                          fontSize: 13,
                           color: "#C4B89A",
                         }}
                       >

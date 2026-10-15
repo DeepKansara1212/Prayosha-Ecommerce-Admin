@@ -11,7 +11,7 @@ import {
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
-const FONT = "'Jost', sans-serif"
+const FONT = "var(--font-body)"
 
 const STATUS_TABS = [
   { value: '', label: 'All' },
@@ -52,7 +52,7 @@ const INPUT_BASE: React.CSSProperties = {
   border: '1px solid #E2DAC8',
   borderRadius: 4,
   fontFamily: FONT,
-  fontSize: 12,
+  fontSize: 13,
   color: '#1C1A17',
   outline: 'none',
 }
@@ -60,10 +60,10 @@ const INPUT_BASE: React.CSSProperties = {
 const TH: React.CSSProperties = {
   padding: '10px 12px',
   fontFamily: FONT,
-  fontSize: 10,
+  fontSize: 13,
   fontWeight: 600,
   textTransform: 'uppercase',
-  letterSpacing: '0.08em',
+  letterSpacing: '0.05em',
   color: '#9E9590',
   textAlign: 'left',
   borderBottom: '1px solid #E2DAC8',
@@ -164,7 +164,7 @@ function StatusDropdown({
           background: STATUS_STYLE[current].bg,
           color: STATUS_STYLE[current].color,
           fontFamily: FONT,
-          fontSize: 11,
+          fontSize: 13,
           fontWeight: 500,
           opacity: busy ? 0.6 : 1,
           transition: 'opacity 0.15s',
@@ -205,7 +205,7 @@ function StatusDropdown({
                 background: s === current ? '#EDE8DC' : 'transparent',
                 border: 'none',
                 fontFamily: FONT,
-                fontSize: 12,
+                fontSize: 13,
                 color: STATUS_STYLE[s]?.color ?? '#6B7280',
                 cursor: 'pointer',
                 textAlign: 'left',
@@ -366,7 +366,7 @@ export default function OrdersPage() {
                   border: 'none',
                   borderRight: '1px solid #E2DAC8',
                   fontFamily: FONT,
-                  fontSize: 11,
+                  fontSize: 13,
                   color: active ? '#fff' : '#6B6057',
                   cursor: 'pointer',
                   whiteSpace: 'nowrap',
@@ -381,7 +381,7 @@ export default function OrdersPage() {
 
         {/* Date range */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-          <span style={{ fontFamily: FONT, fontSize: 11, color: '#9E9590', whiteSpace: 'nowrap' }}>
+          <span style={{ fontFamily: FONT, fontSize: 13, color: '#9E9590', whiteSpace: 'nowrap' }}>
             From
           </span>
           <input
@@ -390,7 +390,7 @@ export default function OrdersPage() {
             onChange={e => setDateFrom(e.target.value)}
             style={{ ...INPUT_BASE, width: 136 }}
           />
-          <span style={{ fontFamily: FONT, fontSize: 11, color: '#9E9590', whiteSpace: 'nowrap' }}>
+          <span style={{ fontFamily: FONT, fontSize: 13, color: '#9E9590', whiteSpace: 'nowrap' }}>
             To
           </span>
           <input
@@ -484,7 +484,7 @@ export default function OrdersPage() {
                       to={`/admin/orders/${order._id}`}
                       style={{
                         fontFamily: FONT,
-                        fontSize: 12,
+                        fontSize: 13,
                         color: '#7B5EA7',
                         textDecoration: 'none',
                         fontWeight: 500,
@@ -498,24 +498,24 @@ export default function OrdersPage() {
 
                   {/* Customer */}
                   <td style={TD}>
-                    <div style={{ fontFamily: FONT, fontSize: 12, fontWeight: 500, color: '#1C1A17' }}>
+                    <div style={{ fontFamily: FONT, fontSize: 13, fontWeight: 500, color: '#1C1A17' }}>
                       {order.user.name}
                     </div>
-                    <div style={{ fontFamily: FONT, fontSize: 11, color: '#9E9590' }}>
+                    <div style={{ fontFamily: FONT, fontSize: 13, color: '#9E9590' }}>
                       {order.user.email}
                     </div>
                   </td>
 
                   {/* Date */}
                   <td style={TD}>
-                    <span style={{ fontFamily: FONT, fontSize: 12, color: '#6B6057', whiteSpace: 'nowrap' }}>
+                    <span style={{ fontFamily: FONT, fontSize: 13, color: '#6B6057', whiteSpace: 'nowrap' }}>
                       {fmtDate(order.createdAt)}
                     </span>
                   </td>
 
                   {/* Items */}
                   <td style={TD}>
-                    <span style={{ fontFamily: FONT, fontSize: 12, color: '#6B6057' }}>
+                    <span style={{ fontFamily: FONT, fontSize: 13, color: '#6B6057' }}>
                       {order.items.length} item{order.items.length !== 1 ? 's' : ''}
                     </span>
                   </td>
@@ -537,7 +537,7 @@ export default function OrdersPage() {
                         background: PAYMENT_STYLE[order.paymentStatus]?.bg ?? '#F3F4F6',
                         color: PAYMENT_STYLE[order.paymentStatus]?.color ?? '#6B7280',
                         fontFamily: FONT,
-                        fontSize: 11,
+                        fontSize: 13,
                         fontWeight: 500,
                         textTransform: 'capitalize',
                       }}
@@ -562,7 +562,7 @@ export default function OrdersPage() {
                         <span style={{
                           display: 'inline-block', padding: '2px 8px', borderRadius: 10,
                           background: '#F3F4F6', color: '#6B6057',
-                          fontFamily: FONT, fontSize: 10, width: 'fit-content',
+                          fontFamily: FONT, fontSize: 13, width: 'fit-content',
                         }}>
                           📦 Tracking Available
                         </span>
@@ -571,7 +571,7 @@ export default function OrdersPage() {
                         <span style={{
                           display: 'inline-block', padding: '2px 8px', borderRadius: 10,
                           background: '#ECFDF5', color: '#5A8A6A',
-                          fontFamily: FONT, fontSize: 10, width: 'fit-content',
+                          fontFamily: FONT, fontSize: 13, width: 'fit-content',
                         }}>
                           ✓ Delivered
                         </span>
@@ -625,7 +625,7 @@ export default function OrdersPage() {
             padding: '10px 0',
           }}
         >
-          <span style={{ fontFamily: FONT, fontSize: 12, color: '#9E9590' }}>
+          <span style={{ fontFamily: FONT, fontSize: 13, color: '#9E9590' }}>
             {pagination.total} order{pagination.total !== 1 ? 's' : ''} · page {pagination.page} of {pagination.totalPages}
           </span>
           <div style={{ display: 'flex', gap: 6 }}>
@@ -641,7 +641,7 @@ export default function OrdersPage() {
                 border: '1px solid #E2DAC8',
                 borderRadius: 4,
                 fontFamily: FONT,
-                fontSize: 12,
+                fontSize: 13,
                 color: pagination.hasPrev ? '#1C1A17' : '#C4B89A',
                 cursor: pagination.hasPrev ? 'pointer' : 'not-allowed',
               }}
@@ -660,7 +660,7 @@ export default function OrdersPage() {
                 border: '1px solid #E2DAC8',
                 borderRadius: 4,
                 fontFamily: FONT,
-                fontSize: 12,
+                fontSize: 13,
                 color: pagination.hasNext ? '#1C1A17' : '#C4B89A',
                 cursor: pagination.hasNext ? 'pointer' : 'not-allowed',
               }}

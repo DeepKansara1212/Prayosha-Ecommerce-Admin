@@ -19,7 +19,7 @@ import { useToast } from '../../store/toastStore'
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
-const FONT = "'Jost', sans-serif"
+const FONT = "var(--font-body)"
 
 const ORDER_STATUSES: OrderStatus[] = [
   'placed', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled', 'refunded',
@@ -114,10 +114,10 @@ function SectionCard({
         <span
           style={{
             fontFamily: FONT,
-            fontSize: 12,
+            fontSize: 13,
             fontWeight: 600,
             textTransform: 'uppercase',
-            letterSpacing: '0.07em',
+            letterSpacing: '0.05em',
             color: '#6B6057',
           }}
         >
@@ -217,7 +217,7 @@ function ShippingPanel({ order }: { order: Order }) {
   const btnPrimary: React.CSSProperties = {
     display: 'inline-flex', alignItems: 'center', gap: 6,
     padding: '8px 16px', background: '#7B5EA7', border: 'none', borderRadius: 4,
-    fontFamily: FONT, fontSize: 12, fontWeight: 500, color: '#fff',
+    fontFamily: FONT, fontSize: 13, fontWeight: 500, color: '#fff',
     cursor: busy ? 'not-allowed' : 'pointer', opacity: busy ? 0.6 : 1,
   }
 
@@ -253,7 +253,7 @@ function ShippingPanel({ order }: { order: Order }) {
             disabled={busy}
             style={{
               flex: 1, padding: '8px 10px', background: '#F5F0E8', border: '1px solid #E2DAC8',
-              borderRadius: 4, fontFamily: FONT, fontSize: 12, color: '#1C1A17', outline: 'none',
+              borderRadius: 4, fontFamily: FONT, fontSize: 13, color: '#1C1A17', outline: 'none',
             }}
           >
             {activeProviders.map(p => (
@@ -272,27 +272,27 @@ function ShippingPanel({ order }: { order: Order }) {
   return (
     <SectionCard title="Shipping & Fulfillment" icon={<Truck size={14} />}>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 16 }}>
-        <div style={{ fontFamily: FONT, fontSize: 12, color: '#6B6057' }}>
+        <div style={{ fontFamily: FONT, fontSize: 13, color: '#6B6057' }}>
           Provider: <span style={{ color: '#1C1A17', fontWeight: 500 }}>{providerLabel(order.shippingProvider)}</span>
         </div>
-        <div style={{ fontFamily: FONT, fontSize: 12, color: '#6B6057' }}>
+        <div style={{ fontFamily: FONT, fontSize: 13, color: '#6B6057' }}>
           Shipment ID: <span style={{ color: '#1C1A17', fontWeight: 500 }}>{order.shipmentId}</span>
         </div>
         {order.awbNumber && (
-          <div style={{ fontFamily: FONT, fontSize: 12, color: '#6B6057' }}>
+          <div style={{ fontFamily: FONT, fontSize: 13, color: '#6B6057' }}>
             Tracking Number: <span style={{ color: '#1C1A17', fontWeight: 500 }}>{order.awbNumber}</span>
           </div>
         )}
         {order.carrier && (
-          <div style={{ fontFamily: FONT, fontSize: 12, color: '#6B6057' }}>
+          <div style={{ fontFamily: FONT, fontSize: 13, color: '#6B6057' }}>
             Carrier: <span style={{ color: '#1C1A17', fontWeight: 500 }}>{order.carrier}</span>
           </div>
         )}
-        <div style={{ fontFamily: FONT, fontSize: 12, color: '#6B6057' }}>
+        <div style={{ fontFamily: FONT, fontSize: 13, color: '#6B6057' }}>
           Status: <span style={{ color: '#7B5EA7', fontWeight: 500 }}>{order.shippingStatus || 'Awaiting update'}</span>
         </div>
         {order.shipmentCreatedAt && (
-          <div style={{ fontFamily: FONT, fontSize: 12, color: '#6B6057' }}>
+          <div style={{ fontFamily: FONT, fontSize: 13, color: '#6B6057' }}>
             Shipment Date: <span style={{ color: '#1C1A17', fontWeight: 500 }}>{fmtCheckpointDate(order.shipmentCreatedAt)}</span>
           </div>
         )}
@@ -303,7 +303,7 @@ function ShippingPanel({ order }: { order: Order }) {
             rel="noopener noreferrer"
             style={{
               display: 'inline-flex', alignItems: 'center', gap: 4,
-              fontFamily: FONT, fontSize: 12, color: '#7B5EA7', textDecoration: 'none',
+              fontFamily: FONT, fontSize: 13, color: '#7B5EA7', textDecoration: 'none',
             }}
           >
             View Label <ExternalLink size={12} />
@@ -314,8 +314,8 @@ function ShippingPanel({ order }: { order: Order }) {
       {order.trackingCheckpoints && order.trackingCheckpoints.length > 0 && (
         <div style={{ marginBottom: 16 }}>
           <p style={{
-            fontFamily: FONT, fontSize: 11, fontWeight: 600, textTransform: 'uppercase',
-            letterSpacing: '0.07em', color: '#9E9590', margin: '0 0 12px',
+            fontFamily: FONT, fontSize: 13, fontWeight: 600, textTransform: 'uppercase',
+            letterSpacing: '0.05em', color: '#9E9590', margin: '0 0 12px',
           }}>
             Tracking Timeline
           </p>
@@ -327,14 +327,14 @@ function ShippingPanel({ order }: { order: Order }) {
                   marginTop: 4, flexShrink: 0,
                 }} />
                 <div>
-                  <div style={{ fontFamily: FONT, fontSize: 11, color: '#9E9590' }}>
+                  <div style={{ fontFamily: FONT, fontSize: 13, color: '#9E9590' }}>
                     {fmtCheckpointDate(cp.time)}
                   </div>
-                  <div style={{ fontFamily: FONT, fontSize: 12, fontWeight: 500, color: '#1C1A17' }}>
+                  <div style={{ fontFamily: FONT, fontSize: 13, fontWeight: 500, color: '#1C1A17' }}>
                     {cp.message}
                   </div>
                   {cp.location && (
-                    <div style={{ fontFamily: FONT, fontSize: 11, color: '#6B6057' }}>
+                    <div style={{ fontFamily: FONT, fontSize: 13, color: '#6B6057' }}>
                       {cp.location}
                     </div>
                   )}
@@ -470,7 +470,7 @@ export default function OrderDetailPage() {
             border: 'none',
             cursor: 'pointer',
             fontFamily: FONT,
-            fontSize: 12,
+            fontSize: 13,
             color: '#6B6057',
             padding: 0,
           }}
@@ -492,7 +492,7 @@ export default function OrderDetailPage() {
             background: STATUS_STYLE[order.status].bg,
             color: STATUS_STYLE[order.status].color,
             fontFamily: FONT,
-            fontSize: 11,
+            fontSize: 13,
             fontWeight: 500,
           }}
         >
@@ -516,10 +516,10 @@ export default function OrderDetailPage() {
                       style={{
                         padding: '6px 8px',
                         fontFamily: FONT,
-                        fontSize: 10,
+                        fontSize: 13,
                         fontWeight: 600,
                         textTransform: 'uppercase',
-                        letterSpacing: '0.07em',
+                        letterSpacing: '0.05em',
                         color: '#9E9590',
                         textAlign: h === 'Line Total' ? 'right' : 'left',
                         borderBottom: '1px solid #E2DAC8',
@@ -560,7 +560,7 @@ export default function OrderDetailPage() {
                             alignItems: 'center',
                             justifyContent: 'center',
                             color: '#C4B89A',
-                            fontSize: 9,
+                            fontSize: 13,
                             fontFamily: FONT,
                           }}
                         >
@@ -569,27 +569,27 @@ export default function OrderDetailPage() {
                       )}
                     </td>
                     <td style={{ padding: '8px', borderBottom: '1px solid #E2DAC8' }}>
-                      <span style={{ fontFamily: FONT, fontSize: 12, fontWeight: 500, color: '#1C1A17' }}>
+                      <span style={{ fontFamily: FONT, fontSize: 13, fontWeight: 500, color: '#1C1A17' }}>
                         {item.name}
                       </span>
                     </td>
                     <td style={{ padding: '8px', borderBottom: '1px solid #E2DAC8' }}>
-                      <span style={{ fontFamily: FONT, fontSize: 11, color: '#9E9590' }}>
+                      <span style={{ fontFamily: FONT, fontSize: 13, color: '#9E9590' }}>
                         {item.sku}
                       </span>
                     </td>
                     <td style={{ padding: '8px', borderBottom: '1px solid #E2DAC8' }}>
-                      <span style={{ fontFamily: FONT, fontSize: 12, color: '#6B6057' }}>
+                      <span style={{ fontFamily: FONT, fontSize: 13, color: '#6B6057' }}>
                         {item.quantity}
                       </span>
                     </td>
                     <td style={{ padding: '8px', borderBottom: '1px solid #E2DAC8' }}>
-                      <span style={{ fontFamily: FONT, fontSize: 12, color: '#6B6057' }}>
+                      <span style={{ fontFamily: FONT, fontSize: 13, color: '#6B6057' }}>
                         {fmt(item.price)}
                       </span>
                     </td>
                     <td style={{ padding: '8px', borderBottom: '1px solid #E2DAC8', textAlign: 'right' }}>
-                      <span style={{ fontFamily: FONT, fontSize: 12, fontWeight: 500, color: '#1C1A17' }}>
+                      <span style={{ fontFamily: FONT, fontSize: 13, fontWeight: 500, color: '#1C1A17' }}>
                         {fmt(item.price * item.quantity)}
                       </span>
                     </td>
@@ -604,14 +604,14 @@ export default function OrderDetailPage() {
             <div style={{ fontFamily: FONT, fontSize: 13, color: '#1C1A17', fontWeight: 500, marginBottom: 4 }}>
               {order.shippingAddress.fullName}
             </div>
-            <div style={{ fontFamily: FONT, fontSize: 12, color: '#6B6057', lineHeight: 1.7 }}>
+            <div style={{ fontFamily: FONT, fontSize: 13, color: '#6B6057', lineHeight: 1.7 }}>
               {order.shippingAddress.phone}
             </div>
-            <div style={{ fontFamily: FONT, fontSize: 12, color: '#6B6057', lineHeight: 1.7 }}>
+            <div style={{ fontFamily: FONT, fontSize: 13, color: '#6B6057', lineHeight: 1.7 }}>
               {order.shippingAddress.line1}
               {order.shippingAddress.line2 && `, ${order.shippingAddress.line2}`}
             </div>
-            <div style={{ fontFamily: FONT, fontSize: 12, color: '#6B6057', lineHeight: 1.7 }}>
+            <div style={{ fontFamily: FONT, fontSize: 13, color: '#6B6057', lineHeight: 1.7 }}>
               {order.shippingAddress.city}, {order.shippingAddress.state} — {order.shippingAddress.pincode}
             </div>
             {order.trackingNumber && (
@@ -622,7 +622,7 @@ export default function OrderDetailPage() {
                   background: '#E0F2FE',
                   borderRadius: 4,
                   fontFamily: FONT,
-                  fontSize: 12,
+                  fontSize: 13,
                   color: '#0369A1',
                 }}
               >
@@ -634,7 +634,7 @@ export default function OrderDetailPage() {
           {/* Order timeline */}
           <SectionCard title="Order Timeline" icon={<Clock size={14} />}>
             {order.statusHistory.length === 0 ? (
-              <p style={{ fontFamily: FONT, fontSize: 12, color: '#9E9590' }}>No history yet.</p>
+              <p style={{ fontFamily: FONT, fontSize: 13, color: '#9E9590' }}>No history yet.</p>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
                 {[...order.statusHistory].reverse().map((entry, i) => (
@@ -670,15 +670,15 @@ export default function OrderDetailPage() {
 
                     {/* Content */}
                     <div style={{ paddingBottom: 4 }}>
-                      <div style={{ fontFamily: FONT, fontSize: 12, fontWeight: 500, color: '#1C1A17' }}>
+                      <div style={{ fontFamily: FONT, fontSize: 13, fontWeight: 500, color: '#1C1A17' }}>
                         {capitalize(entry.status)}
                       </div>
                       {entry.note && (
-                        <div style={{ fontFamily: FONT, fontSize: 11, color: '#6B6057', marginTop: 2 }}>
+                        <div style={{ fontFamily: FONT, fontSize: 13, color: '#6B6057', marginTop: 2 }}>
                           {entry.note}
                         </div>
                       )}
-                      <div style={{ fontFamily: FONT, fontSize: 11, color: '#9E9590', marginTop: 2 }}>
+                      <div style={{ fontFamily: FONT, fontSize: 13, color: '#9E9590', marginTop: 2 }}>
                         {fmtDate(entry.timestamp)}
                       </div>
                     </div>
@@ -709,8 +709,8 @@ export default function OrderDetailPage() {
                     alignItems: 'center',
                   }}
                 >
-                  <span style={{ fontFamily: FONT, fontSize: 12, color: '#6B6057' }}>{row.label}</span>
-                  <span style={{ fontFamily: FONT, fontSize: 12, color: row.color ?? '#1C1A17' }}>
+                  <span style={{ fontFamily: FONT, fontSize: 13, color: '#6B6057' }}>{row.label}</span>
+                  <span style={{ fontFamily: FONT, fontSize: 13, color: row.color ?? '#1C1A17' }}>
                     {row.value}
                   </span>
                 </div>
@@ -747,11 +747,11 @@ export default function OrderDetailPage() {
                   alignItems: 'center',
                 }}
               >
-                <span style={{ fontFamily: FONT, fontSize: 11, color: '#6B6057' }}>Coupon applied</span>
+                <span style={{ fontFamily: FONT, fontSize: 13, color: '#6B6057' }}>Coupon applied</span>
                 <span
                   style={{
                     fontFamily: FONT,
-                    fontSize: 11,
+                    fontSize: 13,
                     fontWeight: 600,
                     color: '#C49A3C',
                     letterSpacing: '0.05em',
@@ -769,17 +769,17 @@ export default function OrderDetailPage() {
           <SectionCard title="Payment" icon={<CreditCard size={14} />}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span style={{ fontFamily: FONT, fontSize: 12, color: '#6B6057' }}>Method</span>
-                <span style={{ fontFamily: FONT, fontSize: 12, color: '#1C1A17', fontWeight: 500 }}>
+                <span style={{ fontFamily: FONT, fontSize: 13, color: '#6B6057' }}>Method</span>
+                <span style={{ fontFamily: FONT, fontSize: 13, color: '#1C1A17', fontWeight: 500 }}>
                   {order.paymentMethod === 'cod' ? 'Cash on Delivery' : 'Razorpay'}
                 </span>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span style={{ fontFamily: FONT, fontSize: 12, color: '#6B6057' }}>Status</span>
+                <span style={{ fontFamily: FONT, fontSize: 13, color: '#6B6057' }}>Status</span>
                 <span
                   style={{
                     fontFamily: FONT,
-                    fontSize: 11,
+                    fontSize: 13,
                     fontWeight: 500,
                     color:
                       order.paymentStatus === 'paid' ? '#5A8A6A'
@@ -793,20 +793,20 @@ export default function OrderDetailPage() {
               </div>
               {order.razorpayOrderId && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 2, paddingTop: 4, borderTop: '1px solid #E2DAC8' }}>
-                  <span style={{ fontFamily: FONT, fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: '#9E9590' }}>
+                  <span style={{ fontFamily: FONT, fontSize: 13, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: '#9E9590' }}>
                     Razorpay Order ID
                   </span>
-                  <span style={{ fontFamily: FONT, fontSize: 11, color: '#6B6057', wordBreak: 'break-all' }}>
+                  <span style={{ fontFamily: FONT, fontSize: 13, color: '#6B6057', wordBreak: 'break-all' }}>
                     {order.razorpayOrderId}
                   </span>
                 </div>
               )}
               {order.razorpayPaymentId && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                  <span style={{ fontFamily: FONT, fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: '#9E9590' }}>
+                  <span style={{ fontFamily: FONT, fontSize: 13, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: '#9E9590' }}>
                     Razorpay Payment ID
                   </span>
-                  <span style={{ fontFamily: FONT, fontSize: 11, color: '#6B6057', wordBreak: 'break-all' }}>
+                  <span style={{ fontFamily: FONT, fontSize: 13, color: '#6B6057', wordBreak: 'break-all' }}>
                     {order.razorpayPaymentId}
                   </span>
                 </div>
@@ -833,10 +833,10 @@ export default function OrderDetailPage() {
               <span
                 style={{
                   fontFamily: FONT,
-                  fontSize: 12,
+                  fontSize: 13,
                   fontWeight: 600,
                   textTransform: 'uppercase',
-                  letterSpacing: '0.07em',
+                  letterSpacing: '0.05em',
                   color: '#6B6057',
                 }}
               >
@@ -857,7 +857,7 @@ export default function OrderDetailPage() {
               {/* Status select */}
               <div>
                 <label
-                  style={{ display: 'block', fontFamily: FONT, fontSize: 11, color: '#6B6057', marginBottom: 5 }}
+                  style={{ display: 'block', fontFamily: FONT, fontSize: 13, color: '#6B6057', marginBottom: 5 }}
                 >
                   Status
                 </label>
@@ -876,7 +876,7 @@ export default function OrderDetailPage() {
                       border: '1px solid #E2DAC8',
                       borderRadius: 4,
                       fontFamily: FONT,
-                      fontSize: 12,
+                      fontSize: 13,
                       color: '#1C1A17',
                       outline: 'none',
                       cursor: statusMutation.isPending ? 'not-allowed' : 'pointer',
@@ -900,7 +900,7 @@ export default function OrderDetailPage() {
               {formStatus === 'shipped' && (
                 <div>
                   <label
-                    style={{ display: 'block', fontFamily: FONT, fontSize: 11, color: '#6B6057', marginBottom: 5 }}
+                    style={{ display: 'block', fontFamily: FONT, fontSize: 13, color: '#6B6057', marginBottom: 5 }}
                   >
                     Tracking Number <span style={{ color: '#A85050' }}>*</span>
                   </label>
@@ -916,7 +916,7 @@ export default function OrderDetailPage() {
                       border: `1px solid ${formError ? '#A85050' : '#E2DAC8'}`,
                       borderRadius: 4,
                       fontFamily: FONT,
-                      fontSize: 12,
+                      fontSize: 13,
                       color: '#1C1A17',
                       outline: 'none',
                       boxSizing: 'border-box',
@@ -928,7 +928,7 @@ export default function OrderDetailPage() {
               {/* Note */}
               <div>
                 <label
-                  style={{ display: 'block', fontFamily: FONT, fontSize: 11, color: '#6B6057', marginBottom: 5 }}
+                  style={{ display: 'block', fontFamily: FONT, fontSize: 13, color: '#6B6057', marginBottom: 5 }}
                 >
                   Note <span style={{ color: '#C4B89A' }}>(optional)</span>
                 </label>
@@ -944,7 +944,7 @@ export default function OrderDetailPage() {
                     border: '1px solid #E2DAC8',
                     borderRadius: 4,
                     fontFamily: FONT,
-                    fontSize: 12,
+                    fontSize: 13,
                     color: '#1C1A17',
                     outline: 'none',
                     resize: 'vertical',
@@ -956,7 +956,7 @@ export default function OrderDetailPage() {
 
               {/* Validation error */}
               {formError && (
-                <p style={{ fontFamily: FONT, fontSize: 12, color: '#A85050', margin: 0 }}>
+                <p style={{ fontFamily: FONT, fontSize: 13, color: '#A85050', margin: 0 }}>
                   {formError}
                 </p>
               )}
@@ -974,7 +974,7 @@ export default function OrderDetailPage() {
                   border: 'none',
                   borderRadius: 4,
                   fontFamily: FONT,
-                  fontSize: 12,
+                  fontSize: 13,
                   fontWeight: 500,
                   color: '#fff',
                   cursor: statusMutation.isPending ? 'not-allowed' : 'pointer',

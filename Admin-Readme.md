@@ -115,6 +115,7 @@ All admin API calls are prefixed with `/api/v1/...` on that base URL.
 | `/admin` | Protected | Redirect → `/admin/dashboard` |
 | `/admin/dashboard` | Protected | Dashboard |
 | `/admin/products` | Protected | Products list |
+| `/admin/meanings` | Protected | Manage product meanings |
 | `/admin/products/new` | Protected | Create product |
 | `/admin/products/:id/edit` | Protected | Edit product (`:id` = product `_id`) |
 | `/admin/categories` | Protected | Categories |
@@ -146,7 +147,7 @@ Protected routes use `ProtectedAdminRoute`: requires a logged-in user with `admi
 
 **Sidebar navigation (in order):**
 
-Dashboard · Products · Categories · Orders · Customers · Reviews · Coupons · **Rashis · Purposes · Rudraksha Types · Rashi Mappings · Purpose Mappings · Rudraksha Mappings · Calculator Leads** · Blogs · Banners · Settings
+Dashboard · Products · Meanings · Categories · Orders · Customers · Reviews · Coupons · **Rashis · Purposes · Rudraksha Types · Rashi Mappings · Purpose Mappings · Rudraksha Mappings · Calculator Leads** · Blogs · Banners · Settings
 
 ---
 
@@ -275,7 +276,7 @@ Six sections, shared create/edit:
 | Basic info | Name, slug (editable), SKU, short description (max 200) |
 | Description | Full description, care instructions, metaphysical properties |
 | Pricing & inventory | Price, compare price, cost price, stock, low stock threshold, weight |
-| Categorization | Category, chakra, tags (Enter to add), badge |
+| Categorization | Category, chakra, meaning assignments, purpose collections, tags (Enter to add), badge |
 | Images | Drag-drop (max 6), preview grid, reorder, delete; `updateImages` on save for new files |
 | Visibility | Featured, Active |
 

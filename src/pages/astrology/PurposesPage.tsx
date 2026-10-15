@@ -6,11 +6,11 @@ import { useToast } from '../../store/toastStore'
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
-const FONT = "'Jost', sans-serif"
+const FONT = "var(--font-body)"
 
 const TH: React.CSSProperties = {
-  padding: '10px 12px', fontFamily: FONT, fontSize: 10, fontWeight: 600,
-  textTransform: 'uppercase', letterSpacing: '0.08em', color: '#9E9590',
+  padding: '10px 12px', fontFamily: FONT, fontSize: 13, fontWeight: 600,
+  textTransform: 'uppercase', letterSpacing: '0.05em', color: '#9E9590',
   textAlign: 'left', borderBottom: '1px solid #E2DAC8', background: '#EDE8DC', whiteSpace: 'nowrap',
 }
 
@@ -18,12 +18,12 @@ const TD: React.CSSProperties = { padding: '10px 12px', borderBottom: '1px solid
 
 const INPUT_BASE: React.CSSProperties = {
   padding: '8px 10px', background: '#F5F0E8', border: '1px solid #E2DAC8', borderRadius: 4,
-  fontFamily: FONT, fontSize: 12, color: '#1C1A17', outline: 'none', width: '100%', boxSizing: 'border-box',
+  fontFamily: FONT, fontSize: 13, color: '#1C1A17', outline: 'none', width: '100%', boxSizing: 'border-box',
 }
 
 const LABEL: React.CSSProperties = {
-  fontFamily: FONT, fontSize: 11, fontWeight: 600, color: '#6B6057',
-  textTransform: 'uppercase', letterSpacing: '0.07em', display: 'block', marginBottom: 6,
+  fontFamily: FONT, fontSize: 13, fontWeight: 600, color: '#6B6057',
+  textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: 6,
 }
 
 // ── ActiveToggle ──────────────────────────────────────────────────────────────
@@ -36,7 +36,7 @@ function ActiveToggle({ value, onChange }: { value: boolean; onChange: (v: boole
       style={{
         display: 'inline-flex', alignItems: 'center', gap: 6, padding: '3px 10px', borderRadius: 12,
         border: 'none', cursor: 'pointer', background: value ? '#ECFDF5' : '#F3F4F6',
-        color: value ? '#5A8A6A' : '#9E9590', fontFamily: FONT, fontSize: 11, fontWeight: 500,
+        color: value ? '#5A8A6A' : '#9E9590', fontFamily: FONT, fontSize: 13, fontWeight: 500,
       }}
     >
       <span style={{ width: 7, height: 7, borderRadius: '50%', background: value ? '#5A8A6A' : '#9E9590', flexShrink: 0 }} />
@@ -73,7 +73,7 @@ function DeleteButton({ onConfirm, disabled }: { onConfirm: () => void; disabled
         width: confirming ? 'auto' : 30, height: 30, padding: confirming ? '0 10px' : '0',
         borderRadius: 4, border: '1px solid', borderColor: confirming ? '#A85050' : '#E2DAC8',
         background: confirming ? '#FEF2F2' : 'transparent', color: confirming ? '#A85050' : '#9E9590',
-        fontFamily: FONT, fontSize: 11, fontWeight: confirming ? 500 : 400,
+        fontFamily: FONT, fontSize: 13, fontWeight: confirming ? 500 : 400,
         cursor: disabled ? 'not-allowed' : 'pointer', whiteSpace: 'nowrap', gap: 4,
       }}
     >
@@ -249,7 +249,7 @@ export default function PurposesPage() {
                     <ActiveToggle value={purpose.active} onChange={active => toggleMutation.mutate({ id: purpose._id, active })} />
                   </td>
                   <td style={TD}>
-                    <span style={{ fontFamily: FONT, fontSize: 12, color: '#6B6057' }}>{purpose.mappedRudrakshaCount}</span>
+                    <span style={{ fontFamily: FONT, fontSize: 13, color: '#6B6057' }}>{purpose.mappedRudrakshaCount}</span>
                   </td>
                   <td style={{ ...TD, textAlign: 'right' as const }}>
                     <div style={{ display: 'inline-flex', gap: 6, alignItems: 'center' }}>

@@ -113,10 +113,10 @@ function KpiCard({
       </div>
       <p
         style={{
-          fontFamily: "'Jost', sans-serif",
-          fontSize: 10,
+          fontFamily: "var(--font-body)",
+          fontSize: 13,
           textTransform: 'uppercase',
-          letterSpacing: '0.08em',
+          letterSpacing: '0.05em',
           color: '#6B6057',
           marginBottom: 12,
         }}
@@ -125,7 +125,7 @@ function KpiCard({
       </p>
       <p
         style={{
-          fontFamily: "'Cormorant Garamond', serif",
+          fontFamily: "var(--font-heading)",
           fontSize: 36,
           fontWeight: 500,
           color: '#1C1A17',
@@ -137,8 +137,8 @@ function KpiCard({
       {subLabel && (
         <p
           style={{
-            fontFamily: "'Jost', sans-serif",
-            fontSize: 11,
+            fontFamily: "var(--font-body)",
+            fontSize: 13,
             color: '#9E9590',
             marginTop: 10,
           }}
@@ -174,8 +174,8 @@ function Badge({
         display: 'inline-block',
         background: s.bg,
         color: s.color,
-        fontFamily: "'Jost', sans-serif",
-        fontSize: 10,
+        fontFamily: "var(--font-body)",
+        fontSize: 13,
         textTransform: 'uppercase',
         letterSpacing: '0.06em',
         fontWeight: 500,
@@ -290,7 +290,7 @@ export default function DashboardPage() {
         >
           <span
             style={{
-              fontFamily: "'Jost', sans-serif",
+              fontFamily: "var(--font-body)",
               fontSize: 13,
               fontWeight: 500,
               color: '#1C1A17',
@@ -312,8 +312,8 @@ export default function DashboardPage() {
                     color: active ? '#fff' : '#6B6057',
                     border: `1px solid ${active ? '#7B5EA7' : '#E2DAC8'}`,
                     borderRadius: 2,
-                    fontFamily: "'Jost', sans-serif",
-                    fontSize: 10,
+                    fontFamily: "var(--font-body)",
+                    fontSize: 13,
                     textTransform: 'uppercase',
                     letterSpacing: '0.06em',
                     cursor: 'pointer',
@@ -336,7 +336,7 @@ export default function DashboardPage() {
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              fontFamily: "'Jost', sans-serif",
+              fontFamily: "var(--font-body)",
               fontSize: 13,
               color: '#9E9590',
             }}
@@ -361,8 +361,8 @@ export default function DashboardPage() {
               <XAxis
                 dataKey="date"
                 tick={{
-                  fontFamily: "'Jost', sans-serif",
-                  fontSize: 10,
+                  fontFamily: "var(--font-body)",
+                  fontSize: 13,
                   fill: '#9E9590',
                 }}
                 tickLine={false}
@@ -373,8 +373,8 @@ export default function DashboardPage() {
 
               <YAxis
                 tick={{
-                  fontFamily: "'Jost', sans-serif",
-                  fontSize: 10,
+                  fontFamily: "var(--font-body)",
+                  fontSize: 13,
                   fill: '#9E9590',
                 }}
                 tickLine={false}
@@ -388,10 +388,10 @@ export default function DashboardPage() {
                   background: '#EDE8DC',
                   border: '1px solid #E2DAC8',
                   borderRadius: 2,
-                  fontFamily: "'Jost', sans-serif",
+                  fontFamily: "var(--font-body)",
                   boxShadow: 'none',
                 }}
-                labelStyle={{ fontSize: 11, color: '#6B6057', marginBottom: 4 }}
+                labelStyle={{ fontSize: 13, color: '#6B6057', marginBottom: 4 }}
                 itemStyle={{ fontSize: 14, color: '#1C1A17' }}
                 formatter={(v) => [formatINR(v as number), 'Revenue']}
                 labelFormatter={formatTooltipLabel}
@@ -428,7 +428,7 @@ export default function DashboardPage() {
           >
             <span
               style={{
-                fontFamily: "'Jost', sans-serif",
+                fontFamily: "var(--font-body)",
                 fontSize: 13,
                 fontWeight: 500,
                 color: '#1C1A17',
@@ -439,8 +439,8 @@ export default function DashboardPage() {
             <Link
               to="/admin/orders"
               style={{
-                fontFamily: "'Jost', sans-serif",
-                fontSize: 11,
+                fontFamily: "var(--font-body)",
+                fontSize: 13,
                 color: '#7B5EA7',
                 textDecoration: 'none',
                 letterSpacing: '0.04em',
@@ -487,7 +487,7 @@ export default function DashboardPage() {
             >
               <span
                 style={{
-                  fontFamily: "'Jost', sans-serif",
+                  fontFamily: "var(--font-body)",
                   fontSize: 13,
                   color: '#A85050',
                 }}
@@ -501,8 +501,8 @@ export default function DashboardPage() {
                   background: 'transparent',
                   border: '1px solid #A85050',
                   borderRadius: 2,
-                  fontFamily: "'Jost', sans-serif",
-                  fontSize: 11,
+                  fontFamily: "var(--font-body)",
+                  fontSize: 13,
                   textTransform: 'uppercase',
                   letterSpacing: '0.06em',
                   color: '#A85050',
@@ -521,8 +521,8 @@ export default function DashboardPage() {
                       <th
                         key={h}
                         style={{
-                          fontFamily: "'Jost', sans-serif",
-                          fontSize: 10,
+                          fontFamily: "var(--font-body)",
+                          fontSize: 13,
                           textTransform: 'uppercase',
                           letterSpacing: '0.06em',
                           color: '#9E9590',
@@ -544,7 +544,7 @@ export default function DashboardPage() {
                     <td colSpan={7} style={{ padding: '32px 8px', textAlign: 'center' }}>
                       <p
                         style={{
-                          fontFamily: "'Jost', sans-serif",
+                          fontFamily: "var(--font-body)",
                           fontSize: 14,
                           fontWeight: 500,
                           color: '#6B6057',
@@ -555,8 +555,8 @@ export default function DashboardPage() {
                       </p>
                       <p
                         style={{
-                          fontFamily: "'Jost', sans-serif",
-                          fontSize: 12,
+                          fontFamily: "var(--font-body)",
+                          fontSize: 13,
                           color: '#9E9590',
                         }}
                       >
@@ -575,8 +575,8 @@ export default function DashboardPage() {
                         <td style={TD}>
                           <span
                             style={{
-                              fontFamily: "'Jost', sans-serif",
-                              fontSize: 12,
+                              fontFamily: "var(--font-body)",
+                              fontSize: 13,
                               fontWeight: 500,
                               color: '#1C1A17',
                             }}
@@ -587,7 +587,7 @@ export default function DashboardPage() {
                         <td style={TD}>
                           <span
                             style={{
-                              fontFamily: "'Jost', sans-serif",
+                              fontFamily: "var(--font-body)",
                               fontSize: 13,
                               color: '#1C1A17',
                             }}
@@ -598,8 +598,8 @@ export default function DashboardPage() {
                         <td style={TD}>
                           <span
                             style={{
-                              fontFamily: "'Jost', sans-serif",
-                              fontSize: 12,
+                              fontFamily: "var(--font-body)",
+                              fontSize: 13,
                               color: '#9E9590',
                             }}
                           >
@@ -609,7 +609,7 @@ export default function DashboardPage() {
                         <td style={TD}>
                           <span
                             style={{
-                              fontFamily: "'Jost', sans-serif",
+                              fontFamily: "var(--font-body)",
                               fontSize: 13,
                               color: '#6B6057',
                             }}
@@ -620,7 +620,7 @@ export default function DashboardPage() {
                         <td style={TD}>
                           <span
                             style={{
-                              fontFamily: "'Cormorant Garamond', serif",
+                              fontFamily: "var(--font-heading)",
                               fontSize: 16,
                               color: '#C4A35A',
                             }}
@@ -656,7 +656,7 @@ export default function DashboardPage() {
             <AlertTriangle size={14} color="#C49A3C" />
             <span
               style={{
-                fontFamily: "'Jost', sans-serif",
+                fontFamily: "var(--font-body)",
                 fontSize: 13,
                 fontWeight: 500,
                 color: '#1C1A17',
@@ -670,8 +670,8 @@ export default function DashboardPage() {
                   marginLeft: 'auto',
                   background: '#FFF3CD',
                   color: '#C49A3C',
-                  fontFamily: "'Jost', sans-serif",
-                  fontSize: 10,
+                  fontFamily: "var(--font-body)",
+                  fontSize: 13,
                   fontWeight: 500,
                   padding: '2px 8px',
                   borderRadius: 2,
@@ -691,7 +691,7 @@ export default function DashboardPage() {
           ) : lowStockProducts.length === 0 ? (
             <p
               style={{
-                fontFamily: "'Jost', sans-serif",
+                fontFamily: "var(--font-body)",
                 fontSize: 13,
                 color: '#9E9590',
                 padding: '16px 0',
@@ -715,7 +715,7 @@ export default function DashboardPage() {
                   <div style={{ minWidth: 0, flex: 1, paddingRight: 12 }}>
                     <p
                       style={{
-                        fontFamily: "'Jost', sans-serif",
+                        fontFamily: "var(--font-body)",
                         fontSize: 13,
                         color: '#1C1A17',
                         overflow: 'hidden',
@@ -727,8 +727,8 @@ export default function DashboardPage() {
                     </p>
                     <p
                       style={{
-                        fontFamily: "'Jost', sans-serif",
-                        fontSize: 10,
+                        fontFamily: "var(--font-body)",
+                        fontSize: 13,
                         color: '#9E9590',
                         marginTop: 2,
                         textTransform: 'uppercase',
@@ -740,8 +740,8 @@ export default function DashboardPage() {
                   </div>
                   <span
                     style={{
-                      fontFamily: "'Jost', sans-serif",
-                      fontSize: 12,
+                      fontFamily: "var(--font-body)",
+                      fontSize: 13,
                       fontWeight: 600,
                       color: '#A85050',
                       whiteSpace: 'nowrap',
@@ -759,8 +759,8 @@ export default function DashboardPage() {
             style={{
               display: 'block',
               marginTop: 16,
-              fontFamily: "'Jost', sans-serif",
-              fontSize: 11,
+              fontFamily: "var(--font-body)",
+              fontSize: 13,
               color: '#7B5EA7',
               textDecoration: 'none',
               letterSpacing: '0.04em',

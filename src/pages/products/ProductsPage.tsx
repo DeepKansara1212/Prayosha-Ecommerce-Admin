@@ -24,7 +24,7 @@ const BADGE_STYLE: Record<string, { bg: string; color: string }> = {
   'GIFT SET': { bg: '#E0F2FE', color: '#0369A1' },
 }
 
-const FONT = "'Jost', sans-serif"
+const FONT = "var(--font-body)"
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -53,7 +53,7 @@ const INPUT_BASE: React.CSSProperties = {
   border: '1px solid #E2DAC8',
   borderRadius: 4,
   fontFamily: FONT,
-  fontSize: 12,
+  fontSize: 13,
   color: '#1C1A17',
   outline: 'none',
 }
@@ -61,10 +61,10 @@ const INPUT_BASE: React.CSSProperties = {
 const TH: React.CSSProperties = {
   padding: '10px 12px',
   fontFamily: FONT,
-  fontSize: 10,
+  fontSize: 13,
   fontWeight: 600,
   textTransform: 'uppercase',
-  letterSpacing: '0.08em',
+  letterSpacing: '0.05em',
   color: '#9E9590',
   textAlign: 'left',
   borderBottom: '1px solid #E2DAC8',
@@ -130,7 +130,7 @@ function DeleteDialog({
               border: '1px solid #E2DAC8',
               borderRadius: 4,
               fontFamily: FONT,
-              fontSize: 12,
+              fontSize: 13,
               color: '#6B6057',
               cursor: 'pointer',
             }}
@@ -146,7 +146,7 @@ function DeleteDialog({
               border: 'none',
               borderRadius: 4,
               fontFamily: FONT,
-              fontSize: 12,
+              fontSize: 13,
               color: '#fff',
               cursor: isLoading ? 'not-allowed' : 'pointer',
               opacity: isLoading ? 0.7 : 1,
@@ -264,7 +264,7 @@ export default function ProductsPage() {
               border: 'none',
               borderRadius: 4,
               fontFamily: FONT,
-              fontSize: 12,
+              fontSize: 13,
               fontWeight: 500,
               color: '#fff',
               cursor: 'pointer',
@@ -329,7 +329,7 @@ export default function ProductsPage() {
                   border: 'none',
                   borderRight: '1px solid #E2DAC8',
                   fontFamily: FONT,
-                  fontSize: 11,
+                  fontSize: 13,
                   color: active ? '#fff' : '#6B6057',
                   cursor: 'pointer',
                   whiteSpace: 'nowrap',
@@ -392,7 +392,7 @@ export default function ProductsPage() {
                   border: 'none',
                   borderRadius: 4,
                   fontFamily: FONT,
-                  fontSize: 12,
+                  fontSize: 13,
                   fontWeight: 500,
                   color: '#fff',
                   cursor: 'pointer',
@@ -458,7 +458,7 @@ export default function ProductsPage() {
                           alignItems: 'center',
                           justifyContent: 'center',
                           color: '#C4B89A',
-                          fontSize: 10,
+                          fontSize: 13,
                           fontFamily: FONT,
                         }}
                       >
@@ -485,7 +485,7 @@ export default function ProductsPage() {
                             border: '1px solid #C49A3C',
                             color: '#C49A3C',
                             fontFamily: FONT,
-                            fontSize: 9,
+                            fontSize: 13,
                             fontWeight: 600,
                             letterSpacing: '0.05em',
                             textTransform: 'uppercase',
@@ -496,14 +496,14 @@ export default function ProductsPage() {
                         </span>
                       )}
                     </div>
-                    <div style={{ fontFamily: FONT, fontSize: 11, color: '#9E9590' }}>
+                    <div style={{ fontFamily: FONT, fontSize: 13, color: '#9E9590' }}>
                       {product.sku}
                     </div>
                   </td>
 
                   {/* Category */}
                   <td style={{ ...TD }}>
-                    <span style={{ fontFamily: FONT, fontSize: 12, color: '#6B6057' }}>
+                    <span style={{ fontFamily: FONT, fontSize: 13, color: '#6B6057' }}>
                       {product.category?.name ?? '—'}
                     </span>
                   </td>
@@ -514,7 +514,7 @@ export default function ProductsPage() {
                       {product.price === undefined ? 'Price on request' : fmt(product.price)}
                     </div>
                     {product.comparePrice && (
-                      <div style={{ fontFamily: FONT, fontSize: 11, color: '#9E9590', textDecoration: 'line-through' }}>
+                      <div style={{ fontFamily: FONT, fontSize: 13, color: '#9E9590', textDecoration: 'line-through' }}>
                         {fmt(product.comparePrice)}
                       </div>
                     )}
@@ -543,7 +543,7 @@ export default function ProductsPage() {
                         background: product.isActive ? '#ECFDF5' : '#F3F4F6',
                         color: product.isActive ? '#059669' : '#9E9590',
                         fontFamily: FONT,
-                        fontSize: 11,
+                        fontSize: 13,
                         fontWeight: 500,
                         transition: 'background 0.15s',
                       }}
@@ -563,7 +563,7 @@ export default function ProductsPage() {
                           background: BADGE_STYLE[product.badge]?.bg ?? '#F3F4F6',
                           color: BADGE_STYLE[product.badge]?.color ?? '#6B7280',
                           fontFamily: FONT,
-                          fontSize: 10,
+                          fontSize: 13,
                           fontWeight: 600,
                           letterSpacing: '0.05em',
                           textTransform: 'uppercase',
@@ -572,7 +572,7 @@ export default function ProductsPage() {
                         {product.badge}
                       </span>
                     ) : (
-                      <span style={{ color: '#C4B89A', fontSize: 12 }}>—</span>
+                      <span style={{ color: '#C4B89A', fontSize: 13 }}>—</span>
                     )}
                   </td>
 
@@ -641,7 +641,7 @@ export default function ProductsPage() {
             padding: '10px 0',
           }}
         >
-          <span style={{ fontFamily: FONT, fontSize: 12, color: '#9E9590' }}>
+          <span style={{ fontFamily: FONT, fontSize: 13, color: '#9E9590' }}>
             {pagination.total} products · page {pagination.page} of {pagination.totalPages}
           </span>
           <div style={{ display: 'flex', gap: 6 }}>
@@ -657,7 +657,7 @@ export default function ProductsPage() {
                 border: '1px solid #E2DAC8',
                 borderRadius: 4,
                 fontFamily: FONT,
-                fontSize: 12,
+                fontSize: 13,
                 color: pagination.hasPrev ? '#1C1A17' : '#C4B89A',
                 cursor: pagination.hasPrev ? 'pointer' : 'not-allowed',
               }}
@@ -676,7 +676,7 @@ export default function ProductsPage() {
                 border: '1px solid #E2DAC8',
                 borderRadius: 4,
                 fontFamily: FONT,
-                fontSize: 12,
+                fontSize: 13,
                 color: pagination.hasNext ? '#1C1A17' : '#C4B89A',
                 cursor: pagination.hasNext ? 'pointer' : 'not-allowed',
               }}

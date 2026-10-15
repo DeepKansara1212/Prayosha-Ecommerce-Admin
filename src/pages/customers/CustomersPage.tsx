@@ -6,15 +6,15 @@ import { getCustomers, type Customer } from '../../api/customers.api'
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
-const FONT = "'Jost', sans-serif"
+const FONT = "var(--font-body)"
 
 const TH: React.CSSProperties = {
   padding: '10px 12px',
   fontFamily: FONT,
-  fontSize: 10,
+  fontSize: 13,
   fontWeight: 600,
   textTransform: 'uppercase',
-  letterSpacing: '0.08em',
+  letterSpacing: '0.05em',
   color: '#9E9590',
   textAlign: 'left',
   borderBottom: '1px solid #E2DAC8',
@@ -34,7 +34,7 @@ const INPUT_BASE: React.CSSProperties = {
   border: '1px solid #E2DAC8',
   borderRadius: 4,
   fontFamily: FONT,
-  fontSize: 12,
+  fontSize: 13,
   color: '#1C1A17',
   outline: 'none',
 }
@@ -155,7 +155,7 @@ export default function CustomersPage() {
           <span
             style={{
               fontFamily: FONT,
-              fontSize: 12,
+              fontSize: 13,
               color: '#9E9590',
               marginLeft: 'auto',
             }}
@@ -275,21 +275,21 @@ export default function CustomersPage() {
 
                   {/* Email */}
                   <td style={TD}>
-                    <span style={{ fontFamily: FONT, fontSize: 12, color: '#6B6057' }}>
+                    <span style={{ fontFamily: FONT, fontSize: 13, color: '#6B6057' }}>
                       {customer.email}
                     </span>
                   </td>
 
                   {/* Phone */}
                   <td style={TD}>
-                    <span style={{ fontFamily: FONT, fontSize: 12, color: '#6B6057' }}>
+                    <span style={{ fontFamily: FONT, fontSize: 13, color: '#6B6057' }}>
                       {customer.phone ?? '—'}
                     </span>
                   </td>
 
                   {/* Total Orders */}
                   <td style={TD}>
-                    <span style={{ fontFamily: FONT, fontSize: 12, color: '#6B6057' }}>
+                    <span style={{ fontFamily: FONT, fontSize: 13, color: '#6B6057' }}>
                       {customer.totalOrders}
                     </span>
                   </td>
@@ -313,7 +313,7 @@ export default function CustomersPage() {
                     <span
                       style={{
                         fontFamily: FONT,
-                        fontSize: 12,
+                        fontSize: 13,
                         color: '#6B6057',
                         whiteSpace: 'nowrap',
                       }}
@@ -368,7 +368,7 @@ export default function CustomersPage() {
             padding: '10px 0',
           }}
         >
-          <span style={{ fontFamily: FONT, fontSize: 12, color: '#9E9590' }}>
+          <span style={{ fontFamily: FONT, fontSize: 13, color: '#9E9590' }}>
             {pagination.total} customer{pagination.total !== 1 ? 's' : ''} · page{' '}
             {pagination.page} of {pagination.totalPages}
           </span>
@@ -385,7 +385,7 @@ export default function CustomersPage() {
                 border: '1px solid #E2DAC8',
                 borderRadius: 4,
                 fontFamily: FONT,
-                fontSize: 12,
+                fontSize: 13,
                 color: pagination.hasPrev ? '#1C1A17' : '#C4B89A',
                 cursor: pagination.hasPrev ? 'pointer' : 'not-allowed',
               }}
@@ -404,7 +404,7 @@ export default function CustomersPage() {
                 border: '1px solid #E2DAC8',
                 borderRadius: 4,
                 fontFamily: FONT,
-                fontSize: 12,
+                fontSize: 13,
                 color: pagination.hasNext ? '#1C1A17' : '#C4B89A',
                 cursor: pagination.hasNext ? 'pointer' : 'not-allowed',
               }}

@@ -11,7 +11,7 @@ import { useToast } from '../../store/toastStore'
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
-const FONT = "'Jost', sans-serif"
+const FONT = "var(--font-body)"
 
 const INPUT_BASE: React.CSSProperties = {
   padding: '8px 10px',
@@ -19,7 +19,7 @@ const INPUT_BASE: React.CSSProperties = {
   border: '1px solid #E2DAC8',
   borderRadius: 4,
   fontFamily: FONT,
-  fontSize: 12,
+  fontSize: 13,
   color: '#1C1A17',
   outline: 'none',
   width: '100%',
@@ -28,11 +28,11 @@ const INPUT_BASE: React.CSSProperties = {
 
 const LABEL: React.CSSProperties = {
   fontFamily: FONT,
-  fontSize: 11,
+  fontSize: 13,
   fontWeight: 600,
   color: '#6B6057',
   textTransform: 'uppercase',
-  letterSpacing: '0.07em',
+  letterSpacing: '0.05em',
   display: 'block',
   marginBottom: 6,
 }
@@ -51,7 +51,7 @@ function ActiveToggle({ value, onChange, disabled }: { value: boolean; onChange:
         cursor: disabled ? 'not-allowed' : 'pointer',
         background: value ? '#ECFDF5' : '#F3F4F6',
         color: value ? '#5A8A6A' : '#9E9590',
-        fontFamily: FONT, fontSize: 11, fontWeight: 500,
+        fontFamily: FONT, fontSize: 13, fontWeight: 500,
         opacity: disabled ? 0.6 : 1,
       }}
     >
@@ -171,7 +171,7 @@ function CredentialsDrawer({ open, provider, onClose, onSave, isPending }: Crede
               <input style={INPUT_BASE} value={aftership.apiKey} onChange={e => setAftership({ apiKey: e.target.value })} placeholder="AfterShip Shipping API key" />
             </div>
           )}
-          <p style={{ fontFamily: FONT, fontSize: 11, color: '#9E9590', margin: 0 }}>
+          <p style={{ fontFamily: FONT, fontSize: 13, color: '#9E9590', margin: 0 }}>
             Credentials are encrypted before being stored and are never shown again after saving.
           </p>
         </div>
@@ -179,14 +179,14 @@ function CredentialsDrawer({ open, provider, onClose, onSave, isPending }: Crede
         <div style={{ padding: 16, borderTop: '1px solid #E2DAC8', display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
           <button
             onClick={onClose}
-            style={{ padding: '8px 16px', background: 'transparent', border: '1px solid #E2DAC8', borderRadius: 4, fontFamily: FONT, fontSize: 12, color: '#6B6057', cursor: 'pointer' }}
+            style={{ padding: '8px 16px', background: 'transparent', border: '1px solid #E2DAC8', borderRadius: 4, fontFamily: FONT, fontSize: 13, color: '#6B6057', cursor: 'pointer' }}
           >
             Cancel
           </button>
           <button
             onClick={handleSave}
             disabled={isPending}
-            style={{ padding: '8px 16px', background: '#7B5EA7', border: 'none', borderRadius: 4, fontFamily: FONT, fontSize: 12, fontWeight: 500, color: '#fff', cursor: isPending ? 'not-allowed' : 'pointer', opacity: isPending ? 0.6 : 1 }}
+            style={{ padding: '8px 16px', background: '#7B5EA7', border: 'none', borderRadius: 4, fontFamily: FONT, fontSize: 13, fontWeight: 500, color: '#fff', cursor: isPending ? 'not-allowed' : 'pointer', opacity: isPending ? 0.6 : 1 }}
           >
             {isPending ? 'Saving…' : 'Save Credentials'}
           </button>
@@ -233,7 +233,7 @@ export default function ShippingProvidersPage() {
     <div>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 20 }}>
         <Truck size={18} color="#7B5EA7" />
-        <h1 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 22, fontWeight: 600, color: '#1C1A17', margin: 0 }}>
+        <h1 style={{ fontFamily: "var(--font-heading)", fontSize: 22, fontWeight: 600, color: '#1C1A17', margin: 0 }}>
           Shipping Providers
         </h1>
       </div>
@@ -248,13 +248,13 @@ export default function ShippingProvidersPage() {
                 <div>
                   <div style={{ fontFamily: FONT, fontSize: 14, fontWeight: 600, color: '#1C1A17' }}>{p.name}</div>
                   {p.description && (
-                    <div style={{ fontFamily: FONT, fontSize: 11, color: '#9E9590', marginTop: 2 }}>{p.description}</div>
+                    <div style={{ fontFamily: FONT, fontSize: 13, color: '#9E9590', marginTop: 2 }}>{p.description}</div>
                   )}
                 </div>
                 {p.isDefault && (
                   <span style={{
                     padding: '2px 8px', borderRadius: 10, background: '#FEF9EC', color: '#C49A3C',
-                    fontFamily: FONT, fontSize: 10, fontWeight: 600, whiteSpace: 'nowrap',
+                    fontFamily: FONT, fontSize: 13, fontWeight: 600, whiteSpace: 'nowrap',
                   }}>
                     Default
                   </span>
@@ -268,12 +268,12 @@ export default function ShippingProvidersPage() {
                   onChange={(v) => toggleMutation.mutate({ id: p._id, isActive: v })}
                 />
                 {!p.hasCredentials && (
-                  <span style={{ fontFamily: FONT, fontSize: 10, color: '#A85050' }}>No credentials</span>
+                  <span style={{ fontFamily: FONT, fontSize: 13, color: '#A85050' }}>No credentials</span>
                 )}
               </div>
 
               {p.lastSyncedAt && (
-                <div style={{ fontFamily: FONT, fontSize: 10, color: '#9E9590', marginBottom: 10 }}>
+                <div style={{ fontFamily: FONT, fontSize: 13, color: '#9E9590', marginBottom: 10 }}>
                   Last synced: {new Date(p.lastSyncedAt).toLocaleString('en-IN', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
                 </div>
               )}
@@ -284,7 +284,7 @@ export default function ShippingProvidersPage() {
                   style={{
                     display: 'inline-flex', alignItems: 'center', gap: 6, padding: '6px 12px',
                     background: '#F5F0E8', border: '1px solid #E2DAC8', borderRadius: 4,
-                    fontFamily: FONT, fontSize: 11, color: '#1C1A17', cursor: 'pointer',
+                    fontFamily: FONT, fontSize: 13, color: '#1C1A17', cursor: 'pointer',
                   }}
                 >
                   <Pencil size={12} /> Edit Credentials
@@ -295,7 +295,7 @@ export default function ShippingProvidersPage() {
                     disabled={defaultMutation.isPending}
                     style={{
                       padding: '6px 12px', background: 'transparent', border: '1px solid #E2DAC8', borderRadius: 4,
-                      fontFamily: FONT, fontSize: 11, color: '#7B5EA7', cursor: 'pointer',
+                      fontFamily: FONT, fontSize: 13, color: '#7B5EA7', cursor: 'pointer',
                     }}
                   >
                     Set Default

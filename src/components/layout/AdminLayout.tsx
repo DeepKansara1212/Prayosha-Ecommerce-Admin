@@ -24,6 +24,7 @@ import Toaster from '../ui/Toaster'
 const NAV_ITEMS = [
   { label: 'Dashboard', path: '/admin/dashboard', icon: LayoutDashboard },
   { label: 'Products',  path: '/admin/products',  icon: Package },
+  { label: 'Meanings',  path: '/admin/meanings',  icon: Sparkles },
   { label: 'Categories',path: '/admin/categories',icon: Tag },
   { label: 'Sub-Categories', path: '/admin/subcategories', icon: Tag },
   { label: 'Orders',    path: '/admin/orders',    icon: ShoppingBag },
@@ -54,6 +55,7 @@ function getPageTitle(pathname: string): string {
   const map: Record<string, string> = {
     '/admin/dashboard':  'Dashboard',
     '/admin/categories': 'Categories',
+    '/admin/meanings': 'Meanings',
     '/admin/subcategories': 'Sub-Categories',
     '/admin/customers':  'Customers',
     '/admin/reviews':    'Reviews',
@@ -119,10 +121,10 @@ export default function AdminLayout() {
           />
           {/* <span
             style={{
-              fontFamily: "'Jost', sans-serif",
-              fontSize: 10,
+              fontFamily: "var(--font-body)",
+              fontSize: 13,
               textTransform: 'uppercase',
-              letterSpacing: '0.08em',
+              letterSpacing: '0.05em',
               color: '#9E9590',
             }}
           >
@@ -155,8 +157,8 @@ export default function AdminLayout() {
         >
           <div
             style={{
-              fontFamily: "'Jost', sans-serif",
-              fontSize: 12,
+              fontFamily: "var(--font-body)",
+              fontSize: 13,
               fontWeight: 500,
               color: '#1C1A17',
               marginBottom: 10,
@@ -176,10 +178,10 @@ export default function AdminLayout() {
               background: 'none',
               border: 'none',
               cursor: 'pointer',
-              fontFamily: "'Jost', sans-serif",
-              fontSize: 11,
+              fontFamily: "var(--font-body)",
+              fontSize: 13,
               textTransform: 'uppercase',
-              letterSpacing: '0.08em',
+              letterSpacing: '0.05em',
               color: '#9E9590',
               padding: 0,
             }}
@@ -219,7 +221,7 @@ export default function AdminLayout() {
         >
           <span
             style={{
-              fontFamily: "'Jost', sans-serif",
+              fontFamily: "var(--font-body)",
               fontSize: 14,
               fontWeight: 500,
               color: '#1C1A17',
@@ -253,7 +255,7 @@ export default function AdminLayout() {
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                fontFamily: "'Jost', sans-serif",
+                fontFamily: "var(--font-body)",
                 fontSize: 13,
                 fontWeight: 500,
                 color: '#fff',
