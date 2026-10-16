@@ -352,7 +352,7 @@ function PasswordSection() {
 
 function StoreInfoSection() {
   const INFO_ROWS = [
-    { label: 'Store Name',    value: 'Prayosha Crystal' },
+    { label: 'Store Name',    value: 'prayosha crystals' },
     { label: 'Currency',      value: '₹ INR' },
     { label: 'Country',       value: 'India' },
     { label: 'Payment',       value: 'COD + Razorpay' },

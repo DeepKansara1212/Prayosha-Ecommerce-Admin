@@ -97,7 +97,7 @@ export default function AdminLoginPage() {
         <div style={{ textAlign: 'center', marginBottom: 36 }}>
           <img
             src="/prayosha-logo.png"
-            alt="Prayosha Crystals"
+            alt="prayosha crystalss"
             style={{ height: 60, width: 'auto', objectFit: 'contain', margin: '0 auto' }}
           />
           <div

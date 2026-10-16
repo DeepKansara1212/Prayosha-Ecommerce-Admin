@@ -1,6 +1,6 @@
 # Prayosha Admin
 
-A full-featured admin dashboard for the **Prayosha Crystal** e-commerce platform. Built with React 19, TypeScript, and Vite 8. Manages products, orders, customers, content (blogs, hero banners), coupons, reviews, analytics, and store settings against the Prayosha backend API.
+A full-featured admin dashboard for the **prayosha crystals** e-commerce platform. Built with React 19, TypeScript, and Vite 8. Manages products, orders, customers, content (blogs, hero banners), coupons, reviews, analytics, and store settings against the Prayosha backend API.
 
 ---
 
@@ -140,7 +140,7 @@ Protected routes use `ProtectedAdminRoute`: requires a logged-in user with `admi
 
 ### Layout (`src/components/layout/AdminLayout.tsx`)
 
-- **Sidebar** (240px fixed, `#EDE8DC`) — Prayosha Crystal branding, nav links with Lucide icons, admin name, logout
+- **Sidebar** (240px fixed, `#EDE8DC`) — prayosha crystals branding, nav links with Lucide icons, admin name, logout
 - **Topbar** (64px sticky) — dynamic page title, notification bell (UI only), avatar initial
 - **Main** — `<Outlet />` for page content
 - **Toaster** — global toast stack (`src/components/ui/Toaster.tsx`)

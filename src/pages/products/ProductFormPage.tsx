@@ -56,6 +56,7 @@ const schema = z.object({
   productHeight:          z.string(),
   productDimensions:      z.string(),
   productSize:            z.string(),
+  productIngredients:     z.string(),
   category:               z.string().min(1, 'Category is required'),
   subCategory:            z.string(),
   tags:                   z.array(z.string()),
@@ -421,7 +422,7 @@ export default function ProductFormPage() {
       careInstructions: '', howToUse: '', metaphysicalProperties: '',
       price: '', comparePrice: '', costPrice: '', stock: 0, lowStockThreshold: 5,
       useCategoryShipping: true, shippingWeight: '', shippingTotalWeight: '', shippingLength: '', shippingBreadth: '', shippingHeight: '',
-      productWeight: '', productLength: '', productBreadth: '', productHeight: '', productDimensions: '', productSize: '',
+      productWeight: '', productLength: '', productBreadth: '', productHeight: '', productDimensions: '', productSize: '', productIngredients: '',
       category: '', subCategory: '', tags: [], chakra: '', purposeTags: [], meaningTags: [], shape: '', color: '', rudrakshaFaces: '', beadSize: '', noOfSticks: '', rashiIds: [], badge: '', isFeatured: false, isActive: true, hasFreeGift: false,
     },
   })
@@ -620,6 +621,7 @@ export default function ProductFormPage() {
       productHeight:          product.productDetails?.height ?? '',
       productDimensions:      product.productDetails?.dimensions ?? '',
       productSize:            product.productDetails?.size ?? '',
+      productIngredients:     product.productDetails?.ingredients ?? '',
       category:               typeof product.category === 'object'
                                 ? product.category._id
                                 : product.category,
@@ -674,6 +676,7 @@ export default function ProductFormPage() {
         ...(data.productHeight.trim() && { height: data.productHeight.trim() }),
         ...(data.productDimensions.trim() && { dimensions: data.productDimensions.trim() }),
         ...(data.productSize.trim() && { size: data.productSize.trim() }),
+        ...(data.productIngredients.trim() && { ingredients: data.productIngredients.trim() }),
       },
       ...(data.shortDescription       && { shortDescription: data.shortDescription }),
       ...(data.careInstructions       && { careInstructions: data.careInstructions }),
@@ -1036,7 +1039,7 @@ export default function ProductFormPage() {
         <div style={SECTION}>
           <p style={SECTION_TITLE}>Product Details</p>
           <p style={{ fontFamily: FONT, fontSize: 13, color: '#9E9590', marginTop: -12, marginBottom: 16 }}>
-            Optional item measurements shown to customers. Include units, such as 120 g or 8 cm.
+            Optional product information shown to customers. Include units for measurements, such as 120 g or 8 cm.
           </p>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 16 }}>
             {([
@@ -1046,6 +1049,7 @@ export default function ProductFormPage() {
               ['productHeight', 'Height'],
               ['productDimensions', 'Dimensions'],
               ['productSize', 'Size'],
+              ['productIngredients', 'Ingredients'],
             ] as const).map(([field, label]) => (
               <div style={FIELD} key={field}>
                 <label style={LABEL}>{label}</label>
@@ -1056,6 +1060,7 @@ export default function ProductFormPage() {
                     label === 'Weight' ? 'e.g. 120 g'
                       : label === 'Dimensions' ? 'e.g. 8 x 4 x 2 cm'
                       : label === 'Size' ? 'e.g. M / L or 7 inch'
+                      : label === 'Ingredients' ? 'e.g. Natural crystal, silver'
                       : 'Optional'
                   }
                   className="admin-input"

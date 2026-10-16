@@ -17,6 +17,7 @@ export interface ProductDetails {
   height?: string
   dimensions?: string
   size?: string
+  ingredients?: string
 }
 
 export interface ProductCategory {
