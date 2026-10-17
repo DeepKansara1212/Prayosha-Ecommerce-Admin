@@ -5,6 +5,7 @@ import {
   getShippingProviders,
   updateShippingProvider,
   setDefaultShippingProvider,
+  testShippingProviderConnection,
   type ShippingProvider,
 } from '../../api/shippingProviders.api'
 import { useToast } from '../../store/toastStore'
@@ -229,6 +230,15 @@ export default function ShippingProvidersPage() {
     onError: () => toast.error('Failed to set default provider'),
   })
 
+  const testConnectionMutation = useMutation({
+    mutationFn: (id: string) => testShippingProviderConnection(id),
+    onSuccess: () => { invalidate(); toast.success('Provider connection verified') },
+    onError: (err: unknown) => {
+      const message = (err as { response?: { data?: { message?: string } } })?.response?.data?.message
+      toast.error(message || 'Provider connection test failed')
+    },
+  })
+
   return (
     <div>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 20 }}>
@@ -264,13 +274,24 @@ export default function ShippingProvidersPage() {
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, margin: '10px 0' }}>
                 <ActiveToggle
                   value={p.isActive}
-                  disabled={toggleMutation.isPending}
+                  disabled={toggleMutation.isPending || (!p.isActive && !p.isVerified)}
                   onChange={(v) => toggleMutation.mutate({ id: p._id, isActive: v })}
                 />
                 {!p.hasCredentials && (
                   <span style={{ fontFamily: FONT, fontSize: 13, color: '#A85050' }}>No credentials</span>
                 )}
+                {p.hasCredentials && (
+                  <span style={{ fontFamily: FONT, fontSize: 13, color: p.isVerified ? '#5A8A6A' : '#A85050' }}>
+                    {p.isVerified ? 'Connection verified' : 'Test connection required'}
+                  </span>
+                )}
               </div>
+
+              {p.lastVerifiedAt && (
+                <div style={{ fontFamily: FONT, fontSize: 13, color: '#9E9590', marginBottom: 10 }}>
+                  Verified: {new Date(p.lastVerifiedAt).toLocaleString('en-IN', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                </div>
+              )}
 
               {p.lastSyncedAt && (
                 <div style={{ fontFamily: FONT, fontSize: 13, color: '#9E9590', marginBottom: 10 }}>
@@ -279,6 +300,18 @@ export default function ShippingProvidersPage() {
               )}
 
               <div style={{ display: 'flex', gap: 8 }}>
+                <button
+                  onClick={() => testConnectionMutation.mutate(p._id)}
+                  disabled={!p.hasCredentials || testConnectionMutation.isPending}
+                  style={{
+                    padding: '6px 12px', background: 'transparent', border: '1px solid #E2DAC8', borderRadius: 4,
+                    fontFamily: FONT, fontSize: 13, color: '#7B5EA7',
+                    cursor: !p.hasCredentials || testConnectionMutation.isPending ? 'not-allowed' : 'pointer',
+                    opacity: !p.hasCredentials || testConnectionMutation.isPending ? 0.6 : 1,
+                  }}
+                >
+                  {testConnectionMutation.isPending ? 'Testing…' : 'Test Connection'}
+                </button>
                 <button
                   onClick={() => setEditing(p)}
                   style={{

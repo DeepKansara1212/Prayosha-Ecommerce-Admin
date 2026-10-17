@@ -309,6 +309,19 @@ function ShippingPanel({ order }: { order: Order }) {
             View Label <ExternalLink size={12} />
           </a>
         )}
+        {order.manifestUrl && (
+          <a
+            href={order.manifestUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              display: 'inline-flex', alignItems: 'center', gap: 4,
+              fontFamily: FONT, fontSize: 13, color: '#7B5EA7', textDecoration: 'none',
+            }}
+          >
+            View Manifest <ExternalLink size={12} />
+          </a>
+        )}
       </div>
 
       {order.trackingCheckpoints && order.trackingCheckpoints.length > 0 && (

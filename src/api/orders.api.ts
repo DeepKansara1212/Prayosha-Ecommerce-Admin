@@ -76,6 +76,7 @@ export interface Order {
   carrier?: string
   shippingStatus?: string
   labelUrl?: string
+  manifestUrl?: string
   invoiceUrl?: string
   shipmentCreatedAt?: string
   trackingUrl?: string

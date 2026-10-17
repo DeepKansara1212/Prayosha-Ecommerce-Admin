@@ -8,6 +8,8 @@ export interface ShippingProvider {
   logo?: string
   isActive: boolean
   isDefault: boolean
+  isVerified: boolean
+  lastVerifiedAt?: string
   hasCredentials: boolean
   lastSyncedAt?: string
   createdAt: string
@@ -29,5 +31,10 @@ export async function updateShippingProvider(
 
 export async function setDefaultShippingProvider(id: string): Promise<ShippingProvider> {
   const res = await client.post(`/api/v1/admin/shipping-providers/${id}/set-default`)
+  return res.data.data.provider as ShippingProvider
+}
+
+export async function testShippingProviderConnection(id: string): Promise<ShippingProvider> {
+  const res = await client.post(`/api/v1/admin/shipping-providers/${id}/test-connection`)
   return res.data.data.provider as ShippingProvider
 }
