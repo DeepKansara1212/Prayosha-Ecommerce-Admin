@@ -116,7 +116,7 @@ export default function AdminLayout() {
         >
           <img
             src="/prayosha-logo.png"
-            alt="prayosha crystalss"
+            alt="prayosha crystals"
             style={{ height: 56, width: 'auto', objectFit: 'contain' }}
           />
           {/* <span
