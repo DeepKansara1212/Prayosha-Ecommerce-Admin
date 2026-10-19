@@ -29,6 +29,7 @@ const CARD: React.CSSProperties = {
   border: '1px solid #E2DAC8',
   borderRadius: 4,
   padding: 24,
+  minWidth: 0,
 }
 
 const TD: React.CSSProperties = {
@@ -126,7 +127,7 @@ function KpiCard({
       <p
         style={{
           fontFamily: "var(--font-heading)",
-          fontSize: 36,
+          fontSize: 'clamp(24px, 2.2vw, 36px)',
           fontWeight: 500,
           color: '#1C1A17',
           lineHeight: 1,
@@ -235,12 +236,7 @@ export default function DashboardPage() {
     <div>
       {/* ── Row 1: KPI Cards ── */}
       <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(4, 1fr)',
-          gap: 20,
-          marginBottom: 24,
-        }}
+        className="admin-dashboard-kpis"
       >
         {overviewLoading ? (
           Array.from({ length: 4 }, (_, i) => <KpiSkeleton key={i} />)
@@ -279,14 +275,9 @@ export default function DashboardPage() {
       </div>
 
       {/* ── Row 2: Sales Chart ── */}
-      <div style={{ ...CARD, marginBottom: 24 }}>
+      <div style={{ ...CARD, marginBottom: 22 }}>
         <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            marginBottom: 20,
-          }}
+          className="admin-dashboard-chart-header"
         >
           <span
             style={{
@@ -414,7 +405,7 @@ export default function DashboardPage() {
 
       {/* ── Row 3: Recent Orders + Low Stock ── */}
       <div
-        style={{ display: 'grid', gridTemplateColumns: '3fr 2fr', gap: 20 }}
+        className="admin-dashboard-sections"
       >
         {/* Recent Orders */}
         <div style={CARD}>
@@ -450,6 +441,7 @@ export default function DashboardPage() {
             </Link>
           </div>
 
+          <div className="admin-dashboard-orders">
           {ordersLoading ? (
             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
               <thead>
@@ -641,6 +633,7 @@ export default function DashboardPage() {
               </tbody>
             </table>
           )}
+          </div>
         </div>
 
         {/* Low Stock Alerts */}

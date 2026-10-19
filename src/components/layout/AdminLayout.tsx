@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import {
   LayoutDashboard,
@@ -17,6 +18,8 @@ import {
   Link2,
   Sparkles,
   Truck,
+  Menu,
+  X,
 } from 'lucide-react'
 import { useAdminAuthStore } from '../../store/adminAuthStore'
 import Toaster from '../ui/Toaster'
@@ -76,68 +79,36 @@ export default function AdminLayout() {
   const { admin, logout } = useAdminAuthStore()
   const location = useLocation()
   const navigate = useNavigate()
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false)
 
   const pageTitle = getPageTitle(location.pathname)
 
   const handleLogout = () => {
     logout()
+    setIsSidebarOpen(false)
     navigate('/admin/login')
   }
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh' }}>
+    <div className="admin-shell">
       {/* ── Sidebar ── */}
-      <aside
-        style={{
-          position: 'fixed',
-          left: 0,
-          top: 0,
-          width: 240,
-          height: '100vh',
-          background: '#EDE8DC',
-          borderRight: '1px solid #E2DAC8',
-          display: 'flex',
-          flexDirection: 'column',
-          zIndex: 10,
-        }}
-      >
+      <aside className={`admin-sidebar${isSidebarOpen ? ' is-open' : ''}`} id="admin-navigation">
         {/* Logo area */}
-        <div
-          style={{
-            height: 72,
-            borderBottom: '1px solid #E2DAC8',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: '0 20px',
-            gap: 2,
-          }}
-        >
+        <div className="admin-sidebar-brand">
           <img
             src="/prayosha-logo.png"
             alt="prayosha crystals"
-            style={{ height: 56, width: 'auto', objectFit: 'contain' }}
+            style={{ height: 54, width: 'auto', objectFit: 'contain' }}
           />
-          {/* <span
-            style={{
-              fontFamily: "var(--font-body)",
-              fontSize: 13,
-              textTransform: 'uppercase',
-              letterSpacing: '0.05em',
-              color: '#9E9590',
-            }}
-          >
-            Admin Panel
-          </span> */}
         </div>
 
         {/* Nav */}
-        <nav style={{ flex: 1, padding: '8px 0', overflowY: 'auto' }}>
+        <nav className="admin-sidebar-nav" aria-label="Admin navigation">
           {NAV_ITEMS.map(({ label, path, icon: Icon }) => (
             <NavLink
               key={path}
               to={path}
+              onClick={() => setIsSidebarOpen(false)}
               className={({ isActive }) =>
                 `admin-nav-item${isActive ? ' active' : ''}`
               }
@@ -149,24 +120,8 @@ export default function AdminLayout() {
         </nav>
 
         {/* Admin info + logout */}
-        <div
-          style={{
-            borderTop: '1px solid #E2DAC8',
-            padding: '16px 20px',
-          }}
-        >
-          <div
-            style={{
-              fontFamily: "var(--font-body)",
-              fontSize: 13,
-              fontWeight: 500,
-              color: '#1C1A17',
-              marginBottom: 10,
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              whiteSpace: 'nowrap',
-            }}
-          >
+        <div className="admin-sidebar-footer">
+          <div className="admin-sidebar-user">
             {admin?.name}
           </div>
           <button
@@ -191,34 +146,29 @@ export default function AdminLayout() {
           </button>
         </div>
       </aside>
+      {isSidebarOpen && (
+        <button
+          className="admin-sidebar-backdrop"
+          type="button"
+          aria-label="Close admin navigation"
+          onClick={() => setIsSidebarOpen(false)}
+        />
+      )}
 
       {/* ── Main area ── */}
-      <div
-        style={{
-          marginLeft: 240,
-          flex: 1,
-          background: '#F5F0E8',
-          minHeight: '100vh',
-          display: 'flex',
-          flexDirection: 'column',
-        }}
-      >
+      <div className="admin-main">
         {/* Topbar */}
-        <header
-          style={{
-            height: 64,
-            background: '#F5F0E8',
-            borderBottom: '1px solid #E2DAC8',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            padding: '0 40px',
-            position: 'sticky',
-            top: 0,
-            zIndex: 5,
-            flexShrink: 0,
-          }}
-        >
+        <header className="admin-topbar">
+          <button
+            className="admin-menu-button"
+            type="button"
+            aria-label={isSidebarOpen ? 'Close admin navigation' : 'Open admin navigation'}
+            aria-expanded={isSidebarOpen}
+            aria-controls="admin-navigation"
+            onClick={() => setIsSidebarOpen((open) => !open)}
+          >
+            {isSidebarOpen ? <X size={20} /> : <Menu size={20} />}
+          </button>
           <span
             style={{
               fontFamily: "var(--font-body)",
@@ -268,7 +218,7 @@ export default function AdminLayout() {
         </header>
 
         {/* Page content */}
-        <main style={{ padding: '32px 40px', flex: 1 }}>
+        <main className="admin-page-content">
           <Outlet />
         </main>
       </div>
