@@ -48,15 +48,25 @@ function ActiveToggle({ value, onChange, disabled }: { value: boolean; onChange:
       disabled={disabled}
       style={{
         display: 'inline-flex', alignItems: 'center', gap: 6,
-        padding: '3px 10px', borderRadius: 12, border: 'none',
+        padding: '4px 10px', borderRadius: 999, border: '1px solid #E2DAC8',
         cursor: disabled ? 'not-allowed' : 'pointer',
-        background: value ? '#ECFDF5' : '#F3F4F6',
-        color: value ? '#5A8A6A' : '#9E9590',
-        fontFamily: FONT, fontSize: 13, fontWeight: 500,
+        background: value ? '#F2F4F8' : '#F4EFE7',
+        color: value ? '#4F5B67' : '#7C736A',
+        fontFamily: FONT, fontSize: 12, fontWeight: 500,
         opacity: disabled ? 0.6 : 1,
+        lineHeight: 1.2,
       }}
     >
-      <span style={{ width: 7, height: 7, borderRadius: '50%', background: value ? '#5A8A6A' : '#9E9590', flexShrink: 0 }} />
+      <span
+        style={{
+          width: 7,
+          height: 7,
+          borderRadius: '50%',
+          background: value ? '#6BBF9A' : '#D7C6AA',
+          boxShadow: value ? '0 0 0 3px rgba(107, 191, 154, 0.18)' : '0 0 0 3px rgba(215, 198, 170, 0.18)',
+          flexShrink: 0,
+        }}
+      />
       {value ? 'Active' : 'Inactive'}
     </button>
   )
@@ -240,98 +250,105 @@ export default function ShippingProvidersPage() {
   })
 
   return (
-    <div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 20 }}>
-        <Truck size={18} color="#7B5EA7" />
-        <h1 style={{ fontFamily: "var(--font-heading)", fontSize: 22, fontWeight: 600, color: '#1C1A17', margin: 0 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 18, height: 18, color: '#7B5EA7' }}>
+          <Truck size={18} />
+        </div>
+        <h1 style={{ fontFamily: 'var(--font-heading)', fontSize: 22, fontWeight: 600, color: '#1C1A17', margin: 0 }}>
           Shipping Providers
         </h1>
       </div>
 
       {isLoading ? (
-        <p style={{ fontFamily: FONT, fontSize: 13, color: '#9E9590' }}>Loading…</p>
+        <p style={{ fontFamily: FONT, fontSize: 13, color: '#9E9590', paddingTop: 8 }}>Loading…</p>
       ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 16 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 18, maxWidth: 760, alignItems: 'stretch' }}>
           {(providers ?? []).map(p => (
-            <div key={p._id} style={{ background: '#EDE8DC', border: '1px solid #E2DAC8', borderRadius: 4, padding: 16 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
-                <div>
-                  <div style={{ fontFamily: FONT, fontSize: 14, fontWeight: 600, color: '#1C1A17' }}>{p.name}</div>
+            <div
+              key={p._id}
+              style={{
+                background: '#EFEAE0',
+                border: '1px solid #DBD1BF',
+                borderRadius: 12,
+                padding: '18px 18px 14px',
+                minHeight: 166,
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'space-between',
+                boxShadow: '0 1px 0 rgba(28,26,23,0.02)',
+              }}
+            >
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 10 }}>
+                <div style={{ minWidth: 0, flex: 1 }}>
+                  <div style={{ fontFamily: FONT, fontSize: 14, fontWeight: 600, color: '#1C1A17', marginBottom: 4 }}>{p.name}</div>
                   {p.description && (
-                    <div style={{ fontFamily: FONT, fontSize: 13, color: '#9E9590', marginTop: 2 }}>{p.description}</div>
+                    <div style={{ fontFamily: FONT, fontSize: 13, color: '#7E7269', lineHeight: 1.45 }}>{p.description}</div>
                   )}
                 </div>
                 {p.isDefault && (
                   <span style={{
-                    padding: '2px 8px', borderRadius: 10, background: '#FEF9EC', color: '#C49A3C',
-                    fontFamily: FONT, fontSize: 13, fontWeight: 600, whiteSpace: 'nowrap',
+                    padding: '2px 8px', borderRadius: 999, background: '#F5E8C6', color: '#8A6A1F',
+                    fontFamily: FONT, fontSize: 12, fontWeight: 600, whiteSpace: 'nowrap',
+                    border: '1px solid rgba(138, 106, 31, 0.15)'
                   }}>
                     Default
                   </span>
                 )}
               </div>
 
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, margin: '10px 0' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 14, marginBottom: 10, minHeight: 20 }}>
                 <ActiveToggle
                   value={p.isActive}
                   disabled={toggleMutation.isPending || (!p.isActive && !p.isVerified)}
                   onChange={(v) => toggleMutation.mutate({ id: p._id, isActive: v })}
                 />
                 {!p.hasCredentials && (
-                  <span style={{ fontFamily: FONT, fontSize: 13, color: '#A85050' }}>No credentials</span>
+                  <span style={{ fontFamily: FONT, fontSize: 12, color: '#8A6C67' }}>No credentials</span>
                 )}
                 {p.hasCredentials && (
-                  <span style={{ fontFamily: FONT, fontSize: 13, color: p.isVerified ? '#5A8A6A' : '#A85050' }}>
+                  <span style={{ fontFamily: FONT, fontSize: 12, color: p.isVerified ? '#467B5D' : '#8A6C67' }}>
                     {p.isVerified ? 'Connection verified' : 'Test connection required'}
                   </span>
                 )}
               </div>
 
-              {p.lastVerifiedAt && (
-                <div style={{ fontFamily: FONT, fontSize: 13, color: '#9E9590', marginBottom: 10 }}>
-                  Verified: {new Date(p.lastVerifiedAt).toLocaleString('en-IN', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
-                </div>
-              )}
-
-              {p.lastSyncedAt && (
-                <div style={{ fontFamily: FONT, fontSize: 13, color: '#9E9590', marginBottom: 10 }}>
-                  Last synced: {new Date(p.lastSyncedAt).toLocaleString('en-IN', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
-                </div>
-              )}
-
-              <div style={{ display: 'flex', gap: 8 }}>
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                 <button
                   onClick={() => testConnectionMutation.mutate(p._id)}
                   disabled={!p.hasCredentials || testConnectionMutation.isPending}
                   style={{
-                    padding: '6px 12px', background: 'transparent', border: '1px solid #E2DAC8', borderRadius: 4,
-                    fontFamily: FONT, fontSize: 13, color: '#7B5EA7',
+                    padding: '7px 12px', background: '#F5F0E8', border: '1px solid #D7CDBE', borderRadius: 6,
+                    fontFamily: FONT, fontSize: 13, color: '#1C1A17',
                     cursor: !p.hasCredentials || testConnectionMutation.isPending ? 'not-allowed' : 'pointer',
                     opacity: !p.hasCredentials || testConnectionMutation.isPending ? 0.6 : 1,
+                    minWidth: 92,
                   }}
                 >
-                  {testConnectionMutation.isPending ? 'Testing…' : 'Test Connection'}
+                  {testConnectionMutation.isPending ? 'Testing…' : 'Test'}
                 </button>
                 <button
                   onClick={() => setEditing(p)}
                   style={{
-                    display: 'inline-flex', alignItems: 'center', gap: 6, padding: '6px 12px',
-                    background: '#F5F0E8', border: '1px solid #E2DAC8', borderRadius: 4,
+                    display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '7px 12px',
+                    background: '#F5F0E8', border: '1px solid #D7CDBE', borderRadius: 6,
                     fontFamily: FONT, fontSize: 13, color: '#1C1A17', cursor: 'pointer',
+                    minWidth: 92,
                   }}
                 >
-                  <Pencil size={12} /> Edit Credentials
+                  <Pencil size={12} /> Edit
                 </button>
                 {!p.isDefault && (
                   <button
                     onClick={() => defaultMutation.mutate(p._id)}
                     disabled={defaultMutation.isPending}
                     style={{
-                      padding: '6px 12px', background: 'transparent', border: '1px solid #E2DAC8', borderRadius: 4,
-                      fontFamily: FONT, fontSize: 13, color: '#7B5EA7', cursor: 'pointer',
+                      padding: '7px 12px', background: '#F5F0E8', border: '1px solid #D7CDBE', borderRadius: 6,
+                      fontFamily: FONT, fontSize: 13, color: '#1C1A17', cursor: 'pointer',
+                      minWidth: 92,
                     }}
                   >
-                    Set Default
+                    Set
                   </button>
                 )}
               </div>
