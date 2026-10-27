@@ -4,6 +4,7 @@ import client from './client'
 
 export interface AdminSettings {
   freeGiftEnabled: boolean
+  freeShippingEnabled: boolean
   whatsappNumber: string
   whatsappDefaultMessage: string
 }

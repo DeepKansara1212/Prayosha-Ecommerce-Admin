@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Pencil, Truck } from 'lucide-react'
 import {
@@ -75,31 +75,18 @@ function ActiveToggle({ value, onChange, disabled }: { value: boolean; onChange:
 // ── Credentials form (per provider — small fixed set, not schema-driven) ──────
 
 interface CredentialsDrawerProps {
-  open: boolean
-  provider: ShippingProvider | null
+  provider: ShippingProvider
   onClose: () => void
   onSave: (id: string, credentials: Record<string, string | number>) => void
   isPending: boolean
 }
 
-function CredentialsDrawer({ open, provider, onClose, onSave, isPending }: CredentialsDrawerProps) {
+function CredentialsDrawer({ provider, onClose, onSave, isPending }: CredentialsDrawerProps) {
   const [shiprocket, setShiprocket] = useState({
-    email: '', password: '', channelId: '', pickupLocation: '',
+    email: '', password: '', channelId: '', pickupLocation: '', pickupPostcode: '',
     defaultWeight: '', defaultLength: '', defaultBreadth: '', defaultHeight: '',
   })
   const [aftership, setAftership] = useState({ apiKey: '' })
-
-  useEffect(() => {
-    if (open) {
-      setShiprocket({
-        email: '', password: '', channelId: '', pickupLocation: '',
-        defaultWeight: '', defaultLength: '', defaultBreadth: '', defaultHeight: '',
-      })
-      setAftership({ apiKey: '' })
-    }
-  }, [open, provider?._id])
-
-  if (!provider) return null
 
   const handleSave = () => {
     if (provider.slug === 'shiprocket') {
@@ -109,6 +96,7 @@ function CredentialsDrawer({ open, provider, onClose, onSave, isPending }: Crede
       }
       if (shiprocket.channelId) creds.channelId = shiprocket.channelId
       if (shiprocket.pickupLocation) creds.pickupLocation = shiprocket.pickupLocation
+      if (shiprocket.pickupPostcode) creds.pickupPostcode = shiprocket.pickupPostcode
       if (shiprocket.defaultWeight) creds.defaultWeight = Number(shiprocket.defaultWeight)
       if (shiprocket.defaultLength) creds.defaultLength = Number(shiprocket.defaultLength)
       if (shiprocket.defaultBreadth) creds.defaultBreadth = Number(shiprocket.defaultBreadth)
@@ -121,15 +109,13 @@ function CredentialsDrawer({ open, provider, onClose, onSave, isPending }: Crede
 
   return (
     <>
-      {open && (
-        <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(28,26,23,0.4)', zIndex: 100 }} />
-      )}
+      <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(28,26,23,0.4)', zIndex: 100 }} />
       <div
         style={{
           position: 'fixed', top: 0, right: 0, height: '100vh', width: 420,
           background: '#F5F0E8', borderLeft: '1px solid #E2DAC8', zIndex: 101,
           boxShadow: '-4px 0 24px rgba(28,26,23,0.12)', display: 'flex', flexDirection: 'column',
-          transform: open ? 'translateX(0)' : 'translateX(100%)', transition: 'transform 0.25s ease',
+          transform: 'translateX(0)', transition: 'transform 0.25s ease',
         }}
       >
         <div style={{ padding: '16px 20px', borderBottom: '1px solid #E2DAC8' }}>
@@ -156,6 +142,17 @@ function CredentialsDrawer({ open, provider, onClose, onSave, isPending }: Crede
               <div>
                 <label style={LABEL}>Pickup Location</label>
                 <input style={INPUT_BASE} value={shiprocket.pickupLocation} onChange={e => setShiprocket(s => ({ ...s, pickupLocation: e.target.value }))} placeholder="Primary" />
+              </div>
+              <div>
+                <label style={LABEL}>Pickup Postcode (required for live rates)</label>
+                <input
+                  style={INPUT_BASE}
+                  value={shiprocket.pickupPostcode}
+                  onChange={e => setShiprocket(s => ({ ...s, pickupPostcode: e.target.value.replace(/\D/g, '').slice(0, 6) }))}
+                  inputMode="numeric"
+                  maxLength={6}
+                  placeholder="6-digit origin postcode"
+                />
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
                 <div>
@@ -357,13 +354,15 @@ export default function ShippingProvidersPage() {
         </div>
       )}
 
-      <CredentialsDrawer
-        open={!!editing}
-        provider={editing}
-        onClose={() => setEditing(null)}
-        onSave={(id, credentials) => credentialsMutation.mutate({ id, credentials })}
-        isPending={credentialsMutation.isPending}
-      />
+      {editing && (
+        <CredentialsDrawer
+          key={editing._id}
+          provider={editing}
+          onClose={() => setEditing(null)}
+          onSave={(id, credentials) => credentialsMutation.mutate({ id, credentials })}
+          isPending={credentialsMutation.isPending}
+        />
+      )}
     </div>
   )
 }

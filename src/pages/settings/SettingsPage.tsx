@@ -533,6 +533,87 @@ function FreeGiftSection() {
   )
 }
 
+function FreeShippingSection() {
+  const toast = useToast()
+  const queryClient = useQueryClient()
+
+  const { data: settings, isLoading } = useQuery({
+    queryKey: ['admin-settings'],
+    queryFn: getAdminSettings,
+  })
+
+  const [freeShippingEnabled, setFreeShippingEnabled] = useState<boolean | null>(null)
+  const resolved = freeShippingEnabled ?? settings?.freeShippingEnabled ?? false
+
+  const mutation = useMutation({
+    mutationFn: () => updateAdminSettings({ freeShippingEnabled: resolved }),
+    onSuccess: () => {
+      toast.success('Shipping settings saved')
+      void queryClient.invalidateQueries({ queryKey: ['admin-settings'] })
+    },
+    onError: () => toast.error('Failed to save shipping settings'),
+  })
+
+  return (
+    <div style={CARD}>
+      <div style={CARD_HEADER}>
+        <div style={{ fontFamily: FONT, fontSize: 13, fontWeight: 600, color: '#1C1A17' }}>
+          Shipping Settings
+        </div>
+        <div style={{ fontFamily: FONT, fontSize: 13, color: '#9E9590', marginTop: 2 }}>
+          Choose whether all orders ship free or use the live Shiprocket rate
+        </div>
+      </div>
+
+      <div style={CARD_BODY}>
+        {isLoading ? (
+          <div style={{ fontFamily: FONT, fontSize: 13, color: '#9E9590' }}>Loading…</div>
+        ) : (
+          <>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 24 }}>
+              <Toggle
+                checked={resolved}
+                onChange={() => setFreeShippingEnabled(!resolved)}
+              />
+              <div>
+                <div style={{ fontFamily: FONT, fontSize: 13, fontWeight: 500, color: '#1C1A17' }}>
+                  Enable free shipping on all orders
+                </div>
+                <div style={{ fontFamily: FONT, fontSize: 13, color: '#9E9590', marginTop: 2 }}>
+                  When enabled, checkout shipping is free. When disabled, the rate is calculated from Shiprocket.
+                </div>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              disabled={mutation.isPending}
+              onClick={() => mutation.mutate()}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                padding: '9px 20px',
+                background: mutation.isPending ? '#C4B89A' : '#C49A3C',
+                color: '#fff',
+                border: 'none',
+                borderRadius: 4,
+                fontFamily: FONT,
+                fontSize: 13,
+                fontWeight: 500,
+                cursor: mutation.isPending ? 'not-allowed' : 'pointer',
+                letterSpacing: '0.04em',
+                transition: 'background 0.2s',
+              }}
+            >
+              {mutation.isPending ? 'Saving…' : 'Save Changes'}
+            </button>
+          </>
+        )}
+      </div>
+    </div>
+  )
+}
+
 // ── WhatsApp Support Section ──────────────────────────────────────────────────
 
 const whatsappSchema = z.object({
@@ -704,6 +785,7 @@ export default function SettingsPage() {
       <PasswordSection />
       <StoreInfoSection />
       <FreeGiftSection />
+      <FreeShippingSection />
       <WhatsAppSection />
     </div>
   )
