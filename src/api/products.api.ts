@@ -54,6 +54,7 @@ export interface Product {
   color?: string
   rudrakshaFaces?: string
   beadSize?: string
+  stone?: string
   noOfSticks?: number
   badge?: string
   stock: number
@@ -116,6 +117,7 @@ export type ProductPayload = {
   color?: string
   rudrakshaFaces?: string
   beadSize?: string
+  stone?: string
   noOfSticks?: number
   badge?: string
   stock: number

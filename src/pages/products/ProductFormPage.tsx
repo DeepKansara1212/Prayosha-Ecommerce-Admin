@@ -67,6 +67,7 @@ const schema = z.object({
   color:                  z.string().max(100, 'Max 100 characters'),
   rudrakshaFaces:         z.string().max(50, 'Max 50 characters'),
   beadSize:               z.string().max(50, 'Max 50 characters'),
+  stone:                  z.string().max(100, 'Max 100 characters'),
   noOfSticks:             z.preprocess(
     value => value === '' ? undefined : value,
     z.coerce.number().int().min(1, 'Must be at least 1').optional(),
@@ -110,8 +111,10 @@ const SECTION: React.CSSProperties = {
   background: '#EDE8DC',
   border: '1px solid #E2DAC8',
   borderRadius: 4,
-  padding: 24,
+  padding: 20,
   marginBottom: 20,
+  width: '100%',
+  boxSizing: 'border-box',
 }
 
 const SECTION_TITLE: React.CSSProperties = {
@@ -163,13 +166,10 @@ const ERR: React.CSSProperties = {
   display: 'block',
 }
 
-const GRID2: React.CSSProperties = {
-  display: 'grid',
-  gridTemplateColumns: '1fr 1fr',
-  gap: 16,
+const FIELD: React.CSSProperties = {
+  marginBottom: 16,
+  minWidth: 0,
 }
-
-const FIELD: React.CSSProperties = { marginBottom: 16 }
 
 // ── Toggle switch ─────────────────────────────────────────────────────────────
 
@@ -423,7 +423,7 @@ export default function ProductFormPage() {
       price: '', comparePrice: '', costPrice: '', stock: 0, lowStockThreshold: 5,
       useCategoryShipping: true, shippingWeight: '', shippingTotalWeight: '', shippingLength: '', shippingBreadth: '', shippingHeight: '',
       productWeight: '', productLength: '', productBreadth: '', productHeight: '', productDimensions: '', productSize: '', productIngredients: '',
-      category: '', subCategory: '', tags: [], chakra: '', purposeTags: [], meaningTags: [], shape: '', color: '', rudrakshaFaces: '', beadSize: '', noOfSticks: '', rashiIds: [], badge: '', isFeatured: false, isActive: true, hasFreeGift: false,
+      category: '', subCategory: '', tags: [], chakra: '', purposeTags: [], meaningTags: [], shape: '', color: '', rudrakshaFaces: '', beadSize: '', stone: '', noOfSticks: '', rashiIds: [], badge: '', isFeatured: false, isActive: true, hasFreeGift: false,
     },
   })
 
@@ -562,13 +562,6 @@ export default function ProductFormPage() {
   const isBraceletCategory = Boolean(
     selectedCategory && /bracelet/i.test(`${selectedCategory.name} ${selectedCategory.slug}`),
   )
-  const isDhoopstickCategory = Boolean(
-    selectedCategory && /dhoop\s*stick|incense/i.test(`${selectedCategory.name} ${selectedCategory.slug}`),
-  )
-  const isRudrakshaCategory = Boolean(
-    selectedCategory && /rudraksha/i.test(`${selectedCategory.name} ${selectedCategory.slug}`),
-  )
-
   useEffect(() => {
     if (!watchCategory || !subcategoriesFetched) return
     if (!subcategories.some(subcategory => subcategory._id === watch('subCategory'))) {
@@ -636,6 +629,7 @@ export default function ProductFormPage() {
       color:                  product.color ?? '',
       rudrakshaFaces:         product.rudrakshaFaces ?? '',
       beadSize:               product.beadSize ?? '',
+      stone:                  product.stone ?? '',
       noOfSticks:             product.noOfSticks ?? '',
       rashiIds:               [],
       badge:                  product.badge ?? '',
@@ -687,7 +681,8 @@ export default function ProductFormPage() {
       ...(data.color                  && { color: data.color.trim() }),
       ...(data.rudrakshaFaces         && { rudrakshaFaces: data.rudrakshaFaces.trim() }),
       ...(isBraceletCategory && data.beadSize.trim() && { beadSize: data.beadSize.trim() }),
-      ...(isDhoopstickCategory && data.noOfSticks !== undefined && { noOfSticks: data.noOfSticks }),
+      ...(data.stone.trim()           && { stone: data.stone.trim() }),
+      ...(data.noOfSticks !== undefined && { noOfSticks: data.noOfSticks }),
       ...(data.badge                  && { badge: data.badge }),
       ...(data.comparePrice           && { comparePrice: +data.comparePrice }),
       ...(data.costPrice              && { costPrice: +data.costPrice }),
@@ -779,7 +774,7 @@ export default function ProductFormPage() {
   // ── Render ─────────────────────────────────────────────────────────────────
 
   return (
-    <div style={{ maxWidth: 860 }}>
+    <div style={{ width: '100%', maxWidth: 1100 }}>
       {/* Toast */}
       {toast && <Toast type={toast.type} message={toast.message} />}
 
@@ -802,7 +797,7 @@ export default function ProductFormPage() {
         <div style={SECTION}>
           <p style={SECTION_TITLE}>Basic Info</p>
 
-          <div style={GRID2}>
+          <div className="product-form-grid">
             <div style={FIELD}>
               <label style={LABEL}>Name <span style={{ color: '#A85050' }}>*</span></label>
               <input
@@ -862,7 +857,7 @@ export default function ProductFormPage() {
             </div>
           </div>
 
-          <div style={GRID2}>
+          <div className="product-form-grid">
             <div style={FIELD}>
               <label style={LABEL}>SKU <span style={{ color: '#A85050' }}>*</span></label>
               <input
@@ -910,7 +905,7 @@ export default function ProductFormPage() {
             {errors.description && <span style={ERR}>{errors.description.message}</span>}
           </div>
 
-          <div style={GRID2}>
+          <div className="product-form-grid">
             <div style={FIELD}>
               <label style={LABEL}>Care Instructions</label>
               <textarea
@@ -1008,7 +1003,7 @@ export default function ProductFormPage() {
             </div>
           </div>
 
-          <div style={GRID2}>
+          <div className="product-form-grid">
             <div style={FIELD}>
               <label style={LABEL}>Stock <span style={{ color: '#A85050' }}>*</span></label>
               <input
@@ -1144,7 +1139,7 @@ export default function ProductFormPage() {
         <div style={SECTION}>
           <p style={SECTION_TITLE}>Categorization</p>
 
-          <div style={GRID2}>
+          <div className="product-form-grid">
             {/* Category */}
             <div style={FIELD}>
               <label style={LABEL}>Category <span style={{ color: '#A85050' }}>*</span></label>
@@ -1190,51 +1185,55 @@ export default function ProductFormPage() {
 
           </div>
 
-          {(isBraceletCategory || isDhoopstickCategory || isRudrakshaCategory) && (
-            <div style={GRID2}>
-              {isBraceletCategory && (
-                <div style={FIELD}>
-                  <label style={LABEL}>Bead Size</label>
-                  <input
-                    {...register('beadSize')}
-                    placeholder="e.g. 8mm or 8-10mm"
-                    className="admin-input"
-                    style={INPUT}
-                  />
-                </div>
-              )}
+          <div className="product-form-grid">
+            {isBraceletCategory && (
+              <div style={FIELD}>
+                <label style={LABEL}>Bead Size</label>
+                <input
+                  {...register('beadSize')}
+                  placeholder="e.g. 8mm or 8-10mm"
+                  className="admin-input"
+                  style={INPUT}
+                />
+              </div>
+            )}
 
-              {isDhoopstickCategory && (
-                <div style={FIELD}>
-                  <label style={LABEL}>No. of Sticks</label>
-                  <input
-                    {...register('noOfSticks')}
-                    type="number"
-                    min="1"
-                    step="1"
-                    placeholder="e.g. 20"
-                    className="admin-input"
-                    style={INPUT}
-                  />
-                  {errors.noOfSticks && <span style={ERR}>{errors.noOfSticks.message}</span>}
-                </div>
-              )}
-
-              {isRudrakshaCategory && (
-                <div style={FIELD}>
-                  <label style={LABEL}>Rudraksha Faces</label>
-                  <input
-                    {...register('rudrakshaFaces')}
-                    placeholder="e.g. 5 or Gauri Shankar"
-                    className="admin-input"
-                    style={INPUT}
-                  />
-                </div>
-              )}
+            <div style={FIELD}>
+              <label style={LABEL}>No. of Sticks</label>
+              <input
+                {...register('noOfSticks')}
+                type="number"
+                min="1"
+                step="1"
+                placeholder="e.g. 20"
+                className="admin-input"
+                style={INPUT}
+              />
+              {errors.noOfSticks && <span style={ERR}>{errors.noOfSticks.message}</span>}
             </div>
-          )}
 
-          <div style={GRID2}>
+            <div style={FIELD}>
+              <label style={LABEL}>Rudraksha Faces</label>
+              <input
+                {...register('rudrakshaFaces')}
+                placeholder="e.g. 5 or Gauri Shankar"
+                className="admin-input"
+                style={INPUT}
+              />
+            </div>
+
+            <div style={FIELD}>
+              <label style={LABEL}>Stone</label>
+              <input
+                {...register('stone')}
+                placeholder="e.g. Amethyst"
+                className="admin-input"
+                style={INPUT}
+              />
+            </div>
+          </div>
+
+          <div className="product-form-grid">
             {/* Rashi */}
             <div style={FIELD}>
               <label style={LABEL}>Rashi</label>

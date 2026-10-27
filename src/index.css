@@ -187,6 +187,13 @@ h1, h2, h3, h4, h5, h6 {
   outline: none;
 }
 
+.product-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: start;
+  gap: 16px;
+}
+
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(-6px); }
   to   { opacity: 1; transform: translateY(0); }
@@ -278,6 +285,11 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 @media (max-width: 700px) {
+  .product-form-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0;
+  }
+
   .admin-dashboard-kpis {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 12px;
