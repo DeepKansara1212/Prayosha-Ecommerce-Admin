@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Pencil, Trash2, Plus, ChevronLeft, ChevronRight, Package } from 'lucide-react'
 import {
-  getProducts,
+  getAdminProducts,
   updateProduct,
   deleteProduct,
   type Product,
@@ -34,15 +34,6 @@ function getStockColor(p: Product) {
   if (p.stock === 0) return '#A85050'
   if (p.stock <= p.lowStockThreshold) return '#C49A3C'
   return '#5A8A6A'
-}
-
-function filterByStock(products: Product[], status: StockStatus): Product[] {
-  switch (status) {
-    case 'inStock':    return products.filter(p => p.stock > p.lowStockThreshold)
-    case 'lowStock':   return products.filter(p => p.stock > 0 && p.stock <= p.lowStockThreshold)
-    case 'outOfStock': return products.filter(p => p.stock === 0)
-    default:           return products
-  }
 }
 
 // ── Styles ────────────────────────────────────────────────────────────────────
@@ -180,26 +171,23 @@ export default function ProductsPage() {
     debounceRef.current = setTimeout(() => {
       setDebouncedSearch(search)
       setPage(1)
-    }, 400)
+    }, 250)
     return () => { if (debounceRef.current) clearTimeout(debounceRef.current) }
   }, [search])
-
-  // Reset page when filters change
-  useEffect(() => { setPage(1) }, [categoryFilter, badgeFilter, stockFilter])
 
   // ── Queries ──────────────────────────────────────────────────────────────────
 
   const { data, isLoading, isError } = useQuery({
-    queryKey: ['admin-products', debouncedSearch, categoryFilter, badgeFilter, page],
+    queryKey: ['admin-products', debouncedSearch, categoryFilter, badgeFilter, stockFilter, page],
     queryFn: () =>
-      getProducts({
+      getAdminProducts({
         search: debouncedSearch || undefined,
         category: categoryFilter || undefined,
         badge: badgeFilter || undefined,
+        stockStatus: stockFilter,
         page,
         limit: 20,
       }),
-    placeholderData: (prev) => prev,
   })
 
   const { data: categories } = useQuery({
@@ -227,7 +215,7 @@ export default function ProductsPage() {
   // ── Derived data ──────────────────────────────────────────────────────────────
 
   const rawProducts = data?.products ?? []
-  const products    = filterByStock(rawProducts, stockFilter)
+  const products    = rawProducts
   const pagination  = data?.pagination
 
   // ── Render ────────────────────────────────────────────────────────────────────
@@ -294,17 +282,26 @@ export default function ProductsPage() {
         {/* Search */}
         <input
           type="text"
-          placeholder="Search by name…"
+          placeholder="Search by name, SKU, or product details…"
           value={search}
           onChange={e => setSearch(e.target.value)}
           className="admin-input"
           style={{ ...INPUT_BASE, minWidth: 200, flex: '1 1 200px' }}
+          aria-label="Search products by name, SKU, or details"
         />
+        {search !== debouncedSearch && (
+          <span role="status" style={{ fontFamily: FONT, fontSize: 13, color: '#9E9590' }}>
+            Searching…
+          </span>
+        )}
 
         {/* Category */}
         <select
           value={categoryFilter}
-          onChange={e => setCategoryFilter(e.target.value)}
+          onChange={e => {
+            setCategoryFilter(e.target.value)
+            setPage(1)
+          }}
           className="admin-input"
           style={{ ...INPUT_BASE, minWidth: 160 }}
         >
@@ -322,7 +319,10 @@ export default function ProductsPage() {
             return (
               <button
                 key={s}
-                onClick={() => setStockFilter(s)}
+                onClick={() => {
+                  setStockFilter(s)
+                  setPage(1)
+                }}
                 style={{
                   padding: '7px 12px',
                   background: active ? '#1C1A17' : '#F5F0E8',
@@ -344,7 +344,10 @@ export default function ProductsPage() {
         {/* Badge */}
         <select
           value={badgeFilter}
-          onChange={e => setBadgeFilter(e.target.value)}
+          onChange={e => {
+            setBadgeFilter(e.target.value)
+            setPage(1)
+          }}
           className="admin-input"
           style={{ ...INPUT_BASE, minWidth: 140 }}
         >

@@ -559,9 +559,6 @@ export default function ProductFormPage() {
     ...selectedCategory?.shipping,
     ...selectedSubCategory?.shipping,
   }
-  const isBraceletCategory = Boolean(
-    selectedCategory && /bracelet/i.test(`${selectedCategory.name} ${selectedCategory.slug}`),
-  )
   useEffect(() => {
     if (!watchCategory || !subcategoriesFetched) return
     if (!subcategories.some(subcategory => subcategory._id === watch('subCategory'))) {
@@ -680,7 +677,7 @@ export default function ProductFormPage() {
       ...(data.shape                  && { shape: data.shape.trim() }),
       ...(data.color                  && { color: data.color.trim() }),
       ...(data.rudrakshaFaces         && { rudrakshaFaces: data.rudrakshaFaces.trim() }),
-      ...(isBraceletCategory && data.beadSize.trim() && { beadSize: data.beadSize.trim() }),
+      ...(data.beadSize.trim() && { beadSize: data.beadSize.trim() }),
       ...(data.stone.trim()           && { stone: data.stone.trim() }),
       ...(data.noOfSticks !== undefined && { noOfSticks: data.noOfSticks }),
       ...(data.badge                  && { badge: data.badge }),
@@ -1186,17 +1183,15 @@ export default function ProductFormPage() {
           </div>
 
           <div className="product-form-grid">
-            {isBraceletCategory && (
-              <div style={FIELD}>
-                <label style={LABEL}>Bead Size</label>
-                <input
-                  {...register('beadSize')}
-                  placeholder="e.g. 8mm or 8-10mm"
-                  className="admin-input"
-                  style={INPUT}
-                />
-              </div>
-            )}
+            <div style={FIELD}>
+              <label style={LABEL}>Bead Size</label>
+              <input
+                {...register('beadSize')}
+                placeholder="e.g. 8mm or 8-10mm"
+                className="admin-input"
+                style={INPUT}
+              />
+            </div>
 
             <div style={FIELD}>
               <label style={LABEL}>No. of Sticks</label>

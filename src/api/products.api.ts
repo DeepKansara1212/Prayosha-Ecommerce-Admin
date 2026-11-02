@@ -97,6 +97,15 @@ export interface ProductsParams {
   limit?: number
 }
 
+export interface AdminProductsParams {
+  search?: string
+  category?: string
+  badge?: string
+  stockStatus?: 'all' | 'inStock' | 'lowStock' | 'outOfStock'
+  page?: number
+  limit?: number
+}
+
 export type ProductPayload = {
   name: string
   slug?: string
@@ -139,6 +148,11 @@ export type ProductPayload = {
 
 export async function getProducts(params?: ProductsParams): Promise<ProductsResponse> {
   const res = await client.get('/api/v1/products', { params })
+  return res.data.data as ProductsResponse
+}
+
+export async function getAdminProducts(params?: AdminProductsParams): Promise<ProductsResponse> {
+  const res = await client.get('/api/v1/products/admin/search', { params })
   return res.data.data as ProductsResponse
 }
 
