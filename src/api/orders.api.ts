@@ -55,7 +55,7 @@ export interface TrackingCheckpoint {
 export interface Order {
   _id: string
   orderNumber: string
-  user: OrderUser
+  user: OrderUser | null
   items: OrderItem[]
   shippingAddress: ShippingAddress
   subtotal: number

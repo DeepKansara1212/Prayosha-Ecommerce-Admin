@@ -499,10 +499,10 @@ export default function OrdersPage() {
                   {/* Customer */}
                   <td style={TD}>
                     <div style={{ fontFamily: FONT, fontSize: 13, fontWeight: 500, color: '#1C1A17' }}>
-                      {order.user.name}
+                      {order.user?.name || order.shippingAddress.fullName || 'Customer record unavailable'}
                     </div>
                     <div style={{ fontFamily: FONT, fontSize: 13, color: '#9E9590' }}>
-                      {order.user.email}
+                      {order.user?.email || 'Customer account unavailable'}
                     </div>
                   </td>
 
