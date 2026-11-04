@@ -33,6 +33,11 @@ export interface ProductSubCategory {
   slug: string
 }
 
+export interface ProductCategorySubCategory {
+  category: string | ProductCategory
+  subCategory?: string | ProductSubCategory
+}
+
 export interface Product {
   _id: string
   name: string
@@ -45,6 +50,8 @@ export interface Product {
   images: string[]
   video?: string
   category: ProductCategory
+  categories?: ProductCategory[]
+  categorySubCategories?: ProductCategorySubCategory[]
   subCategory?: string | ProductSubCategory
   tags: string[]
   chakra?: string
@@ -116,7 +123,9 @@ export type ProductPayload = {
   comparePrice?: number
   costPrice?: number
   video?: string
-  category: string
+  category?: string
+  categories: string[]
+  categorySubCategories?: { category: string; subCategory?: string }[]
   subCategory?: string | null
   tags?: string[]
   chakra?: string

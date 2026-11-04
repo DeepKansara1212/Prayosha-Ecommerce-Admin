@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { useQueries, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -57,8 +57,14 @@ const schema = z.object({
   productDimensions:      z.string(),
   productSize:            z.string(),
   productIngredients:     z.string(),
-  category:               z.string().min(1, 'Category is required'),
-  subCategory:            z.string(),
+  categories:             z.array(z.string()).refine(
+    categories => categories.some(Boolean),
+    'Select at least one category',
+  ),
+  categorySubCategories: z.array(z.object({
+    category: z.string(),
+    subCategory: z.string(),
+  })),
   tags:                   z.array(z.string()),
   chakra:                 z.string(),
   purposeTags:            z.array(z.string()),
@@ -423,7 +429,7 @@ export default function ProductFormPage() {
       price: '', comparePrice: '', costPrice: '', stock: 0, lowStockThreshold: 5,
       useCategoryShipping: true, shippingWeight: '', shippingTotalWeight: '', shippingLength: '', shippingBreadth: '', shippingHeight: '',
       productWeight: '', productLength: '', productBreadth: '', productHeight: '', productDimensions: '', productSize: '', productIngredients: '',
-      category: '', subCategory: '', tags: [], chakra: '', purposeTags: [], meaningTags: [], shape: '', color: '', rudrakshaFaces: '', beadSize: '', stone: '', noOfSticks: '', rashiIds: [], badge: '', isFeatured: false, isActive: true, hasFreeGift: false,
+      categories: [''], categorySubCategories: [], tags: [], chakra: '', purposeTags: [], meaningTags: [], shape: '', color: '', rudrakshaFaces: '', beadSize: '', stone: '', noOfSticks: '', rashiIds: [], badge: '', isFeatured: false, isActive: true, hasFreeGift: false,
     },
   })
 
@@ -438,7 +444,6 @@ export default function ProductFormPage() {
 
   const watchName       = watch('name')
   const watchSlug       = watch('slug')
-  const watchSubCategory = watch('subCategory')
   const watchBadge      = watch('badge')
   const watchTags       = watch('tags')
   const watchRashiIds   = watch('rashiIds')
@@ -447,7 +452,9 @@ export default function ProductFormPage() {
   const watchFeatured   = watch('isFeatured')
   const watchActive     = watch('isActive')
   const watchHasFreeGift = watch('hasFreeGift')
-  const watchCategory    = watch('category')
+  const watchCategories  = watch('categories')
+  const watchCategorySubCategories = watch('categorySubCategories')
+  const watchCategory    = watchCategories.find(Boolean) ?? ''
   const watchUseCategoryShipping = watch('useCategoryShipping')
 
   // Slug lock/edit state
@@ -542,30 +549,61 @@ export default function ProductFormPage() {
   }, [existingPurposeMappings, product, setValue])
 
   // The category and subcategory lists carry shipping defaults.
-  // Fall back to the edited product's own populated category (covers the case where
-  // its category is inactive and therefore missing from the public categories list).
+  // Fall back to the edited product's populated categories when an assigned
+  // category is inactive and therefore missing from the public categories list.
   const productCategory = product && typeof product.category === 'object' ? product.category : undefined
-  const selectedCategory =
-    categories?.find(c => c._id === watchCategory) ??
-    (productCategory?._id === watchCategory ? productCategory : undefined)
-  const { data: subcategories = [], isFetched: subcategoriesFetched } = useQuery({
-    queryKey: ['subcategories-for-category', selectedCategory?.slug],
-    queryFn: () => getSubCategories(selectedCategory!.slug),
-    enabled: !!selectedCategory?.slug,
-    staleTime: 5 * 60_000,
+  const productCategories = product?.categories ?? (productCategory ? [productCategory] : [])
+  const selectedCategoryRecords = watchCategories
+    .filter(Boolean)
+    .map(categoryId =>
+      categories?.find(category => category._id === categoryId) ??
+      productCategories.find(category => category._id === categoryId),
+    )
+    .filter((category): category is NonNullable<typeof category> => !!category)
+  const subcategoryQueries = useQueries({
+    queries: selectedCategoryRecords.map(category => ({
+      queryKey: ['subcategories-for-category', category.slug],
+      queryFn: () => getSubCategories(category.slug),
+      staleTime: 5 * 60_000,
+    })),
   })
-  const selectedSubCategory = subcategories.find(item => item._id === watchSubCategory)
+  useEffect(() => {
+    const selectedIds = watchCategories.filter(Boolean)
+    const existingByCategory = new Map(
+      watchCategorySubCategories.map(assignment => [assignment.category, assignment.subCategory]),
+    )
+    const nextAssignments = selectedIds.map(category => ({
+      category,
+      subCategory: existingByCategory.get(category) ?? '',
+    }))
+    if (JSON.stringify(nextAssignments) !== JSON.stringify(watchCategorySubCategories)) {
+      setValue('categorySubCategories', nextAssignments, { shouldValidate: true })
+    }
+  }, [watchCategories, watchCategorySubCategories, setValue])
+
+  useEffect(() => {
+    let hasChanges = false
+    const nextAssignments = watchCategorySubCategories.map(assignment => {
+      const categoryIndex = selectedCategoryRecords.findIndex(category => category._id === assignment.category)
+      const query = subcategoryQueries[categoryIndex]
+      if (!assignment.subCategory || !query?.isFetched) return assignment
+      if (query.data?.some(subcategory => subcategory._id === assignment.subCategory)) return assignment
+      hasChanges = true
+      return { ...assignment, subCategory: '' }
+    })
+    if (hasChanges) setValue('categorySubCategories', nextAssignments, { shouldValidate: true })
+  }, [selectedCategoryRecords, subcategoryQueries, watchCategorySubCategories, setValue])
+
+  const selectedCategory = selectedCategoryRecords.find(category => category._id === watchCategory)
+  const primaryAssignment = watchCategorySubCategories.find(assignment => assignment.category === watchCategory)
+  const primarySubCategories = subcategoryQueries[
+    selectedCategoryRecords.findIndex(category => category._id === watchCategory)
+  ]?.data ?? []
+  const selectedSubCategory = primarySubCategories.find(item => item._id === primaryAssignment?.subCategory)
   const selectedShipping = {
     ...selectedCategory?.shipping,
     ...selectedSubCategory?.shipping,
   }
-  useEffect(() => {
-    if (!watchCategory || !subcategoriesFetched) return
-    if (!subcategories.some(subcategory => subcategory._id === watch('subCategory'))) {
-      setValue('subCategory', '')
-    }
-  }, [watchCategory, subcategories, subcategoriesFetched, setValue, watch])
-
   // Subcategory values override parent category defaults field by field.
   useEffect(() => {
     if (!watchUseCategoryShipping) return
@@ -612,12 +650,24 @@ export default function ProductFormPage() {
       productDimensions:      product.productDetails?.dimensions ?? '',
       productSize:            product.productDetails?.size ?? '',
       productIngredients:     product.productDetails?.ingredients ?? '',
-      category:               typeof product.category === 'object'
-                                ? product.category._id
-                                : product.category,
-      subCategory:            typeof product.subCategory === 'object'
-                ? product.subCategory._id
-                : product.subCategory ?? '',
+      categories:             product.categories?.length
+                                ? product.categories.map(category => category._id)
+                                : [typeof product.category === 'object'
+                                    ? product.category._id
+                                    : product.category],
+      categorySubCategories: product.categorySubCategories?.length
+        ? product.categorySubCategories.map(assignment => ({
+            category: typeof assignment.category === 'object' ? assignment.category._id : assignment.category,
+            subCategory: assignment.subCategory
+              ? typeof assignment.subCategory === 'object' ? assignment.subCategory._id : assignment.subCategory
+              : '',
+          }))
+        : [{
+            category: typeof product.category === 'object' ? product.category._id : product.category,
+            subCategory: product.subCategory
+              ? typeof product.subCategory === 'object' ? product.subCategory._id : product.subCategory
+              : '',
+          }],
       tags:                   product.tags ?? [],
       chakra:                 product.chakra ?? '',
       purposeTags:            product.purposeTags ?? [],
@@ -649,8 +699,16 @@ export default function ProductFormPage() {
       price:            data.price ?? null,
       stock:            data.stock,
       lowStockThreshold: data.lowStockThreshold,
-      category:         data.category,
-      subCategory: data.subCategory || null,
+      categories:       data.categories.filter(Boolean),
+      categorySubCategories: data.categorySubCategories
+        .filter(assignment => assignment.category && data.categories.includes(assignment.category))
+        .map(assignment => ({
+          category: assignment.category,
+          ...(assignment.subCategory && { subCategory: assignment.subCategory }),
+        })),
+      subCategory: data.categorySubCategories.find(
+        assignment => assignment.category === data.categories.find(Boolean),
+      )?.subCategory || null,
       tags:             data.tags,
       purposeTags:      data.purposeTags,
       meaningTags:      data.meaningTags,
@@ -1137,37 +1195,114 @@ export default function ProductFormPage() {
           <p style={SECTION_TITLE}>Categorization</p>
 
           <div className="product-form-grid">
-            {/* Category */}
-            <div style={FIELD}>
-              <label style={LABEL}>Category <span style={{ color: '#A85050' }}>*</span></label>
-              <select
-                {...register('category')}
-                className="admin-input"
-                style={{ ...INPUT, appearance: 'auto', cursor: 'pointer' }}
-              >
-                <option value="">Select category…</option>
-                {categories?.map(c => (
-                  <option key={c._id} value={c._id}>{c.name}</option>
-                ))}
-              </select>
-              {errors.category && <span style={ERR}>{errors.category.message}</span>}
-            </div>
-
-            {subcategories.length > 0 && (
-              <div style={FIELD}>
-                <label style={LABEL}>Sub-Category</label>
-                <select
-                  {...register('subCategory')}
-                  className="admin-input"
-                  style={{ ...INPUT, appearance: 'auto', cursor: 'pointer' }}
+            <div style={{ ...FIELD, gridColumn: '1 / -1' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                {watchCategories.map((selectedId, index) => {
+                  const category = selectedCategoryRecords.find(item => item._id === selectedId)
+                  const queryIndex = selectedCategoryRecords.findIndex(item => item._id === selectedId)
+                  const options = subcategoryQueries[queryIndex]?.data ?? []
+                  const assignment = watchCategorySubCategories.find(item => item.category === selectedId)
+                  return (
+                    <div
+                      key={index}
+                      style={{
+                        display: 'grid',
+                        gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr) auto',
+                        gap: 16,
+                        alignItems: 'end',
+                      }}
+                    >
+                      <div style={{ minWidth: 0 }}>
+                        <label style={LABEL}>
+                          Category {index === 0 && <span style={{ color: '#A85050' }}>*</span>}
+                        </label>
+                        <select
+                          value={selectedId}
+                          className="admin-input"
+                          style={{ ...INPUT, appearance: 'auto', cursor: 'pointer' }}
+                          onChange={event => {
+                            const nextCategories = [...watchCategories]
+                            nextCategories[index] = event.target.value
+                            setValue('categories', nextCategories, { shouldDirty: true, shouldValidate: true })
+                          }}
+                        >
+                          <option value="">Select category…</option>
+                          {categories?.map(option => (
+                            <option
+                              key={option._id}
+                              value={option._id}
+                              disabled={watchCategories.some((id, selectedIndex) => selectedIndex !== index && id === option._id)}
+                            >
+                              {option.name}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                      <div style={{ minWidth: 0 }}>
+                        <label style={LABEL}>
+                          {category ? `Sub-category for ${category.name}` : 'Sub-category'}
+                        </label>
+                        <select
+                          value={assignment?.subCategory ?? ''}
+                          disabled={!category}
+                          className="admin-input"
+                          style={{ ...INPUT, appearance: 'auto', cursor: category ? 'pointer' : 'not-allowed' }}
+                          onChange={event => {
+                            const nextAssignments = watchCategorySubCategories.map(item =>
+                              item.category === selectedId
+                                ? { ...item, subCategory: event.target.value }
+                                : item,
+                            )
+                            setValue('categorySubCategories', nextAssignments, { shouldDirty: true, shouldValidate: true })
+                          }}
+                        >
+                          <option value="">No sub-category</option>
+                          {options.map(subcategory => (
+                            <option key={subcategory._id} value={subcategory._id}>{subcategory.name}</option>
+                          ))}
+                        </select>
+                      </div>
+                      {watchCategories.length > 1 ? (
+                        <button
+                          type="button"
+                          aria-label="Remove category"
+                          onClick={() => {
+                            const nextCategories = watchCategories.filter((_, selectedIndex) => selectedIndex !== index)
+                            setValue('categories', nextCategories, { shouldDirty: true, shouldValidate: true })
+                          }}
+                          style={{ background: 'none', border: 'none', color: '#9E9590', cursor: 'pointer', padding: 4, display: 'flex', marginBottom: 8 }}
+                        >
+                          <X size={15} />
+                        </button>
+                      ) : <span style={{ width: 23 }} />}
+                    </div>
+                  )
+                })}
+                <button
+                  type="button"
+                  disabled={watchCategories.length >= (categories?.length ?? 0) || watchCategories.includes('')}
+                  onClick={() => setValue('categories', [...watchCategories, ''], { shouldDirty: true })}
+                  style={{
+                    alignSelf: 'flex-start',
+                    padding: '7px 10px',
+                    background: '#F5F0E8',
+                    border: '1px solid #E2DAC8',
+                    borderRadius: 4,
+                    color: '#6B6057',
+                    fontFamily: FONT,
+                    fontSize: 13,
+                    cursor: 'pointer',
+                    opacity: watchCategories.length >= (categories?.length ?? 0) || watchCategories.includes('') ? 0.6 : 1,
+                  }}
                 >
-                  <option value="">No sub-category</option>
-                  {subcategories.map(subcategory => (
-                    <option key={subcategory._id} value={subcategory._id}>{subcategory.name}</option>
-                  ))}
-                </select>
+                  + Add another category
+                </button>
               </div>
-            )}
+              <span style={{ display: 'block', marginTop: 6, fontFamily: FONT, fontSize: 13, color: '#9E9590' }}>
+                Choose each category and its sub-category on the same row. The first category controls shipping defaults.
+              </span>
+              {errors.categories && <span style={ERR}>{errors.categories.message}</span>}
+            </div>
 
             {/* Chakra */}
             <div style={FIELD}>

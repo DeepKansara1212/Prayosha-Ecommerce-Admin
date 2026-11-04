@@ -507,7 +507,9 @@ export default function ProductsPage() {
                   {/* Category */}
                   <td style={{ ...TD }}>
                     <span style={{ fontFamily: FONT, fontSize: 13, color: '#6B6057' }}>
-                      {product.category?.name ?? '—'}
+                      {product.categories?.length
+                        ? product.categories.map(category => category.name).join(', ')
+                        : product.category?.name ?? '—'}
                     </span>
                   </td>
 
