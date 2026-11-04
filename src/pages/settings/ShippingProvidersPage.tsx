@@ -175,8 +175,8 @@ function CredentialsDrawer({ provider, onClose, onSave, isPending }: Credentials
             </>
           ) : (
             <div>
-              <label style={LABEL}>API Key</label>
-              <input style={INPUT_BASE} value={aftership.apiKey} onChange={e => setAftership({ apiKey: e.target.value })} placeholder="AfterShip Shipping API key" />
+              <label style={LABEL}>AfterShip Tracking API Key</label>
+              <input style={INPUT_BASE} value={aftership.apiKey} onChange={e => setAftership({ apiKey: e.target.value })} placeholder="Paste your AfterShip Tracking API key" />
             </div>
           )}
           <p style={{ fontFamily: FONT, fontSize: 13, color: '#9E9590', margin: 0 }}>

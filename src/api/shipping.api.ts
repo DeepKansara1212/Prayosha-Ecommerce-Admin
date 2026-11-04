@@ -16,9 +16,31 @@ export interface TrackingInfo {
   checkpoints: TrackingCheckpoint[]
 }
 
-export async function createShipment(orderId: string, provider: string): Promise<Order> {
-  const res = await client.post(`/api/v1/admin/orders/${orderId}/shipments`, { provider })
-  return res.data.data as Order
+export interface AfterShipTrackingInput {
+  carrierName: string
+  trackingNumber: string
+  courierSlug?: string
+}
+
+export type ShipmentCreationResult = Order & {
+  trackingEmailSent?: boolean
+  trackingEmailError?: string
+}
+
+export interface TrackingEmailResult {
+  trackingEmailStatusSaved: boolean
+}
+
+export async function createShipment(
+  orderId: string,
+  provider: string,
+  tracking?: AfterShipTrackingInput,
+): Promise<ShipmentCreationResult> {
+  const res = await client.post(`/api/v1/admin/orders/${orderId}/shipments`, {
+    provider,
+    ...tracking,
+  })
+  return res.data.data as ShipmentCreationResult
 }
 
 export async function trackShipment(orderId: string): Promise<TrackingInfo> {
@@ -39,4 +61,9 @@ export async function downloadLabel(orderId: string): Promise<{ labelUrl: string
 export async function generateInvoice(orderId: string): Promise<{ invoiceUrl: string }> {
   const res = await client.post(`/api/v1/admin/orders/${orderId}/shipments/invoice`)
   return res.data.data as { invoiceUrl: string }
+}
+
+export async function resendTrackingEmail(orderId: string): Promise<TrackingEmailResult> {
+  const res = await client.post(`/api/v1/admin/orders/${orderId}/shipments/tracking-email`)
+  return res.data.data as TrackingEmailResult
 }

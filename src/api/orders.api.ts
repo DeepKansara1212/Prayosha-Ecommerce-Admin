@@ -68,10 +68,15 @@ export interface Order {
   paymentStatus: PaymentStatus
   razorpayOrderId?: string
   razorpayPaymentId?: string
+  razorpayRefundId?: string
+  refundStatus?: 'initiating' | 'pending' | 'processed' | 'failed'
   status: OrderStatus
   trackingNumber?: string
   shippingProvider?: string
   shipmentId?: string
+  aftershipTrackingId?: string
+  aftershipCourierSlug?: string
+  trackingEmailSentAt?: string
   awbNumber?: string
   carrier?: string
   shippingStatus?: string

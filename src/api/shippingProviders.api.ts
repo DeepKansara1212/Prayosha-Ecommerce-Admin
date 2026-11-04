@@ -16,6 +16,11 @@ export interface ShippingProvider {
   updatedAt: string
 }
 
+export interface AfterShipCourier {
+  slug: string
+  name: string
+}
+
 export async function getShippingProviders(): Promise<ShippingProvider[]> {
   const res = await client.get('/api/v1/admin/shipping-providers')
   return res.data.data.providers as ShippingProvider[]
@@ -37,4 +42,9 @@ export async function setDefaultShippingProvider(id: string): Promise<ShippingPr
 export async function testShippingProviderConnection(id: string): Promise<ShippingProvider> {
   const res = await client.post(`/api/v1/admin/shipping-providers/${id}/test-connection`)
   return res.data.data.provider as ShippingProvider
+}
+
+export async function getAfterShipCouriers(): Promise<AfterShipCourier[]> {
+  const res = await client.get('/api/v1/admin/shipping-providers/aftership/couriers')
+  return res.data.data.couriers as AfterShipCourier[]
 }

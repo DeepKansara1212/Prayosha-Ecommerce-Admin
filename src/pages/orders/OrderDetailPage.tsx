@@ -13,8 +13,12 @@ import {
   trackShipment,
   cancelShipment,
   downloadLabel,
+  resendTrackingEmail,
 } from '../../api/shipping.api'
-import { getShippingProviders } from '../../api/shippingProviders.api'
+import {
+  getAfterShipCouriers,
+  getShippingProviders,
+} from '../../api/shippingProviders.api'
 import { useToast } from '../../store/toastStore'
 
 // ── Constants ─────────────────────────────────────────────────────────────────
@@ -147,6 +151,14 @@ function ShippingPanel({ order }: { order: Order }) {
   const activeProviders = (providers ?? []).filter(p => p.isActive)
 
   const [selectedProvider, setSelectedProvider] = useState('')
+  const [courierName, setCourierName] = useState('')
+  const [afterShipTrackingNumber, setAfterShipTrackingNumber] = useState('')
+  const { data: afterShipCouriers, isError: couriersError } = useQuery({
+    queryKey: ['aftership-couriers'],
+    queryFn: getAfterShipCouriers,
+    enabled: selectedProvider === 'aftership',
+    staleTime: 12 * 60 * 60 * 1000,
+  })
   useEffect(() => {
     if (selectedProvider || activeProviders.length === 0) return
     const def = activeProviders.find(p => p.isDefault) ?? activeProviders[0]
@@ -162,14 +174,35 @@ function ShippingPanel({ order }: { order: Order }) {
     (providers ?? []).find(p => p.slug === slug)?.name ?? slug ?? ''
 
   const createMutation = useMutation({
-    mutationFn: () => createShipment(order._id, selectedProvider),
-    onSuccess: () => {
-      toast.success(`Shipment created using ${providerLabel(selectedProvider)}.`)
+    mutationFn: () => {
+      if (selectedProvider !== 'aftership') {
+        return createShipment(order._id, selectedProvider)
+      }
+      const selectedCourier = afterShipCouriers?.find(
+        courier => courier.name.toLowerCase() === courierName.trim().toLowerCase(),
+      )
+      return createShipment(order._id, selectedProvider, {
+        carrierName: courierName.trim(),
+        trackingNumber: afterShipTrackingNumber.trim(),
+        ...(selectedCourier ? { courierSlug: selectedCourier.slug } : {}),
+      })
+    },
+    onSuccess: (result) => {
+      if (selectedProvider === 'aftership' && !result.trackingEmailSent) {
+        toast.error('Tracking was added, but the customer email could not be sent. Use “Resend Tracking Email” to retry.')
+      } else if (selectedProvider === 'aftership' && result.trackingEmailError) {
+        toast.error('Customer was notified, but the notification time could not be saved.')
+      } else if (selectedProvider === 'aftership') {
+        toast.success('Tracking registered and customer notified.')
+      } else {
+        toast.success(`Shipment created using ${providerLabel(selectedProvider)}.`)
+      }
       invalidate()
     },
     onError: (err: unknown) => {
       const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message
       toast.error(msg || 'Failed to create shipment')
+      if (selectedProvider === 'aftership') invalidate()
     },
   })
 
@@ -200,7 +233,9 @@ function ShippingPanel({ order }: { order: Order }) {
   const cancelMutation = useMutation({
     mutationFn: () => cancelShipment(order._id),
     onSuccess: () => {
-      toast.success(`Shipment cancelled using ${providerLabel(order.shippingProvider)}.`)
+      toast.success(order.shippingProvider === 'aftership'
+        ? 'Pending tracking attempt cleared. Check AfterShip before retrying.'
+        : `Shipment cancelled using ${providerLabel(order.shippingProvider)}.`)
       invalidate()
     },
     onError: (err: unknown) => {
@@ -209,7 +244,23 @@ function ShippingPanel({ order }: { order: Order }) {
     },
   })
 
-  const busy = createMutation.isPending || trackMutation.isPending || labelMutation.isPending || cancelMutation.isPending
+  const emailMutation = useMutation({
+    mutationFn: () => resendTrackingEmail(order._id),
+    onSuccess: (result) => {
+      if (result.trackingEmailStatusSaved) {
+        toast.success('Tracking email sent to the customer.')
+      } else {
+        toast.error('Tracking email was sent, but the notification time could not be saved.')
+      }
+      invalidate()
+    },
+    onError: (err: unknown) => {
+      const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message
+      toast.error(msg || 'Failed to send tracking email')
+    },
+  })
+
+  const busy = createMutation.isPending || trackMutation.isPending || labelMutation.isPending || cancelMutation.isPending || emailMutation.isPending
 
   const showCard = ['confirmed', 'processing', 'shipped', 'delivered'].includes(order.status)
   if (!showCard) return null
@@ -246,10 +297,14 @@ function ShippingPanel({ order }: { order: Order }) {
         <p style={{ fontFamily: FONT, fontSize: 13, color: '#6B6057', margin: '0 0 12px' }}>
           Status: Not yet dispatched
         </p>
-        <div style={{ display: 'flex', gap: 8 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           <select
             value={selectedProvider}
-            onChange={e => setSelectedProvider(e.target.value)}
+            onChange={e => {
+              setSelectedProvider(e.target.value)
+              setCourierName('')
+              setAfterShipTrackingNumber('')
+            }}
             disabled={busy}
             style={{
               flex: 1, padding: '8px 10px', background: '#F5F0E8', border: '1px solid #E2DAC8',
@@ -260,10 +315,68 @@ function ShippingPanel({ order }: { order: Order }) {
               <option key={p.slug} value={p.slug}>{p.name}</option>
             ))}
           </select>
-          <button style={btnPrimary} disabled={busy} onClick={() => createMutation.mutate()}>
-            {createMutation.isPending && <Loader2 size={13} style={{ animation: 'spin 1s linear infinite' }} />}
-            Create Shipment
-          </button>
+          {selectedProvider === 'aftership' ? (
+            <>
+              <div>
+                <label htmlFor="aftership-courier" style={{ fontFamily: FONT, fontSize: 12, color: '#6B6057', display: 'block', marginBottom: 5 }}>
+                  Courier
+                </label>
+                <input
+                  id="aftership-courier"
+                  list="aftership-courier-options"
+                  value={courierName}
+                  onChange={e => setCourierName(e.target.value)}
+                  disabled={busy}
+                  placeholder="Search or enter courier name"
+                  style={{
+                    width: '100%', boxSizing: 'border-box', padding: '9px 10px',
+                    background: '#F5F0E8', border: '1px solid #E2DAC8', borderRadius: 4,
+                    fontFamily: FONT, fontSize: 13, color: '#1C1A17',
+                  }}
+                />
+                <datalist id="aftership-courier-options">
+                  {(afterShipCouriers ?? []).map(courier => (
+                    <option key={courier.slug} value={courier.name} />
+                  ))}
+                </datalist>
+                <p style={{ fontFamily: FONT, fontSize: 12, color: '#9E9590', margin: '5px 0 0' }}>
+                  Choose a listed courier or enter a name manually; AfterShip will try to detect unlisted couriers.
+                  {couriersError ? ' The courier list could not be loaded.' : ''}
+                </p>
+              </div>
+              <div>
+                <label htmlFor="aftership-tracking-number" style={{ fontFamily: FONT, fontSize: 12, color: '#6B6057', display: 'block', marginBottom: 5 }}>
+                  Courier tracking number
+                </label>
+                <input
+                  id="aftership-tracking-number"
+                  value={afterShipTrackingNumber}
+                  onChange={e => setAfterShipTrackingNumber(e.target.value)}
+                  disabled={busy}
+                  maxLength={120}
+                  placeholder="Enter the tracking number provided by the courier"
+                  style={{
+                    width: '100%', boxSizing: 'border-box', padding: '9px 10px',
+                    background: '#F5F0E8', border: '1px solid #E2DAC8', borderRadius: 4,
+                    fontFamily: FONT, fontSize: 13, color: '#1C1A17',
+                  }}
+                />
+              </div>
+              <button
+                style={{ ...btnPrimary, alignSelf: 'flex-start' }}
+                disabled={busy || !courierName.trim() || !afterShipTrackingNumber.trim()}
+                onClick={() => createMutation.mutate()}
+              >
+                {createMutation.isPending && <Loader2 size={13} style={{ animation: 'spin 1s linear infinite' }} />}
+                Add Tracking & Notify Customer
+              </button>
+            </>
+          ) : (
+            <button style={{ ...btnPrimary, alignSelf: 'flex-start' }} disabled={busy} onClick={() => createMutation.mutate()}>
+              {createMutation.isPending && <Loader2 size={13} style={{ animation: 'spin 1s linear infinite' }} />}
+              Create Shipment
+            </button>
+          )}
         </div>
       </SectionCard>
     )
@@ -275,12 +388,14 @@ function ShippingPanel({ order }: { order: Order }) {
         <div style={{ fontFamily: FONT, fontSize: 13, color: '#6B6057' }}>
           Provider: <span style={{ color: '#1C1A17', fontWeight: 500 }}>{providerLabel(order.shippingProvider)}</span>
         </div>
-        <div style={{ fontFamily: FONT, fontSize: 13, color: '#6B6057' }}>
-          Shipment ID: <span style={{ color: '#1C1A17', fontWeight: 500 }}>{order.shipmentId}</span>
-        </div>
-        {order.awbNumber && (
+        {order.shipmentId && (
           <div style={{ fontFamily: FONT, fontSize: 13, color: '#6B6057' }}>
-            Tracking Number: <span style={{ color: '#1C1A17', fontWeight: 500 }}>{order.awbNumber}</span>
+            Shipment ID: <span style={{ color: '#1C1A17', fontWeight: 500 }}>{order.shipmentId}</span>
+          </div>
+        )}
+        {(order.awbNumber || order.trackingNumber) && (
+          <div style={{ fontFamily: FONT, fontSize: 13, color: '#6B6057' }}>
+            Tracking Number: <span style={{ color: '#1C1A17', fontWeight: 500 }}>{order.awbNumber || order.trackingNumber}</span>
           </div>
         )}
         {order.carrier && (
@@ -359,21 +474,55 @@ function ShippingPanel({ order }: { order: Order }) {
       )}
 
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-        {!order.labelUrl && (
+        {order.shippingProvider === 'aftership' ? (
+          <>
+            {order.aftershipTrackingId && (
+              <button style={btnSecondary} disabled={busy} onClick={() => trackMutation.mutate()}>
+                {trackMutation.isPending && <Loader2 size={13} style={{ animation: 'spin 1s linear infinite' }} />}
+                Refresh Tracking
+              </button>
+            )}
+            {order.trackingUrl && (
+              <button style={btnSecondary} disabled={busy} onClick={() => emailMutation.mutate()}>
+                {emailMutation.isPending && <Loader2 size={13} style={{ animation: 'spin 1s linear infinite' }} />}
+                Resend Tracking Email
+              </button>
+            )}
+            {!order.aftershipTrackingId &&
+              !order.shipmentId &&
+              ['Registering tracking', 'Registration outcome unknown'].includes(order.shippingStatus || '') && (
+              <button
+                style={btnDanger}
+                disabled={busy}
+                onClick={() => {
+                  if (window.confirm('This only clears the local pending attempt. Check AfterShip first to ensure no tracking record was created.')) {
+                    cancelMutation.mutate()
+                  }
+                }}
+              >
+                Clear Pending Attempt
+              </button>
+            )}
+          </>
+        ) : (
+          <>
+            {!order.labelUrl && (
           <button style={btnPrimary} disabled={busy} onClick={() => labelMutation.mutate()}>
             {labelMutation.isPending && <Loader2 size={13} style={{ animation: 'spin 1s linear infinite' }} />}
             Download Label
           </button>
-        )}
-        <button style={btnSecondary} disabled={busy} onClick={() => trackMutation.mutate()}>
-          {trackMutation.isPending && <Loader2 size={13} style={{ animation: 'spin 1s linear infinite' }} />}
-          Track Shipment
-        </button>
-        {order.status !== 'delivered' && (
-          <button style={btnDanger} disabled={busy} onClick={() => cancelMutation.mutate()}>
-            {cancelMutation.isPending && <Loader2 size={13} style={{ animation: 'spin 1s linear infinite' }} />}
-            Cancel Shipment
-          </button>
+            )}
+            <button style={btnSecondary} disabled={busy} onClick={() => trackMutation.mutate()}>
+              {trackMutation.isPending && <Loader2 size={13} style={{ animation: 'spin 1s linear infinite' }} />}
+              Track Shipment
+            </button>
+            {order.status !== 'delivered' && (
+              <button style={btnDanger} disabled={busy} onClick={() => cancelMutation.mutate()}>
+                {cancelMutation.isPending && <Loader2 size={13} style={{ animation: 'spin 1s linear infinite' }} />}
+                Cancel Shipment
+              </button>
+            )}
+          </>
         )}
       </div>
     </SectionCard>
@@ -421,16 +570,29 @@ export default function OrderDetailPage() {
   const statusMutation = useMutation({
     mutationFn: (payload: Parameters<typeof updateOrderStatus>[1]) =>
       updateOrderStatus(id!, payload),
-    onSuccess: (_data, variables) => {
+    onSuccess: (updatedOrder, variables) => {
       setNote('')
       setFormError('')
-      showToast('success', `Order #${order?.orderNumber} updated to ${variables.status}`)
+      const message =
+        variables.status === 'cancelled' &&
+        updatedOrder.refundStatus === 'failed'
+          ? `Order #${order?.orderNumber} cancelled, but refund failed`
+          : variables.status === 'cancelled' &&
+        updatedOrder.paymentMethod === 'razorpay' &&
+        updatedOrder.paymentStatus !== 'refunded'
+          ? `Order #${order?.orderNumber} cancelled; refund is being processed`
+          : variables.status === 'cancelled' && updatedOrder.paymentStatus === 'refunded'
+            ? `Order #${order?.orderNumber} cancelled and refunded`
+            : `Order #${order?.orderNumber} updated to ${variables.status}`
+      showToast('success', message)
       qc.invalidateQueries({ queryKey: ['admin-order', id] })
       qc.invalidateQueries({ queryKey: ['admin-orders'] })
     },
-    onError: () => {
+    onError: (err: unknown) => {
       if (order) setFormStatus(order.status)
-      showToast('error', 'Failed to update order status. Please try again.')
+      const message = (err as { response?: { data?: { message?: string } } })
+        ?.response?.data?.message
+      showToast('error', message || 'Failed to update order status. Please try again.')
     },
   })
 
@@ -804,6 +966,14 @@ export default function OrderDetailPage() {
                   {order.paymentStatus}
                 </span>
               </div>
+              {order.refundStatus && (
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <span style={{ fontFamily: FONT, fontSize: 13, color: '#6B6057' }}>Refund</span>
+                  <span style={{ fontFamily: FONT, fontSize: 13, color: '#C49A3C', textTransform: 'capitalize' }}>
+                    {order.refundStatus}
+                  </span>
+                </div>
+              )}
               {order.razorpayOrderId && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 2, paddingTop: 4, borderTop: '1px solid #E2DAC8' }}>
                   <span style={{ fontFamily: FONT, fontSize: 13, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: '#9E9590' }}>
