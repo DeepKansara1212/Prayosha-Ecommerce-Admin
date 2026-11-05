@@ -576,7 +576,13 @@ export default function OrderDetailPage() {
       const message =
         variables.status === 'cancelled' &&
         updatedOrder.refundStatus === 'failed'
-          ? `Order #${order?.orderNumber} cancelled, but refund failed`
+          ? `Order #${order?.orderNumber} cancelled, but refund failed: ${updatedOrder.refundFailureReason || 'check Razorpay and retry'}`
+          : variables.status === 'cancelled' &&
+        updatedOrder.refundStatus === 'pending'
+          ? `Order #${order?.orderNumber} cancelled; refund status is pending. Check Razorpay before retrying.`
+          : variables.status === 'cancelled' &&
+        updatedOrder.refundStatus === 'initiating'
+          ? `Order #${order?.orderNumber} cancelled; refund request is still processing.`
           : variables.status === 'cancelled' &&
         updatedOrder.paymentMethod === 'razorpay' &&
         updatedOrder.paymentStatus !== 'refunded'
@@ -584,7 +590,12 @@ export default function OrderDetailPage() {
           : variables.status === 'cancelled' && updatedOrder.paymentStatus === 'refunded'
             ? `Order #${order?.orderNumber} cancelled and refunded`
             : `Order #${order?.orderNumber} updated to ${variables.status}`
-      showToast('success', message)
+      showToast(
+        variables.status === 'cancelled' && updatedOrder.refundStatus === 'failed'
+          ? 'error'
+          : 'success',
+        message,
+      )
       qc.invalidateQueries({ queryKey: ['admin-order', id] })
       qc.invalidateQueries({ queryKey: ['admin-orders'] })
     },
@@ -972,6 +983,20 @@ export default function OrderDetailPage() {
                   <span style={{ fontFamily: FONT, fontSize: 13, color: '#C49A3C', textTransform: 'capitalize' }}>
                     {order.refundStatus}
                   </span>
+                </div>
+              )}
+              {order.refundFailureReason && (
+                <div style={{
+                  padding: '8px 10px',
+                  background: '#FEF2F2',
+                  border: '1px solid #F3D0D0',
+                  borderRadius: 4,
+                  fontFamily: FONT,
+                  fontSize: 12,
+                  color: '#A85050',
+                  lineHeight: 1.5,
+                }}>
+                  {order.refundFailureReason}
                 </div>
               )}
               {order.razorpayOrderId && (

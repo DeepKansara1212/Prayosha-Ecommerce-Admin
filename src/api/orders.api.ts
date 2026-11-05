@@ -70,6 +70,7 @@ export interface Order {
   razorpayPaymentId?: string
   razorpayRefundId?: string
   refundStatus?: 'initiating' | 'pending' | 'processed' | 'failed'
+  refundFailureReason?: string
   status: OrderStatus
   trackingNumber?: string
   shippingProvider?: string
