@@ -31,14 +31,27 @@ export interface TrackingEmailResult {
   trackingEmailStatusSaved: boolean
 }
 
+export interface ShiprocketCourier {
+  courierCompanyId: number
+  courierName?: string
+  charge: number
+}
+
+export async function getShiprocketCouriers(orderId: string): Promise<ShiprocketCourier[]> {
+  const res = await client.get(`/api/v1/admin/orders/${orderId}/shipments/couriers`)
+  return res.data.data.couriers as ShiprocketCourier[]
+}
+
 export async function createShipment(
   orderId: string,
   provider: string,
   tracking?: AfterShipTrackingInput,
+  options?: { courierCompanyId?: number },
 ): Promise<ShipmentCreationResult> {
   const res = await client.post(`/api/v1/admin/orders/${orderId}/shipments`, {
     provider,
     ...tracking,
+    ...options,
   })
   return res.data.data as ShipmentCreationResult
 }

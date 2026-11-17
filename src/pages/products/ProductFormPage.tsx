@@ -1319,10 +1319,10 @@ export default function ProductFormPage() {
 
           <div className="product-form-grid">
             <div style={FIELD}>
-              <label style={LABEL}>Bead Size</label>
+              <label style={LABEL}>Beads</label>
               <input
                 {...register('beadSize')}
-                placeholder="e.g. 8mm or 8-10mm"
+                placeholder="e.g. 8 beads"
                 className="admin-input"
                 style={INPUT}
               />

@@ -13,6 +13,7 @@ import {
   trackShipment,
   cancelShipment,
   downloadLabel,
+  getShiprocketCouriers,
   resendTrackingEmail,
 } from '../../api/shipping.api'
 import {
@@ -43,6 +44,9 @@ const STATUS_STYLE: Record<OrderStatus, { bg: string; color: string }> = {
 
 const fmt = (n: number) =>
   `₹${n.toLocaleString('en-IN', { maximumFractionDigits: 0 })}`
+
+const fmtRate = (n: number) =>
+  `₹${n.toLocaleString('en-IN', { maximumFractionDigits: 2 })}`
 
 const capitalize = (s: string) =>
   s.charAt(0).toUpperCase() + s.slice(1)
@@ -151,8 +155,18 @@ function ShippingPanel({ order }: { order: Order }) {
   const activeProviders = (providers ?? []).filter(p => p.isActive)
 
   const [selectedProvider, setSelectedProvider] = useState('')
+  const [selectedShiprocketCourierId, setSelectedShiprocketCourierId] = useState<number | null>(null)
   const [courierName, setCourierName] = useState('')
   const [afterShipTrackingNumber, setAfterShipTrackingNumber] = useState('')
+  const shiprocketCouriersQuery = useQuery({
+    queryKey: ['shiprocket-couriers', order._id],
+    queryFn: () => getShiprocketCouriers(order._id),
+    enabled: selectedProvider === 'shiprocket' && !order.shippingProvider,
+    staleTime: 5 * 60 * 1000,
+  })
+  const shiprocketCouriersError =
+    (shiprocketCouriersQuery.error as { response?: { data?: { message?: string } } } | null)
+      ?.response?.data?.message || 'Could not load ShipRocket couriers.'
   const { data: afterShipCouriers, isError: couriersError } = useQuery({
     queryKey: ['aftership-couriers'],
     queryFn: getAfterShipCouriers,
@@ -175,6 +189,14 @@ function ShippingPanel({ order }: { order: Order }) {
 
   const createMutation = useMutation({
     mutationFn: () => {
+      if (selectedProvider === 'shiprocket') {
+        if (selectedShiprocketCourierId === null) {
+          throw new Error('Select a ShipRocket courier before creating the shipment')
+        }
+        return createShipment(order._id, selectedProvider, undefined, {
+          courierCompanyId: selectedShiprocketCourierId,
+        })
+      }
       if (selectedProvider !== 'aftership') {
         return createShipment(order._id, selectedProvider)
       }
@@ -302,6 +324,7 @@ function ShippingPanel({ order }: { order: Order }) {
             value={selectedProvider}
             onChange={e => {
               setSelectedProvider(e.target.value)
+              setSelectedShiprocketCourierId(null)
               setCourierName('')
               setAfterShipTrackingNumber('')
             }}
@@ -369,6 +392,56 @@ function ShippingPanel({ order }: { order: Order }) {
               >
                 {createMutation.isPending && <Loader2 size={13} style={{ animation: 'spin 1s linear infinite' }} />}
                 Add Tracking & Notify Customer
+              </button>
+            </>
+          ) : selectedProvider === 'shiprocket' ? (
+            <>
+              <div>
+                <label htmlFor="shiprocket-courier" style={{ fontFamily: FONT, fontSize: 12, color: '#6B6057', display: 'block', marginBottom: 5 }}>
+                  Choose courier
+                </label>
+                <select
+                  id="shiprocket-courier"
+                  value={selectedShiprocketCourierId ?? ''}
+                  onChange={e => setSelectedShiprocketCourierId(e.target.value ? Number(e.target.value) : null)}
+                  disabled={busy || shiprocketCouriersQuery.isLoading || shiprocketCouriersQuery.isError}
+                  style={{
+                    width: '100%', boxSizing: 'border-box', padding: '9px 10px',
+                    background: '#F5F0E8', border: '1px solid #E2DAC8', borderRadius: 4,
+                    fontFamily: FONT, fontSize: 13, color: '#1C1A17',
+                  }}
+                >
+                  <option value="">
+                    {shiprocketCouriersQuery.isLoading ? 'Loading available couriers...' : 'Select a courier'}
+                  </option>
+                  {(shiprocketCouriersQuery.data ?? []).map(courier => (
+                    <option key={courier.courierCompanyId} value={courier.courierCompanyId}>
+                      {courier.courierName || `Courier ${courier.courierCompanyId}`} - {fmtRate(courier.charge)}
+                    </option>
+                  ))}
+                </select>
+                {shiprocketCouriersQuery.isError && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 6 }}>
+                    <p style={{ fontFamily: FONT, fontSize: 12, color: '#A85050', margin: 0 }}>
+                      {shiprocketCouriersError}
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => void shiprocketCouriersQuery.refetch()}
+                      style={{ ...btnSecondary, padding: '4px 8px', fontSize: 12 }}
+                    >
+                      Retry
+                    </button>
+                  </div>
+                )}
+              </div>
+              <button
+                style={{ ...btnPrimary, alignSelf: 'flex-start' }}
+                disabled={busy || shiprocketCouriersQuery.isLoading || shiprocketCouriersQuery.isError || selectedShiprocketCourierId === null}
+                onClick={() => createMutation.mutate()}
+              >
+                {createMutation.isPending && <Loader2 size={13} style={{ animation: 'spin 1s linear infinite' }} />}
+                Create Shipment
               </button>
             </>
           ) : (
