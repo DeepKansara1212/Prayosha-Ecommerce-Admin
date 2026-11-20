@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
+import { Eye, EyeOff } from 'lucide-react'
 import client from '../../api/client'
 import { useAdminAuthStore } from '../../store/adminAuthStore'
 import type { Admin } from '../../store/adminAuthStore'
@@ -54,6 +55,7 @@ export default function AdminLoginPage() {
   const navigate = useNavigate()
   const login    = useAdminAuthStore(state => state.login)
 
+  const [passwordVisible, setPasswordVisible] = useState(false)
   const [serverError, setServerError] = useState<string | null>(null)
   const form = useForm<LoginFormData>({ resolver: zodResolver(loginSchema) })
 
@@ -123,7 +125,38 @@ export default function AdminLoginPage() {
 
           <div style={{ marginBottom: 24 }}>
             <label style={labelStyle}>Password</label>
-            <input {...form.register('password')} type="password" placeholder="Your password" className="admin-input" style={fieldStyle} autoComplete="current-password" />
+            <div style={{ position: 'relative' }}>
+              <input
+                {...form.register('password')}
+                type={passwordVisible ? 'text' : 'password'}
+                placeholder="Your password"
+                className="admin-input"
+                style={{ ...fieldStyle, paddingRight: 42 }}
+                autoComplete="current-password"
+              />
+              <button
+                type="button"
+                onClick={() => setPasswordVisible(visible => !visible)}
+                aria-label={passwordVisible ? 'Hide password' : 'Show password'}
+                aria-pressed={passwordVisible}
+                style={{
+                  position: 'absolute',
+                  top: '50%',
+                  right: 10,
+                  transform: 'translateY(-50%)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  padding: 4,
+                  border: 'none',
+                  background: 'transparent',
+                  color: '#6B6057',
+                  cursor: 'pointer',
+                }}
+              >
+                {passwordVisible ? <EyeOff size={16} aria-hidden="true" /> : <Eye size={16} aria-hidden="true" />}
+              </button>
+            </div>
             {form.formState.errors.password && <p style={errorStyle}>{form.formState.errors.password.message}</p>}
           </div>
 

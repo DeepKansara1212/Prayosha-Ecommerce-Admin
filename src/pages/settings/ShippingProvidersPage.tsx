@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Pencil, Truck } from 'lucide-react'
+import { Eye, EyeOff, Pencil, Truck } from 'lucide-react'
 import {
   getShippingProviders,
   updateShippingProvider,
@@ -82,6 +82,7 @@ interface CredentialsDrawerProps {
 }
 
 function CredentialsDrawer({ provider, onClose, onSave, isPending }: CredentialsDrawerProps) {
+  const [passwordVisible, setPasswordVisible] = useState(false)
   const [shiprocket, setShiprocket] = useState({
     email: '', password: '', channelId: '', pickupLocation: '', pickupPostcode: '',
     defaultWeight: '', defaultLength: '', defaultBreadth: '', defaultHeight: '',
@@ -133,7 +134,37 @@ function CredentialsDrawer({ provider, onClose, onSave, isPending }: Credentials
               </div>
               <div>
                 <label style={LABEL}>Password</label>
-                <input type="password" style={INPUT_BASE} value={shiprocket.password} onChange={e => setShiprocket(s => ({ ...s, password: e.target.value }))} />
+                <div style={{ position: 'relative' }}>
+                  <input
+                    type={passwordVisible ? 'text' : 'password'}
+                    style={{ ...INPUT_BASE, paddingRight: 38 }}
+                    value={shiprocket.password}
+                    onChange={e => setShiprocket(s => ({ ...s, password: e.target.value }))}
+                    autoComplete="new-password"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setPasswordVisible(visible => !visible)}
+                    aria-label={passwordVisible ? 'Hide password' : 'Show password'}
+                    aria-pressed={passwordVisible}
+                    style={{
+                      position: 'absolute',
+                      top: '50%',
+                      right: 10,
+                      transform: 'translateY(-50%)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      padding: 4,
+                      border: 'none',
+                      background: 'transparent',
+                      color: '#6B6057',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    {passwordVisible ? <EyeOff size={14} aria-hidden="true" /> : <Eye size={14} aria-hidden="true" />}
+                  </button>
+                </div>
               </div>
               <div>
                 <label style={LABEL}>Channel ID <span style={{ textTransform: 'none', fontWeight: 400 }}>(optional)</span></label>
